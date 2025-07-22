@@ -1,2 +1,2 @@
-// QATree知识图谱的TypeScript类型定义文件
-// 定义QATree和QANode的数据结构接口 
+// QATree知识图谱相关的TypeScript类型定义
+// 定义QATree实体的数据结构和相关接口类型 
