@@ -7,7 +7,7 @@ import React from "react";
 const BrandIcon = ({ className }: { className?: string }) => {
   return (
     <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-primary ${className}`}>
-      <span className="text-primary-foreground font-bold text-sm">Q</span>
+      <span className="text-primary-foreground font-bold text-sm">N</span>
     </div>
   );
 };
@@ -16,8 +16,8 @@ export default function BrandHeader() {
   return (
     <div className="flex items-center gap-2 px-2">
       <BrandIcon />
-      <span className="text-base font-bold uppercase leading-6 text-foreground">
-        QATree
+      <span className="text-base font-bold leading-6 text-foreground">
+        NodeAsk
       </span>
     </div>
   );

@@ -1,4 +1,4 @@
-// 创建QATree按钮组件
+// 创建知识图谱按钮组件
 // 基于sidebar-with-chat-history的New Chat按钮实现
 
 "use client";
@@ -24,7 +24,7 @@ export default function CreateQATreeButton() {
       }
       onClick={handleCreateQATree}
     >
-      创建QATree
+      创建图谱
     </Button>
   );
 } 

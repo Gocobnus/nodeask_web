@@ -1,12 +1,12 @@
-// QATree列表组件
+// 知识图谱列表组件
 // 基于sidebar-with-chat-history的聊天历史列表实现
 
 "use client";
 
 import React from "react";
-import { 
-  Listbox, 
-  ListboxItem, 
+import {
+  Listbox,
+  ListboxItem,
   ListboxSection,
   Dropdown,
   DropdownTrigger,
@@ -18,11 +18,11 @@ import { Icon } from "@iconify/react";
 import { mockQATrees } from "../../lib/mock-data";
 import { createSelectionHandler, createActionHandler } from "../../lib/selection-utils";
 
-// QATree操作下拉菜单组件
+// 知识图谱操作下拉菜单组件
 function QATreeDropdown({ treeId }: { treeId: string }) {
   const handleAction = createActionHandler({
-    rename: () => console.log("重命名QATree:", treeId),
-    delete: () => console.log("删除QATree:", treeId)
+    rename: () => console.log("重命名知识图谱:", treeId),
+    delete: () => console.log("删除知识图谱:", treeId)
   });
 
   return (
@@ -34,15 +34,15 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           size="sm"
           variant="light"
         >
-          <Icon 
-            className="text-default-400" 
-            icon="solar:menu-dots-linear" 
-            width={16} 
+          <Icon
+            className="text-default-400"
+            icon="solar:menu-dots-linear"
+            width={16}
           />
         </Button>
       </DropdownTrigger>
       <DropdownMenu
-        aria-label="QATree操作"
+        aria-label="知识图谱操作"
         onAction={handleAction}
       >
         <DropdownItem
@@ -70,13 +70,13 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
 
 export default function QATreeList() {
   const handleQATreeSelect = createSelectionHandler((selectedKey: string) => {
-    console.log("选中QATree:", selectedKey);
-    // 这里可以添加选中QATree的逻辑
+    console.log("选中知识图谱:", selectedKey);
+    // 这里可以添加选中知识图谱的逻辑
   });
 
   return (
-    <Listbox 
-      aria-label="我的QATree" 
+    <Listbox
+      aria-label="我的知识图谱"
       variant="flat"
       onSelectionChange={handleQATreeSelect}
     >
@@ -85,7 +85,7 @@ export default function QATreeList() {
           base: "py-0",
           heading: "py-0 pl-[10px] text-small text-default-400",
         }}
-        title="我的QATree"
+        title="我的知识图谱"
       >
         {mockQATrees.map((tree) => (
           <ListboxItem
