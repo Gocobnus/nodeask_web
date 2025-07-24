@@ -12,7 +12,7 @@ export const mockQATrees = [
   },
   {
     id: "tree2", 
-    name: "Node.js实践",
+    name: "Node.js实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践",
     description: "后端开发实践经验",
     createdAt: new Date("2024-01-10"),
     updatedAt: new Date("2024-01-18")
