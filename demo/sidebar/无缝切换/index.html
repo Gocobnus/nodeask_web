@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>CSS带有平滑展开与收起过渡效果的侧边栏导航</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&amp;display=swap'><link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<svg display="none">
+	<symbol id="app" viewBox="0 0 24 24">
+		<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2">
+			<path d="M9,11.969V5c0-1.657,1.343-3,3-3s3,1.343,3,3v1.003"/>
+			<path d="M15,12.002v6.998c0,1.657-1.343,3-3,3s-3-1.343-3-3v-1.015"/>
+			<path d="M12,15H4.992c-1.652,0-2.992-1.343-2.992-3s1.34-3,2.992-3h1.002"/>
+			<path d="M12,9h6.994c1.66,0,3.006,1.343,3.006,3s-1.346,3-3.006,3h-.961"/>
+		</g>
+	</symbol>
+	<symbol id="dashboard" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M12,2h0A11.958,11.958,0,0,0,3.517,5.513l0,0,0,0A11.961,11.961,0,0,0,0,13.989v.021a11.948,11.948,0,0,0,2.742,7.626A1,1,0,0,0,3.514,22H20.485a1,1,0,0,0,.771-.364A12,12,0,0,0,12,2Zm8,18H4A9.936,9.936,0,0,1,2.05,15H5a1,1,0,0,0,0-2H2.05A9.955,9.955,0,0,1,4.257,7.672l.672.671A1,1,0,0,0,6.343,6.929l-.672-.672A9.954,9.954,0,0,1,11,4.05V7a1,1,0,0,0,2,0V4.05a9.948,9.948,0,0,1,5.328,2.207l-.671.672a1,1,0,0,0,1.414,1.414l.671-.672A9.947,9.947,0,0,1,21.95,13H19a1,1,0,0,0,0,2h2.95A9.932,9.932,0,0,1,20,20Z"/>
+			<polygon points="14.999 10.343 9.343 13.172 12.171 16 14.999 10.343"/>
+		</g>
+	</symbol>
+	<symbol id="performance" viewBox="0 0 24 24">
+		<g stroke="currentColor">
+			<path fill="none" stroke-width="2" d="M4.99787498,8.99999999 L4.99787498,0.999999992 L19.4999998,0.999999992 L22.9999998,4.50000005 L23,23 L4,23 M18,1 L18,6 L23,6 M3,19 L8,14 L12,18 L18.5,11.5 M19,17.0003099 L19,11 L13,11"/>
+		</g>
+	</symbol>
+	<symbol id="guides" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M20.3,3.65H17.269c-.088-.681-.152-1.186-.152-1.186a1.006,1.006,0,0,0-1-.877H13.007V1A1,1,0,0,0,11,1v.588H7.882a1.006,1.006,0,0,0-1,.877L6.736,3.65H3.7a1,1,0,0,0-1,1V23a1,1,0,0,0,1,1H20.3a1,1,0,0,0,1.005-1V4.649A1,1,0,0,0,20.3,3.65ZM8.769,3.591h6.462L15.559,6.2H8.441ZM19.3,22.006H4.708V5.653H6.486L6.31,7.074a.936.936,0,0,0,1,1.122h9.4a1,1,0,0,0,1-1c0-.035-.084-.711-.191-1.544H19.3V22.006Z"/>
+		</g>
+	</symbol>
+	<symbol id="hotspots" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M12 11.6495C11.3096 11.6495 10.75 12.2091 10.75 12.8995C10.75 13.5898 11.3096 14.1495 12 14.1495C12.6904 14.1495 13.25 13.5898 13.25 12.8995C13.25 12.2091 12.6904 11.6495 12 11.6495ZM9.25 12.8995C9.25 11.3807 10.4812 10.1495 12 10.1495C13.5188 10.1495 14.75 11.3807 14.75 12.8995C14.75 14.4183 13.5188 15.6495 12 15.6495C10.4812 15.6495 9.25 14.4183 9.25 12.8995Z"/>
+			<path d="M12 7.64948C10.9617 7.64948 9.94662 7.95738 9.08326 8.53426C8.2199 9.11114 7.547 9.93108 7.14964 10.8904C6.75228 11.8497 6.64831 12.9053 6.85088 13.9237C7.05345 14.9421 7.55347 15.8776 8.28769 16.6118C8.58059 16.9047 8.58059 17.3796 8.28769 17.6724C7.9948 17.9653 7.51993 17.9653 7.22703 17.6724C6.28303 16.7284 5.64015 15.5257 5.3797 14.2163C5.11925 12.907 5.25292 11.5498 5.76382 10.3164C6.27471 9.08296 7.13987 8.02876 8.2499 7.28706C9.35994 6.54536 10.665 6.14948 12 6.14948C13.335 6.14948 14.6401 6.54536 15.7501 7.28706C16.8601 8.02876 17.7253 9.08296 18.2362 10.3164C18.7471 11.5498 18.8808 12.907 18.6203 14.2163C18.3599 15.5257 17.717 16.7284 16.773 17.6724C16.4801 17.9653 16.0052 17.9653 15.7123 17.6724C15.4194 17.3796 15.4194 16.9047 15.7123 16.6118C16.4465 15.8776 16.9466 14.9421 17.1491 13.9237C17.3517 12.9053 17.2477 11.8497 16.8504 10.8904C16.453 9.93108 15.7801 9.11114 14.9167 8.53426C14.0534 7.95738 13.0384 7.64948 12 7.64948Z"/>
+			<path d="M12.0001 3.75C10.1905 3.75 8.42152 4.28661 6.9169 5.29197C5.41227 6.29733 4.23956 7.72628 3.54705 9.39813C2.85455 11.07 2.67336 12.9096 3.0264 14.6845C3.37943 16.4593 4.25083 18.0896 5.53041 19.3692C5.82331 19.662 5.82331 20.1369 5.53041 20.4298C5.23752 20.7227 4.76265 20.7227 4.46975 20.4298C2.9804 18.9405 1.96613 17.0429 1.55522 14.9771C1.14431 12.9113 1.3552 10.77 2.16123 8.82411C2.96727 6.87817 4.33224 5.21494 6.08354 4.04476C7.83484 2.87458 9.89381 2.25 12.0001 2.25C14.1063 2.25 16.1653 2.87458 17.9166 4.04476C19.6679 5.21494 21.0329 6.87817 21.8389 8.82411C22.645 10.77 22.8559 12.9113 22.4449 14.9771C22.034 17.0429 21.0198 18.9405 19.5304 20.4298C19.2375 20.7227 18.7626 20.7227 18.4697 20.4298C18.1768 20.1369 18.1768 19.662 18.4697 19.3692C19.7493 18.0896 20.6207 16.4593 20.9738 14.6845C21.3268 12.9096 21.1456 11.07 20.4531 9.39813C19.7606 7.72628 18.5879 6.29733 17.0833 5.29197C15.5786 4.28661 13.8097 3.75 12.0001 3.75Z"/>
+		</g>
+	</symbol>
+	<symbol id="checklists" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M20.995 6.9a.998.998 0 0 0-.548-.795l-8-4a1 1 0 0 0-.895 0l-8 4a1.002 1.002 0 0 0-.547.795c-.011.107-.961 10.767 8.589 15.014a.987.987 0 0 0 .812 0c9.55-4.247 8.6-14.906 8.589-15.014zM12 19.897C5.231 16.625 4.911 9.642 4.966 7.635L12 4.118l7.029 3.515c.037 1.989-.328 9.018-7.029 12.264z"/>
+			<path d="m11 12.586-2.293-2.293-1.414 1.414L11 15.414l5.707-5.707-1.414-1.414z"/>
+		</g>
+	</symbol>
+	<symbol id="nps" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M21.3,10.08A3,3,0,0,0,19,9H14.44L15,7.57A4.13,4.13,0,0,0,11.11,2a1,1,0,0,0-.91.59L7.35,9H5a3,3,0,0,0-3,3v7a3,3,0,0,0,3,3H17.73a3,3,0,0,0,2.95-2.46l1.27-7A3,3,0,0,0,21.3,10.08ZM7,20H5a1,1,0,0,1-1-1V12a1,1,0,0,1,1-1H7Zm13-7.82-1.27,7a1,1,0,0,1-1,.82H9V10.21l2.72-6.12A2.11,2.11,0,0,1,13.1,6.87L12.57,8.3A2,2,0,0,0,14.44,11H19a1,1,0,0,1,.77.36A1,1,0,0,1,20,12.18Z"/>
+		</g>
+	</symbol>
+	<symbol id="segments" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M23.635,10.056,23.23,8.921l-9.2,3.284-.2.527a1.948,1.948,0,0,1-.689.932,1.982,1.982,0,0,1-3.162-1.621,2.318,2.318,0,0,1,.568-1.5l.243-.325V0L9.324.327A11.759,11.759,0,0,0,2.8,4.34,11.989,11.989,0,1,0,24,12,7.175,7.175,0,0,0,23.635,10.056Zm-4.905,8.8a9.478,9.478,0,0,1-6.771,2.8A9.553,9.553,0,0,1,4.622,5.962a9.774,9.774,0,0,1,3.77-2.757V9.489a4.664,4.664,0,0,0-.811,2.594,4.353,4.353,0,0,0,1.3,3.122A4.462,4.462,0,0,0,12,16.5a4.33,4.33,0,0,0,2.6-.851,4.159,4.159,0,0,0,1.3-1.5l5.676-2.027A9.664,9.664,0,0,1,18.73,18.854Z"/>
+			<path d="M14.23,9.57l7.905-2.8a.427.427,0,0,0,.2-.69l-.081-.162A12.036,12.036,0,0,0,13.865.246a.64.64,0,0,0-.724.544.605.605,0,0,0-.006.1V8.84a.769.769,0,0,0,1.1.73Z"/>
+		</g>
+	</symbol>
+	<symbol id="themes" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M7.061 22c1.523 0 2.84-.543 3.91-1.613 1.123-1.123 1.707-2.854 1.551-4.494l8.564-8.564a3.123 3.123 0 0 0-.002-4.414c-1.178-1.18-3.234-1.18-4.412 0l-8.884 8.884c-1.913.169-3.807 1.521-3.807 3.919 0 .303.021.588.042.86.08 1.031.109 1.418-1.471 2.208a1.001 1.001 0 0 0-.122 1.717C2.52 20.563 4.623 22 7.061 22c-.001 0-.001 0 0 0zM18.086 4.328a1.144 1.144 0 0 1 1.586.002 1.12 1.12 0 0 1 0 1.584L12 13.586 10.414 12l7.672-7.672zM6.018 16.423c-.018-.224-.037-.458-.037-.706 0-1.545 1.445-1.953 2.21-1.953.356 0 .699.073.964.206.945.475 1.26 1.293 1.357 1.896.177 1.09-.217 2.368-.956 3.107C8.865 19.664 8.049 20 7.061 20H7.06c-.75 0-1.479-.196-2.074-.427 1.082-.973 1.121-1.989 1.032-3.15z"/>
+		</g>
+	</symbol>
+	<symbol id="arrow" viewBox="0 0 24 24">
+		<g fill="currentColor">
+			<path d="M10.59,4.044A1.091,1.091,0,0,0,9.047,2.5L.32,11.229a1.088,1.088,0,0,0,0,1.542L9.047,21.5a1.091,1.091,0,0,0,1.543-1.543L2.634,12Zm13.091,0A1.091,1.091,0,0,0,22.138,2.5L13.41,11.229a1.09,1.09,0,0,0,0,1.542L22.138,21.5a1.091,1.091,0,0,0,1.543-1.543L15.725,12Z"/>
+		</g>
+	</symbol>
+</svg>
+
+<nav class="nav" data-expanded="true">
+	<div class="nav__main">
+		<div class="nav__logo">
+			<svg role="img" aria-label="Logo" width="24px" height="24px">
+				<use xlink:href="#app" />
+			</svg>
+		</div>
+		<span class="nav__heading">
+			<span class="nav__heading-text">Analytics</span>
+		</span>
+		<ul class="nav__items">
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Dashboard">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#dashboard" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Dashboard</span>
+				</a>
+			</li>
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Performance">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#performance" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Performance</span>
+				</a>
+			</li>
+		</ul>
+		<span class="nav__heading">
+			<span class="nav__heading-text">Content</span>
+		</span>
+		<ul class="nav__items">
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Guides">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#guides" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Guides</span>
+				</a>
+			</li>
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Hotspots (28)">
+					<span class="nav__item-icon nav__item-icon--badge">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#hotspots" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Hotspots <strong class="nav__item-badge">28</strong></span>
+				</a>
+			</li>
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Checklists">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#checklists" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Checklists</span>
+				</a>
+			</li>
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="NPS">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#nps" />
+						</svg>
+					</span>
+					<span class="nav__item-text">NPS</span>
+				</a>
+			</li>
+		</ul>
+		<span class="nav__heading">
+			<span class="nav__heading-text">Customize</span>
+		</span>
+		<ul class="nav__items">
+			<li class="nav__item">
+				<a class="nav__item-box nav__item-box--red" href="#" title="Segments (24)">
+					<span class="nav__item-icon nav__item-icon--badge">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#segments" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Segments <strong class="nav__item-badge">24</strong></span>
+				</a>
+			</li>
+			<li class="nav__item">
+				<a class="nav__item-box" href="#" title="Themes">
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#themes" />
+						</svg>
+					</span>
+					<span class="nav__item-text">Themes</span>
+				</a>
+			</li>
+		</ul>
+	</div>
+	<div class="nav__bottom">
+		<ul class="nav__items">
+			<li class="nav__item">
+				<button class="nav__item-box" type="button" aria-expanded="true" data-expand>
+					<span class="nav__item-icon">
+						<svg width="24px" height="24px" aria-hidden="true">
+							<use xlink:href="#arrow" />
+						</svg>
+					</span>
+					<span class="nav__item-text" data-expand-label>Collapse</span>
+				</button>
+			</li>
+		</ul>
+	</div>
+</nav>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
+</body>
+</html>
