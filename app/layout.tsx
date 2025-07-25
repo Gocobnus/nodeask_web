@@ -1,22 +1,15 @@
-// app/layout.tsx
+// 根布局 - 全局样式和Provider
+// 侧边栏现在在dashboard路由组中管理，实现布局持久化
 
-// globals.css includes @tailwind directives
-// adjust the path if necessary
 import "./globals.css";
 import {Providers} from "./providers";
-import Sidebar from "./components/navigation/Sidebar";
 
 export default function RootLayout({children}: { children: React.ReactNode }) {
   return (
     <html lang="en" className='light'>
       <body>
         <Providers>
-          <div className="flex h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              {children}
-            </main>
-          </div>
+          {children}
         </Providers>
       </body>
     </html>

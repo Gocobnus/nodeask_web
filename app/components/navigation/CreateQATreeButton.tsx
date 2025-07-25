@@ -1,5 +1,5 @@
 // 创建知识图谱按钮组件
-// 基于sidebar-with-chat-history的New Chat按钮实现
+// 点击后直接跳转到首页开始新的问答对话，系统会自动创建新图谱
 
 "use client";
 
@@ -12,7 +12,8 @@ export default function CreateQATreeButton() {
   const router = useRouter();
 
   const handleCreateQATree = () => {
-    router.push("/create-qatree");
+    // 直接跳转到首页开始新的问答对话
+    router.push("/");
   };
 
   return (

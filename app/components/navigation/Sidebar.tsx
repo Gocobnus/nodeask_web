@@ -8,7 +8,6 @@ import { Spacer, ScrollShadow } from "@heroui/react";
 import BrandHeader from "./BrandHeader";
 import CreateQATreeButton from "./CreateQATreeButton";
 import MainNavigation from "./MainNavigation";
-import QATreeList from "./QATreeList";
 import UserProfile from "./UserProfile";
 
 export default function Sidebar() {
@@ -22,17 +21,14 @@ export default function Sidebar() {
       {/* 2. 创建知识图谱按钮 - 来自sidebar-with-chat-history */}
       <CreateQATreeButton />
 
-      {/* 3. 主导航选项 - 来自basic-sidebar */}
-      <MainNavigation />
-
-      {/* 4. 知识图谱列表 - 来自sidebar-with-chat-history，支持滚动 */}
+      {/* 3. 主导航选项 - 集成了可折叠的知识图谱列表 */}
       <ScrollShadow className="flex-1 -mr-6 pr-6">
-        <QATreeList />
+        <MainNavigation />
       </ScrollShadow>
 
       <Spacer y={8} />
 
-      {/* 5. 用户信息区域 - 来自sidebar-with-chat-history，放在底部 */}
+      {/* 4. 用户信息区域 - 来自sidebar-with-chat-history，放在底部 */}
       <UserProfile />
     </div>
   );
