@@ -54,11 +54,5 @@ export const mockMainNavItems = [
     href: "/discover", 
     icon: "solar:compass-linear",
     title: "发现"
-  },
-  {
-    key: "qatree-list",
-    href: "/qatree-list",
-    icon: "solar:folder-linear", 
-    title: "我的图谱"
   }
 ]; 
