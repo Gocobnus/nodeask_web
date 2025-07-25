@@ -5,7 +5,6 @@
 
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   Dropdown,
   DropdownTrigger,
@@ -118,6 +117,53 @@ function QATreeItem({
   );
 }
 
+// 简化的折叠组件，保持相同的动画效果
+function CollapsibleSection({ 
+  isExpanded, 
+  children 
+}: { 
+  isExpanded: boolean; 
+  children: React.ReactNode; 
+}) {
+  const childrenArray = React.Children.toArray(children);
+  
+  return (
+    <div 
+      className={`relative overflow-hidden transition-all ${
+        isExpanded 
+          ? 'duration-400 ease-out max-h-[400px] opacity-100' 
+          : 'duration-600 ease-in max-h-0 opacity-0'
+      }`}
+    >
+      <div 
+        className={`relative transition-transform ${
+          isExpanded 
+            ? 'duration-400 ease-out transform translate-y-0' 
+            : 'duration-500 ease-in transform -translate-y-full'
+        }`}
+      >
+        {childrenArray.map((child, index) => (
+          <div
+            key={index}
+            className={`transition-all ${
+              isExpanded 
+                ? 'duration-300 ease-out opacity-100 transform translate-y-0' 
+                : 'duration-400 ease-in opacity-0 transform -translate-y-4'
+            }`}
+            style={{
+              transitionDelay: isExpanded 
+                ? `${index * 80}ms` 
+                : `${(childrenArray.length - 1 - index) * 60}ms`
+            }}
+          >
+            {child}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface NavigationProps {
   isCompact?: boolean;
   onExpandRequest?: () => void;
@@ -202,34 +248,8 @@ export default function Navigation({ isCompact, onExpandRequest }: NavigationPro
       }
     ];
 
-    // 收起状态的动画配置
-    const compactContainerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          delayChildren: sidebarConfig.animation.contentDelay,
-          staggerChildren: sidebarConfig.animation.staggerDelay,
-        }
-      }
-    };
-
-    const compactItemVariants = {
-      hidden: { opacity: 0, x: -10 },
-      visible: { 
-        opacity: 1, 
-        x: 0,
-        transition: { duration: sidebarConfig.animation.duration * 0.6 }
-      }
-    };
-
     return (
-      <motion.div 
-        className={sidebarConfig.navigationSpacing}
-        variants={compactContainerVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className={sidebarConfig.navigationSpacing}>
         {compactNavItems.map((item, index) => {
           const isSelected = selectedKey === item.key;
           const handleClick = () => {
@@ -241,125 +261,62 @@ export default function Navigation({ isCompact, onExpandRequest }: NavigationPro
           };
 
           return (
-            <motion.div
+            <SidebarButton
               key={item.key}
-              variants={compactItemVariants}
-            >
-              <SidebarButton
-                icon={item.icon}
-                title={item.title}
-                isSelected={isSelected}
-                isCompact={true}
-                onClick={handleClick}
-              />
-            </motion.div>
+              icon={item.icon}
+              title={item.title}
+              isSelected={isSelected}
+              isCompact={true}
+              onClick={handleClick}
+            />
           );
         })}
-      </motion.div>
+      </div>
     );
   }
 
   // 展开状态：显示完整的导航
-  // 展开状态的动画配置
-  const expandedContainerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        delayChildren: sidebarConfig.animation.contentDelay,
-        staggerChildren: sidebarConfig.animation.staggerDelay,
-      }
-    }
-  };
-
-  const expandedItemVariants = {
-    hidden: { opacity: 0, x: -10 },
-    visible: { 
-      opacity: 1, 
-      x: 0,
-      transition: { duration: sidebarConfig.animation.duration * 0.8 }
-    }
-  };
-
   return (
-    <motion.div 
-      className={sidebarConfig.navigationSpacing}
-      variants={expandedContainerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className={sidebarConfig.navigationSpacing}>
       {/* 主导航项 */}
       {mockMainNavItems.map((item, index) => (
-        <motion.div
+        <SidebarButton
           key={item.key}
-          variants={expandedItemVariants}
-        >
-          <SidebarButton
-            icon={item.icon}
-            title={item.title}
-            isSelected={selectedKey === item.key}
-            onClick={() => handleNavItemClick(item.key, item.href)}
-          />
-        </motion.div>
+          icon={item.icon}
+          title={item.title}
+          isSelected={selectedKey === item.key}
+          onClick={() => handleNavItemClick(item.key, item.href)}
+        />
       ))}
       
       {/* 我的图谱 - 可折叠项 */}
-      <motion.div variants={expandedItemVariants}>
-        <SidebarButton
-          icon="solar:folder-linear"
-          title="我的图谱"
-          isSelected={selectedKey === "qatree-list"}
-          onClick={handleQATreeToggle}
-          endContent={
-            <Icon
-              className={`text-default-400 ${sidebarConfig.buttonTransition} ${
-                isQATreeExpanded ? "rotate-90" : "rotate-180"
-              }`}
-              icon="solar:alt-arrow-right-linear"
-              width={16}
-            />
-          }
-        />
-      </motion.div>
+      <SidebarButton
+        icon="solar:folder-linear"
+        title="我的图谱"
+        isSelected={selectedKey === "qatree-list"}
+        onClick={handleQATreeToggle}
+        endContent={
+          <Icon
+            className={`text-default-400 ${sidebarConfig.buttonTransition} ${
+              isQATreeExpanded ? "rotate-90" : "rotate-180"
+            }`}
+            icon="solar:alt-arrow-right-linear"
+            width={16}
+          />
+        }
+      />
       
-      {/* 知识图谱子项列表 - 向下抽屉动画 */}
-      <div 
-        className={`relative overflow-hidden transition-all ${
-          isQATreeExpanded 
-            ? 'duration-400 ease-out max-h-[400px] opacity-100' 
-            : 'duration-600 ease-in max-h-0 opacity-0'
-        }`}
-      >
-        <div 
-          className={`relative transition-transform ${
-            isQATreeExpanded 
-              ? 'duration-400 ease-out transform translate-y-0' 
-              : 'duration-500 ease-in transform -translate-y-full'
-          }`}
-        >
-          {mockQATrees.map((tree, index) => (
-            <div
-              key={tree.id}
-              className={`transition-all ${
-                isQATreeExpanded 
-                  ? 'duration-300 ease-out opacity-100 transform translate-y-0' 
-                  : 'duration-400 ease-in opacity-0 transform -translate-y-4'
-              }`}
-              style={{
-                transitionDelay: isQATreeExpanded 
-                  ? `${index * 80}ms` 
-                  : `${(mockQATrees.length - 1 - index) * 60}ms`
-              }}
-            >
-              <QATreeItem
-                tree={tree}
-                isSelected={currentTreeId === tree.id}
-                onClick={() => handleQATreeClick(tree.id)}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+      {/* 知识图谱子项列表 - 使用简化的折叠组件 */}
+      <CollapsibleSection isExpanded={isQATreeExpanded}>
+        {mockQATrees.map((tree) => (
+          <QATreeItem
+            key={tree.id}
+            tree={tree}
+            isSelected={currentTreeId === tree.id}
+            onClick={() => handleQATreeClick(tree.id)}
+          />
+        ))}
+      </CollapsibleSection>
+    </div>
   );
 } 

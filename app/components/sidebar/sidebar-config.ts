@@ -2,19 +2,11 @@
 // 修改这里的值会同时影响展开和收起状态
 
 export const sidebarConfig = {
-  // 宽度设置 (保留类名用于兼容)
+  // 宽度设置
   expandedWidth: 'w-72',        // 288px
   compactWidth: 'w-16',         // 64px
   
-  // 数值尺寸 (用于动画)
-  sizes: {
-    expandedWidth: 288,         // 288px
-    compactWidth: 64,           // 64px
-    expandedPadding: 24,        // 24px
-    compactPadding: 8,          // 8px
-  },
-  
-  // 动画配置
+  // 动画配置（保留用于其他组件）
   animation: {
     duration: 0.3,              // 300ms 动画持续时间
     ease: "easeOut",            // 更流畅的缓动函数
@@ -29,9 +21,9 @@ export const sidebarConfig = {
     }
   },
   
-  // 内边距设置
-  containerPadding: 'p-6',      // 24px 全方向（展开状态）
-  compactPadding: 'px-2 py-6',  // 8px 左右，24px 上下（收起状态）
+  // 内边距设置 - 统一左右边距为10px
+  containerPadding: 'px-2.5 py-6',  // 10px 左右，24px 上下（展开状态）
+  compactPadding: 'px-1 py-6',      // 4px 左右，24px 上下（收起状态，确保按钮居中）
   
   // 按钮尺寸
   navButtonHeight: 'h-11',      // 44px (统一的导航按钮高度)

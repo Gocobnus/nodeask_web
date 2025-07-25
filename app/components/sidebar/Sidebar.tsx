@@ -5,7 +5,6 @@
 
 import React, { useState } from "react";
 import { Spacer, ScrollShadow } from "@heroui/react";
-import { motion } from "framer-motion";
 import Header from "./Header";
 import CreateButton from "./CreateButton";
 import Navigation from "./Navigation";
@@ -23,38 +22,17 @@ export default function Sidebar() {
     setIsCompact(false);
   };
 
-  // 侧边栏容器动画配置
-  const sidebarVariants = {
-    expanded: {
-      width: sidebarConfig.sizes.expandedWidth,
-      paddingLeft: sidebarConfig.sizes.expandedPadding,
-      paddingRight: sidebarConfig.sizes.expandedPadding,
-      transition: {
-        duration: sidebarConfig.animation.duration,
-        ease: sidebarConfig.animation.ease,
-      }
-    },
-    compact: {
-      width: sidebarConfig.sizes.compactWidth,
-      paddingLeft: sidebarConfig.sizes.compactPadding,
-      paddingRight: sidebarConfig.sizes.compactPadding,
-      transition: {
-        duration: sidebarConfig.animation.duration,
-        ease: sidebarConfig.animation.ease,
-      }
-    }
-  };
-
   const scrollShadowClass = isCompact
     ? "flex-1 -mr-2 pr-2"
     : "flex-1 -mr-6 pr-6";
 
   return (
-    <motion.div
-      className={`relative flex h-full flex-col ${sidebarConfig.borderStyle} py-6`}
-      variants={sidebarVariants}
-      animate={isCompact ? "compact" : "expanded"}
-      initial={false}
+    <div
+      className={`relative flex h-full flex-col ${sidebarConfig.borderStyle} py-6 transition-all duration-300 ease-out ${
+        isCompact 
+          ? `${sidebarConfig.compactWidth} ${sidebarConfig.compactPadding}`
+          : `${sidebarConfig.expandedWidth} ${sidebarConfig.containerPadding}`
+      }`}
     >
       {/* 1. 头部区域 */}
       <Header 
@@ -82,6 +60,6 @@ export default function Sidebar() {
 
       {/* 4. 用户信息区域 */}
       <UserProfile isCompact={isCompact} />
-    </motion.div>
+    </div>
   );
 } 
