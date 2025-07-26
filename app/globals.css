@@ -5,6 +5,11 @@
 @custom-variant light (&:is(.light *));
 
 /* 无缝切换的CSS控制 - 完全按照demo的方式 */
+/* 侧边栏背景色 */
+.nav {
+  background-color: #F9F9F9 !important;
+}
+
 /* 展开状态（默认） */
 [data-expanded="true"] {
   width: 16rem !important; /* 从18rem改为16rem = 256px */
@@ -61,6 +66,7 @@
 /* Header组件样式 */
 .nav__logo {
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background-color: #9353d3 !important;
 }
 
 .nav__toggle-icon {
@@ -182,6 +188,37 @@
 .nav__toggle-icon {
   width: 24px !important;
   height: 24px !important;
+  color: #AE7EDE !important;
+}
+
+/* 创建图谱按钮样式 */
+.nav__item-box.bg-default-foreground {
+  background-color: #7828c8 !important;
+  color: #F9F9F9 !important;
+}
+
+/* 导航按钮文字和图标颜色（排除创建按钮） */
+
+
+/* 导航按钮 hover 背景色和字体/图标颜色（排除创建按钮） */
+.nav__item-box:not(.bg-default-foreground):hover {
+  background-color: #F2EAFA !important;
+}
+.nav__item-box:not(.bg-default-foreground):hover .nav__item-text,
+.nav__item-box:not(.bg-default-foreground):hover .nav__item-icon .iconify {
+  color: #9353d3 !important;
+}
+
+/* 导航按钮选中状态背景色（排除创建按钮） */
+.nav__item-box:not(.bg-default-foreground).bg-default-100 {
+  background-color: #e4d4f4 !important;
+  color: #7828c8 !important;
+}
+
+/* 图谱子项选中状态背景色 */
+.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 {
+  background-color: #c9a9e9 !important;
+  color: #7828c8 !important;
 }
 
 

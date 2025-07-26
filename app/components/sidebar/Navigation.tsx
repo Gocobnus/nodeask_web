@@ -12,7 +12,6 @@ import {
 import { Icon } from "@iconify/react";
 import { mockMainNavItems, mockQATrees } from "../../lib/mock-data";
 import { createActionHandler } from "../../lib/selection-utils";
-import { sidebarConfig } from "./sidebar-config";
 import SidebarButton from "./SidebarButton";
 
 // 知识图谱操作下拉菜单组件
