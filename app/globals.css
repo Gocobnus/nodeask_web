@@ -137,12 +137,12 @@
   max-width: 150px !important;
 }
 
-/* 用户下拉菜单宽度控制 - 确保正确的宽度 */
 [data-slot="content"]:has([aria-label="用户菜单"]) {
-  min-width: 210px !important;
-  width: 210px !important;
-  max-width: 210px !important;
+  width: 231.83px !important;
+  min-width: 0 !important;
+  max-width: none !important;
 }
+
 
 /* 切换按钮基础样式 - 44×44尺寸，padding 10 */
 .nav__toggle-btn {

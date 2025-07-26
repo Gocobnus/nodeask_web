@@ -38,16 +38,17 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
   });
 
   return (
-    <div className="mt-auto">
-      <Dropdown placement="top-end">
+    <div className="mt-auto mb-2">
+      <Dropdown placement="top">
         <DropdownTrigger>
           <Button
             fullWidth
-            className="nav__user-box h-[60px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-2.5 py-[10px] transition-all duration-300 ease-in-out"
+            disableAnimation={isCompact}
+            className="nav__user-box h-[44px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-2.5 py-[10px] transition-all duration-300 ease-in-out"
             endContent={<AvatarDropdownIcon height={20} width={20} />}
           >
             <div className="flex w-full items-center gap-3">
-              <Avatar size="sm" src={mockUser.avatar} className="nav__user-avatar flex-shrink-0" />
+              <Avatar size="sm" src={mockUser.avatar} className="nav__user-avatar flex-shrink-0 w-6 h-6" />
               {!isCompact && (
                 <div className="nav__user-info flex flex-col text-left">
                   <p className="nav__user-name text-base font-semibold leading-5 text-foreground transition-all duration-300 ease-in-out">
@@ -64,7 +65,7 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
         
         <DropdownMenu
           aria-label="用户菜单"
-          className="w-[210px] px-[8px] py-[8px]"
+          className="p-2"
           variant="flat"
           onAction={handleAction}
         >
