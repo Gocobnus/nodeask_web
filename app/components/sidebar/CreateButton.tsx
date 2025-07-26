@@ -13,7 +13,6 @@ interface CreateButtonProps {
 
 export default function CreateButton({ isCompact }: CreateButtonProps) {
   const router = useRouter();
-
   const handleCreateQATree = () => {
     // 直接跳转到首页开始新的问答对话
     router.push("/");

@@ -15,24 +15,28 @@ const BrandIcon = ({ className }: { className?: string }) => {
 };
 
 interface HeaderProps {
+  isCompact?: boolean;
   onToggle?: () => void;
 }
 
-export default function Header({ onToggle }: HeaderProps) {
+export default function Header({ isCompact = false, onToggle }: HeaderProps) {
   return (
-    <div className={`${sidebarConfig.headerHeight} flex items-center justify-between px-2 transition-all duration-300 ease-in-out`}>
-      <div className="flex items-center gap-2 min-w-0 flex-1 transition-all duration-300 ease-in-out">
+    <div className={`${sidebarConfig.headerHeight} flex items-center justify-between transition-all duration-300 ease-in-out`}>
+      <div className={`flex items-center min-w-0 transition-all duration-300 ease-in-out ${
+        isCompact ? 'w-0 overflow-hidden flex-none gap-0' : 'flex-1 gap-2'
+      }`}>
         <BrandIcon />
-        <span className="nav__heading-text text-base font-bold leading-6 text-foreground truncate transition-all duration-300 ease-in-out">
+        <span className="nav__heading-text text-lg font-bold leading-6 text-foreground truncate transition-all duration-300 ease-in-out">
           NodeAsk
         </span>
       </div>
       
       <Button
         isIconOnly
-        className="nav__toggle-btn h-6 w-6 min-w-6 transition-all duration-300 ease-in-out hover:scale-110"
+        className="nav__toggle-btn h-11 w-11 min-w-11 min-h-11 transition-all duration-300 ease-in-out"
         size="sm"
         variant="light"
+        disableAnimation
         onPress={onToggle}
       >
         <Image

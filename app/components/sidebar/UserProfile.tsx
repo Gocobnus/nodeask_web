@@ -26,7 +26,11 @@ function AvatarDropdownIcon(props: React.ComponentProps<"svg">) {
   );
 }
 
-export default function UserProfile() {
+interface UserProfileProps {
+  isCompact?: boolean;
+}
+
+export default function UserProfile({ isCompact = false }: UserProfileProps) {
   const handleAction = createActionHandler({
     settings: () => console.log("打开设置"),
     help: () => console.log("打开帮助"),
@@ -39,26 +43,28 @@ export default function UserProfile() {
         <DropdownTrigger>
           <Button
             fullWidth
-            className="nav__user-box h-[60px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-3 py-[10px] transition-all duration-300 ease-in-out"
+            className="nav__user-box h-[60px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-2.5 py-[10px] transition-all duration-300 ease-in-out"
             endContent={<AvatarDropdownIcon height={20} width={20} />}
           >
             <div className="flex w-full items-center gap-3">
               <Avatar size="sm" src={mockUser.avatar} className="nav__user-avatar flex-shrink-0" />
-              <div className="nav__user-info flex flex-col text-left">
-                <p className="nav__user-name text-small font-semibold leading-5 text-foreground transition-all duration-300 ease-in-out">
-                  {mockUser.name}
-                </p>
-                <p className="nav__user-email text-tiny text-default-400 transition-all duration-300 ease-in-out">
-                  {mockUser.email}
-                </p>
-              </div>
+              {!isCompact && (
+                <div className="nav__user-info flex flex-col text-left">
+                  <p className="nav__user-name text-base font-semibold leading-5 text-foreground transition-all duration-300 ease-in-out">
+                    {mockUser.name}
+                  </p>
+                  <p className="nav__user-email text-tiny text-default-400 transition-all duration-300 ease-in-out">
+                    {mockUser.email}
+                  </p>
+                </div>
+              )}
             </div>
           </Button>
         </DropdownTrigger>
         
         <DropdownMenu
           aria-label="用户菜单"
-          className="w-[210px] bg-content1 px-[8px] py-[8px]"
+          className="w-[210px] px-[8px] py-[8px]"
           variant="flat"
           onAction={handleAction}
         >
@@ -81,7 +87,7 @@ export default function UserProfile() {
               key="settings"
               className="py-[4px] text-default-500"
               startContent={
-                <Icon className="text-default-400" icon="solar:settings-linear" width={16} />
+                <Icon className="text-default-300" icon="solar:settings-linear" width={16} />
               }
             >
               设置
@@ -90,7 +96,7 @@ export default function UserProfile() {
               key="help"
               className="py-[4px] text-default-500"
               startContent={
-                <Icon className="text-default-400" icon="solar:help-linear" width={16} />
+                <Icon className="text-default-300" icon="solar:help-linear" width={16} />
               }
             >
               帮助
@@ -102,7 +108,7 @@ export default function UserProfile() {
               key="logout"
               className="pt-[4px] text-default-500"
               startContent={
-                <Icon className="text-default-400" icon="solar:logout-linear" width={16} />
+                <Icon className="text-default-300" icon="solar:logout-linear" width={16} />
               }
             >
               退出登录

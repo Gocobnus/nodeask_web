@@ -24,11 +24,11 @@ export default function Sidebar() {
 
   return (
     <div
-      className={`nav relative flex h-full flex-col ${sidebarConfig.borderStyle} py-6 transition-all duration-300 ease-in-out ${sidebarConfig.expandedWidth} ${sidebarConfig.containerPadding}`}
+      className={`nav relative flex h-full flex-col ${sidebarConfig.borderStyle} py-2 transition-all duration-200 ease-in-out`}
       data-expanded={isMounted ? !isCompact : true}
     >
       {/* 1. 头部区域 */}
-      <Header onToggle={toggleCompact} />
+      <Header isCompact={isCompact} onToggle={toggleCompact} />
 
       <Spacer y={8} />
 
@@ -38,14 +38,14 @@ export default function Sidebar() {
       <Spacer y={6} />
 
       {/* 3. 导航区域 */}
-      <ScrollShadow className="flex-1 -mr-6 pr-6">
+      <ScrollShadow className={isCompact ? "flex-1 -mr-2 pr-2" : "flex-1 -mr-6 pr-6"}>
         <Navigation isCompact={isCompact} setIsCompact={setIsCompact} />
       </ScrollShadow>
 
       <Spacer y={8} />
 
       {/* 4. 用户信息区域 */}
-      <UserProfile />
+      <UserProfile isCompact={isCompact} />
     </div>
   );
 } 

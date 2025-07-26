@@ -48,9 +48,10 @@ export default function SidebarButton({
             )}
             icon={icon}
             width={24}
+            height={24}
           />
         </span>
-        <span className="nav__item-text text-small font-medium transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap flex-1">
+        <span className="nav__item-text text-base font-medium transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap flex-1">
           {title}
         </span>
         

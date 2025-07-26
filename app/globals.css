@@ -7,29 +7,34 @@
 /* 无缝切换的CSS控制 - 完全按照demo的方式 */
 /* 展开状态（默认） */
 [data-expanded="true"] {
-  width: 18rem !important; /* w-72 = 288px */
-  min-width: 18rem !important;
+  width: 16rem !important; /* 从18rem改为16rem = 256px */
+  min-width: 16rem !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 
 /* 收起状态下的侧边栏宽度 */
 [data-expanded="false"] {
-  width: 4rem !important; /* w-16 = 64px */
-  min-width: 4rem !important;
-  max-width: 4rem !important;
+  width: 61px !important; 
+  min-width: 61px !important;
+  max-width: 61px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
 }
 
-/* 按钮基础样式 - 添加宽度动画 */
+/* 按钮基础样式 - 添加宽度动画和padding */
 .nav__item-box {
-  transition: width 0.5s ease-in-out !important;
   width: 100% !important;
   min-width: 0 !important;
-  padding: 0.75rem !important; /* 参考demo的padding */
+  padding: 10px !important; 
 }
 
-/* 按钮文字边距 - 参考demo */
+/* 按钮文字边距 - 改为10px */
 .nav__item-text {
-  margin-left: 0.75rem;
+  margin-left: 10px !important; /* 改为10px */
   min-width: 0 !important;
+  font-size: 14px !important; /* 字号改为14px */
+  transition: opacity 0.01s ease-out !important; /* 快速透明度过渡，这里让文字慢一点变透明可以顺滑 */
 }
 
 /* 收起状态下的文字隐藏 */
@@ -55,11 +60,11 @@
 
 /* Header组件样式 */
 .nav__logo {
-  transition: opacity 0.5s ease-in-out !important;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .nav__toggle-icon {
-  transition: transform 0.5s ease-in-out !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* 收起状态下的logo隐藏 */
@@ -80,20 +85,24 @@
 }
 
 /* 用户信息组件样式 */
-.nav__user-box {
-  transition: width 0.5s ease-in-out !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  padding: 0.75rem !important; /* 与按钮保持一致 */
-}
-
 .nav__user-info {
   min-width: 0 !important;
+  max-width: 120px !important; /* 限制最大宽度 */
+  overflow: hidden !important;
 }
 
 .nav__user-name,
 .nav__user-email {
-  transition: opacity 0.5s ease-in-out !important;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-size: 14px !important; /* 字号改为14px */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* 用户邮箱单独设置12px */
+.nav__user-email {
+  font-size: 12px !important; /* 邮箱字号改为12px */
 }
 
 /* 收起状态下的用户信息隐藏 */
@@ -108,6 +117,8 @@
 [data-expanded="false"] .nav__user-box {
   width: 2.75rem !important; /* w-11 = 44px */
   min-width: 2.75rem !important;
+  border-radius: 0 !important; /* 删除矩形框 */
+  border: none !important; /* 收起状态下隐藏边框 */
   /* 不设置 justify-content: center，保持头像在左侧 */
 }
 
@@ -116,5 +127,63 @@
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
+  font-size: 14px !important; /* 字号改为14px */
 }
+
+/* 图谱下拉菜单宽度控制 - 只针对图谱菜单 */
+[data-slot="content"]:has([aria-label="知识图谱操作"]) {
+  min-width: 150px !important;
+  width: 150px !important;
+  max-width: 150px !important;
+}
+
+/* 用户下拉菜单宽度控制 - 确保正确的宽度 */
+[data-slot="content"]:has([aria-label="用户菜单"]) {
+  min-width: 210px !important;
+  width: 210px !important;
+  max-width: 210px !important;
+}
+
+/* 切换按钮基础样式 - 44×44尺寸，padding 10 */
+.nav__toggle-btn {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 0.5rem !important; /* rounded-lg */
+  width: 2.75rem !important; /* w-11 = 44px */
+  height: 2.75rem !important; /* h-11 = 44px */
+  min-width: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.625rem !important; /* p-2.5 = 10px */
+}
+
+/* 切换按钮悬停效果 */
+.nav__toggle-btn:hover {
+  background-color: rgb(240 240 240) !important; /* hover:bg-default-50 */
+}
+
+/* 收起状态下的按钮样式 */
+[data-expanded="false"] .nav__toggle-btn {
+  width: 2.75rem !important; /* w-11 = 44px */
+  height: 2.75rem !important; /* h-11 = 44px */
+  min-width: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.625rem !important; /* p-2.5 = 10px */
+}
+
+/* 展开状态下的按钮样式 */
+[data-expanded="true"] .nav__toggle-btn {
+  width: 2.75rem !important; /* w-11 = 44px */
+  height: 2.75rem !important; /* h-11 = 44px */
+  min-width: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.625rem !important; /* p-2.5 = 10px */
+}
+
+/* 图标大小调整 - 24×24像素 */
+.nav__toggle-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+
+
 

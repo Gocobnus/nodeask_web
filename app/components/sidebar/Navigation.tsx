@@ -28,18 +28,18 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
         <Icon
           className="text-default-500 opacity-0 group-hover:opacity-100"
           icon="solar:menu-dots-bold"
-          width={24}
+          width={18}
         />
       </DropdownTrigger>
       <DropdownMenu 
         aria-label="知识图谱操作" 
-        className="py-2" 
+        className="py-1 min-w-[60px]" 
         variant="faded"
         onAction={handleAction}
       >
         <DropdownItem
           key="rename"
-          className="text-default-500 data-[hover=true]:text-default-500"
+          className="text-default-500 data-[hover=true]:text-default-500 py-1 text-small"
           startContent={
             <Icon 
               className="text-default-300" 
@@ -53,7 +53,7 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
         </DropdownItem>
         <DropdownItem
           key="delete"
-          className="text-danger-500 data-[hover=true]:text-danger-500"
+          className="text-danger-500 data-[hover=true]:text-danger-500 py-1 text-small"
           color="danger"
           startContent={
             <Icon
@@ -116,12 +116,13 @@ function QATreeItem({
 
   return (
     <div className="group relative">
-      {/* 连接线 - 只保留一条线，不要连接点 */}
-      <div className="absolute left-6 top-0 bottom-0 w-px bg-default-200 -translate-x-0.5"></div>
+      {/* 连接线 - 只保留一条线，不要连接点，left-[22px] 是调整竖线与容器边界的距离 */}
+      <div className="absolute left-[22px] top-0 bottom-0 w-px bg-default-200 -translate-x-0.5"></div>
       
-      <div className="ml-6 pl-6">
+      <div className="ml-[20px] pl-[14px]"> {/* 修改为 ml-3，使竖线与右侧按钮距离为 20px + 12px + 16px = 48px，竖线到右侧按钮为12px */}
         <div
-          className={`flex w-full items-center justify-between px-3 ${sidebarConfig.roundedButton} ${sidebarConfig.navButtonHeight} cursor-pointer ${sidebarConfig.buttonTransition} ${
+          /* 下面是调整按钮的padding的 px-2.5=10px */
+          className={`flex w-full items-center justify-between px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
             isSelected 
               ? "bg-default-100 text-foreground" 
               : "text-default-500 hover:bg-default-50"
@@ -160,15 +161,15 @@ function CollapsibleSection({
     <div 
       className={`relative overflow-hidden transition-all ${
         isExpanded 
-          ? 'duration-400 ease-out max-h-[400px] opacity-100' 
-          : 'duration-600 ease-in max-h-0 opacity-0'
+          ? 'duration-300 ease-out max-h-[400px] opacity-100' 
+          : 'duration-300 ease-in max-h-0 opacity-0'
       }`}
     >
       <div 
         className={`relative transition-transform ${
           isExpanded 
-            ? 'duration-400 ease-out transform translate-y-0' 
-            : 'duration-500 ease-in transform -translate-y-full'
+            ? 'duration-300 ease-out transform translate-y-0' 
+            : 'duration-300 ease-in transform -translate-y-full'
         }`}
       >
         {childrenArray.map((child, index) => (
@@ -177,12 +178,12 @@ function CollapsibleSection({
             className={`transition-all ${
               isExpanded 
                 ? 'duration-300 ease-out opacity-100 transform translate-y-0' 
-                : 'duration-400 ease-in opacity-0 transform -translate-y-4'
+                : 'duration-300 ease-in opacity-0 transform -translate-y-4'
             }`}
             style={{
               transitionDelay: isExpanded 
-                ? `${index * 80}ms` 
-                : `${(childrenArray.length - 1 - index) * 60}ms`
+                ? `${index * 60}ms` 
+                : `${(childrenArray.length - 1 - index) * 45}ms`
             }}
           >
             {child}
@@ -254,7 +255,7 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
   const currentTreeId = getCurrentTreeId();
 
   return (
-    <div className={sidebarConfig.navigationSpacing}>
+    <div className="space-y-0"> {/* 移除所有间距 */}
       {/* 主导航项 */}
       {mockMainNavItems.map((item) => (
         <SidebarButton
@@ -276,7 +277,7 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
         onClick={handleQATreeToggle}
         endContent={
           <Icon
-            className={`text-default-400 ${sidebarConfig.buttonTransition} ${
+            className={`text-default-400 transition-colors ${
               isQATreeExpanded ? "rotate-90" : "rotate-180"
             }`}
             icon="solar:alt-arrow-right-linear"
@@ -287,15 +288,19 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
       
       {/* 知识图谱子项列表 */}
       <CollapsibleSection isExpanded={isQATreeExpanded} isCompact={isCompact}>
-        {mockQATrees.map((tree) => (
-          <QATreeItem
-            key={tree.id}
-            tree={tree}
-            isSelected={currentTreeId === tree.id}
-            isCompact={isCompact}
-            onClick={() => handleQATreeClick(tree.id)}
-          />
-        ))}
+        <div className="pt-2.5"> {/* 添加10px的上边距 */}
+          <div className="space-y-0"> {/* 子图谱之间没有间距 */}
+            {mockQATrees.map((tree) => (
+              <QATreeItem
+                key={tree.id}
+                tree={tree}
+                isSelected={currentTreeId === tree.id}
+                isCompact={isCompact}
+                onClick={() => handleQATreeClick(tree.id)}
+              />
+            ))}
+          </div>
+        </div>
       </CollapsibleSection>
     </div>
   );

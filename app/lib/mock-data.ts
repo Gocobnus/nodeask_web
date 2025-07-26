@@ -5,7 +5,7 @@
 export const mockQATrees = [
   {
     id: "tree1",
-    name: "React学习笔记",
+    name: "React学习笔记学习笔记学习笔记学习笔记学习笔记学习笔记学习笔记",
     description: "前端开发相关知识图谱",
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date("2024-01-20")
@@ -36,8 +36,8 @@ export const mockQATrees = [
 // 用户信息Mock数据
 export const mockUser = {
   id: "user1",
-  name: "张三",
-  email: "zhangsan@example.com",
+  name: "Gocobnus",
+  email: "sbcdc111@163.com",
   avatar: "https://i.pravatar.cc/150?u=zhangsan"
 };
 
