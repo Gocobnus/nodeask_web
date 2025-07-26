@@ -1,9 +1,8 @@
 // 主侧边栏容器组件
 // 组合所有子组件，实现完整的侧边栏功能
-
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Spacer, ScrollShadow } from "@heroui/react";
 import Header from "./Header";
 import CreateButton from "./CreateButton";
@@ -12,23 +11,35 @@ import UserProfile from "./UserProfile";
 import { sidebarConfig } from "./sidebar-config";
 
 export default function Sidebar() {
+  const [isCompact, setIsCompact] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const toggleCompact = () => {
+    setIsCompact(!isCompact);
+  };
+
   return (
     <div
-      className={`relative flex h-full flex-col ${sidebarConfig.borderStyle} py-6 ${sidebarConfig.expandedWidth} ${sidebarConfig.containerPadding}`}
+      className={`nav relative flex h-full flex-col ${sidebarConfig.borderStyle} py-6 transition-all duration-300 ease-in-out ${sidebarConfig.expandedWidth} ${sidebarConfig.containerPadding}`}
+      data-expanded={isMounted ? !isCompact : true}
     >
       {/* 1. 头部区域 */}
-      <Header />
+      <Header onToggle={toggleCompact} />
 
       <Spacer y={8} />
 
       {/* 2. 创建按钮 */}
-      <CreateButton />
+      <CreateButton isCompact={isCompact} />
 
       <Spacer y={6} />
 
       {/* 3. 导航区域 */}
       <ScrollShadow className="flex-1 -mr-6 pr-6">
-        <Navigation />
+        <Navigation isCompact={isCompact} setIsCompact={setIsCompact} />
       </ScrollShadow>
 
       <Spacer y={8} />

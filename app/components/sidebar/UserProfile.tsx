@@ -1,4 +1,4 @@
-// 用户信息组件 - 移除动画版本
+// 用户信息组件 - 使用单一DOM结构实现无缝切换
 "use client";
 
 import React from "react";
@@ -26,9 +26,7 @@ function AvatarDropdownIcon(props: React.ComponentProps<"svg">) {
   );
 }
 
-interface UserProfileProps {}
-
-export default function UserProfile({}: UserProfileProps) {
+export default function UserProfile() {
   const handleAction = createActionHandler({
     settings: () => console.log("打开设置"),
     help: () => console.log("打开帮助"),
@@ -41,16 +39,16 @@ export default function UserProfile({}: UserProfileProps) {
         <DropdownTrigger>
           <Button
             fullWidth
-            className="h-[60px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-3 py-[10px]"
+            className="nav__user-box h-[60px] justify-start gap-3 rounded-[14px] border-1 border-default-300 bg-transparent px-3 py-[10px] transition-all duration-300 ease-in-out"
             endContent={<AvatarDropdownIcon height={20} width={20} />}
           >
             <div className="flex w-full items-center gap-3">
-              <Avatar size="sm" src={mockUser.avatar} />
-              <div className="flex flex-col text-left">
-                <p className="text-small font-semibold leading-5 text-foreground">
+              <Avatar size="sm" src={mockUser.avatar} className="nav__user-avatar flex-shrink-0" />
+              <div className="nav__user-info flex flex-col text-left">
+                <p className="nav__user-name text-small font-semibold leading-5 text-foreground transition-all duration-300 ease-in-out">
                   {mockUser.name}
                 </p>
-                <p className="text-tiny text-default-400">
+                <p className="nav__user-email text-tiny text-default-400 transition-all duration-300 ease-in-out">
                   {mockUser.email}
                 </p>
               </div>

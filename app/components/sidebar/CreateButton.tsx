@@ -7,7 +7,11 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import SidebarButton from "./SidebarButton";
 
-export default function CreateButton() {
+interface CreateButtonProps {
+  isCompact?: boolean;
+}
+
+export default function CreateButton({ isCompact }: CreateButtonProps) {
   const router = useRouter();
 
   const handleCreateQATree = () => {
@@ -19,6 +23,7 @@ export default function CreateButton() {
     <SidebarButton
       icon="solar:add-circle-linear"
       title="创建图谱"
+      isCompact={isCompact}
       onClick={handleCreateQATree}
       variant="primary"
     />

@@ -1,4 +1,4 @@
-// 导航组件 - 移除收起逻辑
+// 导航组件 - 支持收起/展开状态
 "use client";
 
 import React, { useState } from "react";
@@ -75,11 +75,13 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
 function QATreeItem({ 
   tree, 
   isSelected, 
-  onClick 
+  onClick,
+  isCompact
 }: {
   tree: typeof mockQATrees[0];
   isSelected: boolean;
   onClick: () => void;
+  isCompact?: boolean;
 }) {
   const handleClick = (e: React.MouseEvent) => {
     // 阻止点击下拉菜单时触发选中事件
@@ -88,6 +90,29 @@ function QATreeItem({
     }
     onClick();
   };
+
+  if (isCompact) {
+    return (
+      <div className="group relative">
+        <div className="ml-6 pl-6">
+          <div
+            className={`flex w-11 h-11 items-center justify-center rounded-large cursor-pointer transition-colors ${
+              isSelected 
+                ? "bg-default-100 text-foreground" 
+                : "text-default-500 hover:bg-default-50"
+            }`}
+            onClick={handleClick}
+          >
+            <Icon
+              className={isSelected ? "text-foreground" : "text-default-500"}
+              icon="solar:document-linear"
+              width={20}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group relative">
@@ -118,12 +143,18 @@ function QATreeItem({
 // 简化的折叠组件，保持相同的动画效果
 function CollapsibleSection({ 
   isExpanded, 
-  children 
+  children,
+  isCompact
 }: { 
   isExpanded: boolean; 
-  children: React.ReactNode; 
+  children: React.ReactNode;
+  isCompact?: boolean;
 }) {
   const childrenArray = React.Children.toArray(children);
+  
+  if (isCompact) {
+    return null; // 收起状态下不显示折叠内容
+  }
   
   return (
     <div 
@@ -163,10 +194,11 @@ function CollapsibleSection({
 }
 
 interface NavigationProps {
-  // 🎯 移除 isCompact 和 onExpandRequest props
+  isCompact?: boolean;
+  setIsCompact?: (v: boolean) => void;
 }
 
-export default function Navigation({}: NavigationProps) {
+export default function Navigation({ isCompact = false, setIsCompact }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   
@@ -201,9 +233,16 @@ export default function Navigation({}: NavigationProps) {
   };
 
   const handleQATreeToggle = () => {
-    // 🎯 移除收起状态的逻辑
-    setIsQATreeExpanded(!isQATreeExpanded);
-    setIsQATreeManuallySelected(true);
+    if (isCompact && setIsCompact) {
+      setIsCompact(false);
+      setTimeout(() => {
+        setIsQATreeExpanded(true);
+        setIsQATreeManuallySelected(true);
+      }, 100); // 等待侧边栏动画结束后再展开
+    } else {
+      setIsQATreeExpanded(!isQATreeExpanded);
+      setIsQATreeManuallySelected(true);
+    }
   };
 
   const handleQATreeClick = (treeId: string) => {
@@ -214,7 +253,6 @@ export default function Navigation({}: NavigationProps) {
   const selectedKey = getSelectedKey();
   const currentTreeId = getCurrentTreeId();
 
-  // 🎯 移除收起状态的条件分支，只保留展开状态
   return (
     <div className={sidebarConfig.navigationSpacing}>
       {/* 主导航项 */}
@@ -224,6 +262,7 @@ export default function Navigation({}: NavigationProps) {
           icon={item.icon}
           title={item.title}
           isSelected={selectedKey === item.key}
+          isCompact={isCompact}
           onClick={() => handleNavItemClick(item.key, item.href)}
         />
       ))}
@@ -233,6 +272,7 @@ export default function Navigation({}: NavigationProps) {
         icon="solar:folder-linear"
         title="我的图谱"
         isSelected={selectedKey === "qatree-list"}
+        isCompact={isCompact}
         onClick={handleQATreeToggle}
         endContent={
           <Icon
@@ -246,12 +286,13 @@ export default function Navigation({}: NavigationProps) {
       />
       
       {/* 知识图谱子项列表 */}
-      <CollapsibleSection isExpanded={isQATreeExpanded}>
+      <CollapsibleSection isExpanded={isQATreeExpanded} isCompact={isCompact}>
         {mockQATrees.map((tree) => (
           <QATreeItem
             key={tree.id}
             tree={tree}
             isSelected={currentTreeId === tree.id}
+            isCompact={isCompact}
             onClick={() => handleQATreeClick(tree.id)}
           />
         ))}
