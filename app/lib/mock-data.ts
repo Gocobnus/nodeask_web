@@ -12,7 +12,7 @@ export const mockQATrees = [
   },
   {
     id: "tree2", 
-    name: "Node.js实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践实践",
+    name: "Node.js实践实践实践实践实践",
     description: "后端开发实践经验",
     createdAt: new Date("2024-01-10"),
     updatedAt: new Date("2024-01-18")
@@ -39,20 +39,4 @@ export const mockUser = {
   name: "Gocobnus",
   email: "sbcdc111@163.com",
   avatar: "https://i.pravatar.cc/150?u=zhangsan"
-};
-
-// 主导航项目Mock数据
-export const mockMainNavItems = [
-  {
-    key: "home",
-    href: "/",
-    icon: "solar:home-2-linear",
-    title: "首页"
-  },
-  {
-    key: "discover",
-    href: "/discover", 
-    icon: "solar:compass-linear",
-    title: "发现"
-  }
-]; 
+}; 

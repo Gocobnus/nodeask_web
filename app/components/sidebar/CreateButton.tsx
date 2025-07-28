@@ -20,7 +20,7 @@ export default function CreateButton({ isCompact }: CreateButtonProps) {
 
   return (
     <SidebarButton
-      icon="solar:add-circle-linear"
+      icon="/icons/sidebar/create.svg"
       title="创建图谱"
       isCompact={isCompact}
       onClick={handleCreateQATree}

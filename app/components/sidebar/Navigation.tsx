@@ -1,6 +1,7 @@
 // 导航组件 - 支持收起/展开状态
 "use client";
 
+import DiscoverIcon from "./public/icons/sidebar/discover.svg";
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { 
@@ -10,9 +11,10 @@ import {
   DropdownItem
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { mockMainNavItems, mockQATrees } from "../../lib/mock-data";
+import { mockQATrees } from "../../lib/mock-data";
 import { createActionHandler } from "../../lib/selection-utils";
 import SidebarButton from "./SidebarButton";
+import Image from "next/image";
 
 // 知识图谱操作下拉菜单组件
 function QATreeDropdown({ treeId }: { treeId: string }) {
@@ -24,10 +26,12 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
   return (
     <Dropdown>
       <DropdownTrigger>
-        <Icon
-          className="text-default-500 opacity-0 group-hover:opacity-100"
-          icon="solar:menu-dots-bold"
+        <img
+          src="/icons/sidebar/more.svg"
+          alt="更多操作"
           width={18}
+          height={18}
+          className="opacity-0 group-hover:opacity-100 w-[18px] h-[18px]"
         />
       </DropdownTrigger>
       <DropdownMenu 
@@ -121,17 +125,17 @@ function QATreeItem({
       <div className="ml-[20px] pl-[14px]"> {/* 修改为 ml-3，使竖线与右侧按钮距离为 20px + 12px + 16px = 48px，竖线到右侧按钮为12px */}
         <div
           /* 下面是调整按钮的padding的 px-2.5=10px */
-          className={`flex w-full items-center justify-between px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
+          className={`flex w-full items-center px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
             isSelected 
               ? "bg-default-100 text-foreground" 
               : "text-default-500 hover:bg-default-50"
           }`}
           onClick={handleClick}
         >
-          <span className="text-small font-medium truncate pr-2 leading-5">
+          <span className="text-small font-medium truncate pr-2 leading-5 flex-1 min-w-0">
             {tree.name}
           </span>
-          <div data-dropdown-trigger>
+          <div data-dropdown-trigger className="flex-shrink-0">
             <QATreeDropdown treeId={tree.id} />
           </div>
         </div>
@@ -256,31 +260,38 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
   return (
     <div className="space-y-0"> {/* 移除所有间距 */}
       {/* 主导航项 */}
-      {mockMainNavItems.map((item) => (
-        <SidebarButton
-          key={item.key}
-          icon={item.icon}
-          title={item.title}
-          isSelected={selectedKey === item.key}
-          isCompact={isCompact}
-          onClick={() => handleNavItemClick(item.key, item.href)}
-        />
-      ))}
+      <SidebarButton
+        icon="/icons/sidebar/home.svg"
+        title="首页"
+        isSelected={selectedKey === "home"}
+        isCompact={isCompact}
+        onClick={() => handleNavItemClick("home", "/")}
+      />
+      
+      <SidebarButton
+        icon="/icons/sidebar/discover.svg"
+        title="发现"
+        isSelected={selectedKey === "discover"}
+        isCompact={isCompact}
+        onClick={() => handleNavItemClick("discover", "/discover")}
+      />
       
       {/* 我的图谱 - 可折叠项 */}
       <SidebarButton
-        icon="solar:folder-linear"
+        icon="/icons/sidebar/my-graphs.svg"
         title="我的图谱"
         isSelected={selectedKey === "qatree-list"}
         isCompact={isCompact}
         onClick={handleQATreeToggle}
         endContent={
-          <Icon
-            className={`text-default-400 transition-colors ${
-              isQATreeExpanded ? "rotate-90" : "rotate-180"
-            }`}
-            icon="solar:alt-arrow-right-linear"
+          <Image
+            src="/icons/sidebar/dropdown.svg"
+            alt="展开收起"
             width={16}
+            height={16}
+            className={`transition-colors ${
+              isQATreeExpanded ? "rotate-270" : "rotate-180"
+            }`}
           />
         }
       />

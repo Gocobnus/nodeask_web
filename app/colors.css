@@ -1,0 +1,100 @@
+/* ===== 颜色变量定义 ===== */
+:root {
+  /* 主色调 */
+  --primary-color: #7828c8;
+  --primary-light: #ae7ede;
+  --primary-lighter: #AE7EDE;
+  --primary-dark: #6020a0;
+  
+
+  /* 背景色 */
+  --bg-create-button: #7828c8;
+  --bg-sidebar: #F9F9F9;
+  --bg-hover: #F2EAFA;
+  --bg-selected: #e4d4f4;
+  
+  /* 文字颜色 */
+  --text-create-button: #F9F9F9;
+  --text-hover: #9353d3;
+  --text-selected: #6020a0;
+
+  --text-secondary: #9353d3;
+  --text-default: #666666;
+  --text-light: #999999;
+}
+
+/* ===== 颜色样式统一管理 ===== */
+/* 侧边栏背景色 */
+.nav {
+  background-color: var(--bg-sidebar) !important;
+}
+
+/* 导航按钮 hover 背景色和字体/图标颜色（排除创建按钮） */
+.nav__item-box:not(.create-button):hover {
+  background-color: var(--bg-hover) !important;
+}
+.nav__item-box:not(.create-button):hover .nav__item-text,
+.nav__item-box:not(.create-button):hover .nav__item-icon .iconify {
+  color: var(--text-hover) !important;
+}
+/* 导航按钮选中状态背景色（排除创建按钮） */
+.nav__item-box:not(.create-button).bg-default-100 {
+  background-color: var(--bg-selected) !important;
+}
+.nav__item-box:not(.create-button).bg-default-100 .nav__item-text,
+.nav__item-box:not(.create-button).bg-default-100 .nav__item-icon .iconify {
+  color: var(--text-selected) !important;
+}
+
+/* 创建按钮样式 */
+.nav__item-box.create-button {
+  background-color: var(--bg-create-button) !important;
+  color: var(--text-create-button) !important;
+}
+
+/* 图谱子项选中状态背景色 */
+.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 {
+  background-color: var(--bg-selected-sub) !important;
+}
+
+/* 图谱子项选中状态的文字颜色 */
+.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 span {
+  color: var(--text-primary) !important;
+}
+
+/* 图谱子项选中状态的图标颜色 */
+.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 .iconify {
+  color: var(--text-primary) !important;
+}
+
+/* 切换按钮图标颜色 */
+.nav__toggle-icon {
+  color: var(--primary-lighter) !important;
+}
+
+/* Header 组件样式 */
+.nav__logo {
+  background-color: var(--primary-light) !important;
+}
+
+.nav__logo span {
+  color: var(--bg-primary) !important;
+}
+
+/* 切换按钮悬停效果 */
+.nav__toggle-btn:hover {
+  background-color: rgb(240 240 240) !important;
+}
+
+/* Discover 图标颜色规则 */
+.nav__item-box .nav__item-icon svg {
+  color: blue !important;
+}
+
+.nav__item-box:hover .nav__item-icon svg {
+  color: purple !important;
+}
+
+.nav__item-box.bg-default-100 .nav__item-icon svg {
+  color: red !important;
+} 
