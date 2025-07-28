@@ -7,9 +7,6 @@
 
 
 
-/* ===== 布局和动画样式 ===== */
-/* 无缝切换的CSS控制 - 完全按照demo的方式 */
-
 /* 展开状态（默认） */
 [data-expanded="true"] {
   width: 16rem !important; /* 从18rem改为16rem = 256px */

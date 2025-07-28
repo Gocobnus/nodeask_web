@@ -1,7 +1,6 @@
 // 导航组件 - 支持收起/展开状态
 "use client";
 
-import DiscoverIcon from "./public/icons/sidebar/discover.svg";
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { 
@@ -26,7 +25,7 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
   return (
     <Dropdown>
       <DropdownTrigger>
-        <img
+        <Image
           src="/icons/sidebar/more.svg"
           alt="更多操作"
           width={18}
