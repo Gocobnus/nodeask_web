@@ -43,11 +43,12 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           key="rename"
           className="sidebar__navigation__qa-tree__dropdown__item text-default-500 data-[hover=true]:text-default-500 py-1 text-small"
           startContent={
-            <Icon 
-              className="text-default-300" 
-              height={20} 
-              icon="solar:pen-linear" 
+            <Image 
+              src="/icons/sidebar/rename.svg"
+              alt="重命名"
               width={20} 
+              height={20}
+              className="text-default-300"
             />
           }
         >
@@ -58,11 +59,12 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           className="sidebar__navigation__qa-tree__dropdown__item text-danger-500 data-[hover=true]:text-danger-500 py-1 text-small"
           color="danger"
           startContent={
-            <Icon
-              className="text-danger-500"
-              height={20}
-              icon="solar:trash-bin-minimalistic-linear"
+            <Image
+              src="/icons/sidebar/delete.svg"
+              alt="删除"
               width={20}
+              height={20}
+              className="text-danger-500"
             />
           }
         >

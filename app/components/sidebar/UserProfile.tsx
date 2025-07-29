@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection, Avatar } from "@heroui/react";
-import { Icon } from "@iconify/react";
+import Image from "next/image";
 import { mockUser } from "../../lib/mock-data";
 import { createActionHandler } from "../../lib/selection-utils";
 
@@ -33,7 +33,6 @@ interface UserProfileProps {
 export default function UserProfile({ isCompact = false }: UserProfileProps) {
   const handleAction = createActionHandler({
     settings: () => console.log("打开设置"),
-    help: () => console.log("打开帮助"),
     logout: () => console.log("退出登录")
   });
 
@@ -88,19 +87,16 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
               key="settings"
               className="sidebar__user-profile__dropdown__item py-[4px] text-default-500"
               startContent={
-                <Icon className="text-default-300" icon="solar:settings-linear" width={16} />
+                <Image
+                  src="/icons/sidebar/settings.svg"
+                  alt="设置"
+                  width={16}
+                  height={16}
+                  className="text-default-300"
+                />
               }
             >
               设置
-            </DropdownItem>
-            <DropdownItem
-              key="help"
-              className="sidebar__user-profile__dropdown__item py-[4px] text-default-500"
-              startContent={
-                <Icon className="text-default-300" icon="solar:help-linear" width={16} />
-              }
-            >
-              帮助
             </DropdownItem>
           </DropdownSection>
           
@@ -109,7 +105,13 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
               key="logout"
               className="sidebar__user-profile__dropdown__item pt-[4px] text-default-500"
               startContent={
-                <Icon className="text-default-300" icon="solar:logout-linear" width={16} />
+                <Image
+                  src="/icons/sidebar/logout.svg"
+                  alt="退出登录"
+                  width={16}
+                  height={16}
+                  className="text-default-300"
+                />
               }
             >
               退出登录

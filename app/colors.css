@@ -29,12 +29,11 @@
   background-color: var(--bg-sidebar) !important;
 }
 
-/* 导航按钮 hover 背景色和字体/图标颜色（排除创建按钮） */
+/* 导航按钮 hover，sidebar__button__container是默认的按钮 */
 .sidebar__navigation__item__container:not(.create-button):hover,
 .sidebar__button__container:not(.create-button):hover {
   background-color: var(--bg-hover) !important;
 }
-
 .sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__text,
 .sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__icon .iconify,
 .sidebar__button__container:not(.create-button):hover .sidebar__button__text,
