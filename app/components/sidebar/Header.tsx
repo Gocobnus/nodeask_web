@@ -8,7 +8,7 @@ import { sidebarConfig } from "./sidebar-config";
 
 const BrandIcon = ({ className }: { className?: string }) => {
   return (
-    <div className={`nav__logo flex h-8 w-8 items-center justify-center rounded-full bg-primary transition-all duration-300 ease-in-out ${className}`}>
+    <div className={`sidebar__header__logo flex h-8 w-8 items-center justify-center rounded-full bg-primary transition-all duration-300 ease-in-out ${className}`}>
       <span className="text-primary-foreground font-bold text-sm">N</span>
     </div>
   );
@@ -26,14 +26,14 @@ export default function Header({ isCompact = false, onToggle }: HeaderProps) {
         isCompact ? 'w-0 overflow-hidden flex-none gap-0' : 'flex-1 gap-2'
       }`}>
         <BrandIcon />
-        <span className="nav__heading-text text-lg font-bold leading-6 text-foreground truncate transition-all duration-300 ease-in-out">
+        <span className="sidebar__header__title text-lg font-bold leading-6 text-foreground truncate transition-all duration-300 ease-in-out">
           NodeAsk
         </span>
       </div>
       
       <Button
         isIconOnly
-        className="nav__toggle-btn h-11 w-11 min-w-11 min-h-11 transition-all duration-300 ease-in-out"
+        className="sidebar__header__toggle h-11 w-11 min-w-11 min-h-11 transition-all duration-300 ease-in-out"
         size="sm"
         variant="light"
         disableAnimation
@@ -44,7 +44,7 @@ export default function Header({ isCompact = false, onToggle }: HeaderProps) {
           alt="展开缩放"
           width={24} 
           height={24}
-          className="nav__toggle-icon transition-transform duration-300 ease-in-out"
+          className="sidebar__header__toggle-icon transition-transform duration-300 ease-in-out"
         />
       </Button>
     </div>

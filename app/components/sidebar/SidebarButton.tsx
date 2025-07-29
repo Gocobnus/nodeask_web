@@ -16,6 +16,7 @@ interface SidebarButtonProps {
   variant?: 'default' | 'primary';
   endContent?: React.ReactNode;
   isCompact?: boolean;
+  type?: 'default' | 'create-button' | 'navigation-item';
 }
 
 export default function SidebarButton({
@@ -25,16 +26,62 @@ export default function SidebarButton({
   onClick,
   variant = 'default',
   endContent,
-  isCompact = false
+  isCompact = false,
+  type = 'default'
 }: SidebarButtonProps) {
   const isPrimary = variant === 'primary';
   const isLocalIcon = icon.startsWith('/');
+
+  // 根据type确定使用的类名
+  const getContainerClass = () => {
+    switch (type) {
+      case 'create-button':
+        return 'sidebar__create-button__container';
+      case 'navigation-item':
+        return 'sidebar__navigation__item__container';
+      default:
+        return 'sidebar__button__container';
+    }
+  };
+
+  const getTextClass = () => {
+    switch (type) {
+      case 'create-button':
+        return 'sidebar__create-button__text';
+      case 'navigation-item':
+        return 'sidebar__navigation__item__text';
+      default:
+        return 'sidebar__button__text';
+    }
+  };
+
+  const getIconClass = () => {
+    switch (type) {
+      case 'create-button':
+        return 'sidebar__create-button__icon';
+      case 'navigation-item':
+        return 'sidebar__navigation__item__icon';
+      default:
+        return 'sidebar__button__icon';
+    }
+  };
+
+  const getBadgeClass = () => {
+    switch (type) {
+      case 'create-button':
+        return 'sidebar__create-button__badge';
+      case 'navigation-item':
+        return 'sidebar__navigation__item__badge';
+      default:
+        return 'sidebar__button__badge';
+    }
+  };
 
   return (
     <Tooltip content={title} placement="right" isDisabled={!isCompact}>
       <div
         className={cn(
-          "nav__item-box flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-300 ease-in-out w-full",
+          `${getContainerClass()} flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-300 ease-in-out w-full`,
           isPrimary
             ? "create-button text-default-50 hover:opacity-80"
             : isSelected
@@ -43,7 +90,7 @@ export default function SidebarButton({
         )}
         onClick={onClick}
       >
-        <span className="nav__item-icon flex-shrink-0 w-6 h-6 flex items-center justify-center">
+        <span className={`${getIconClass()} flex-shrink-0 w-6 h-6 flex items-center justify-center`}>
           {icon === "/icons/sidebar/discover.svg" ? (
             <DiscoverIcon
               width={24}
@@ -73,12 +120,12 @@ export default function SidebarButton({
             />
           )}
         </span>
-        <span className="nav__item-text text-base font-medium transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap flex-1">
+        <span className={`${getTextClass()} text-base font-medium transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap flex-1`}>
           {title}
         </span>
         
         {endContent && (
-          <span className="nav__item-badge transition-all duration-300 ease-in-out flex-shrink-0">
+          <span className={`${getBadgeClass()} transition-all duration-300 ease-in-out flex-shrink-0`}>
             {endContent}
           </span>
         )}

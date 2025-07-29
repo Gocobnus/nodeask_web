@@ -25,6 +25,7 @@ export default function CreateButton({ isCompact }: CreateButtonProps) {
       isCompact={isCompact}
       onClick={handleCreateQATree}
       variant="primary"
+      type="create-button"
     />
   );
 } 

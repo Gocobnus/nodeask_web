@@ -30,71 +30,83 @@
 }
 
 /* 导航按钮 hover 背景色和字体/图标颜色（排除创建按钮） */
-.nav__item-box:not(.create-button):hover {
+.sidebar__navigation__item__container:not(.create-button):hover,
+.sidebar__button__container:not(.create-button):hover {
   background-color: var(--bg-hover) !important;
 }
-.nav__item-box:not(.create-button):hover .nav__item-text,
-.nav__item-box:not(.create-button):hover .nav__item-icon .iconify {
+
+.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__text,
+.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__icon .iconify,
+.sidebar__button__container:not(.create-button):hover .sidebar__button__text,
+.sidebar__button__container:not(.create-button):hover .sidebar__button__icon .iconify {
   color: var(--text-hover) !important;
 }
+
 /* 导航按钮选中状态背景色（排除创建按钮） */
-.nav__item-box:not(.create-button).bg-default-100 {
+.sidebar__navigation__item__container:not(.create-button).bg-default-100,
+.sidebar__button__container:not(.create-button).bg-default-100 {
   background-color: var(--bg-selected) !important;
 }
-.nav__item-box:not(.create-button).bg-default-100 .nav__item-text,
-.nav__item-box:not(.create-button).bg-default-100 .nav__item-icon .iconify {
+
+.sidebar__navigation__item__container:not(.create-button).bg-default-100 .sidebar__navigation__item__text,
+.sidebar__navigation__item__container:not(.create-button).bg-default-100 .sidebar__navigation__item__icon .iconify,
+.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__text,
+.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__icon .iconify {
   color: var(--text-selected) !important;
 }
 
 /* 创建按钮样式 */
-.nav__item-box.create-button {
+.sidebar__create-button__container.create-button {
   background-color: var(--bg-create-button) !important;
   color: var(--text-create-button) !important;
 }
 
 /* 图谱子项选中状态背景色 */
-.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 {
+.qa-tree-item-selected {
   background-color: var(--bg-selected-sub) !important;
 }
 
 /* 图谱子项选中状态的文字颜色 */
-.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 span {
+.qa-tree-item-selected span {
   color: var(--text-primary) !important;
 }
 
 /* 图谱子项选中状态的图标颜色 */
-.flex.w-full.items-center.justify-between.px-2\.5.rounded-lg.h-11.cursor-pointer.transition-colors.bg-default-100 .iconify {
+.qa-tree-item-selected .iconify {
   color: var(--text-primary) !important;
 }
 
 /* 切换按钮图标颜色 */
-.nav__toggle-icon {
+.sidebar__header__toggle-icon {
   color: var(--primary-lighter) !important;
 }
 
 /* Header 组件样式 */
-.nav__logo {
+.sidebar__header__logo {
   background-color: var(--primary-light) !important;
 }
 
-.nav__logo span {
+.sidebar__header__logo span {
   color: var(--bg-primary) !important;
 }
 
 /* 切换按钮悬停效果 */
-.nav__toggle-btn:hover {
+.sidebar__header__toggle:hover {
   background-color: rgb(240 240 240) !important;
 }
 
 /* Discover 图标颜色规则 */
-.nav__item-box .nav__item-icon svg {
+.sidebar__navigation__item__container .sidebar__navigation__item__icon svg,
+.sidebar__button__container .sidebar__button__icon svg {
   color: blue !important;
 }
 
-.nav__item-box:hover .nav__item-icon svg {
+.sidebar__navigation__item__container:hover .sidebar__navigation__item__icon svg,
+.sidebar__button__container:hover .sidebar__button__icon svg {
   color: purple !important;
 }
 
-.nav__item-box.bg-default-100 .nav__item-icon svg {
+.sidebar__navigation__item__container.bg-default-100 .sidebar__navigation__item__icon svg,
+.sidebar__button__container.bg-default-100 .sidebar__button__icon svg {
   color: red !important;
 } 

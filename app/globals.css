@@ -24,77 +24,118 @@
   padding-right: 8px !important;
 }
 
-/* 按钮基础样式 - 添加宽度动画和padding */
-.nav__item-box {
+/* 导航按钮基础样式 - 添加宽度动画和padding */
+.sidebar__navigation__item__container,
+.sidebar__button__container {
   width: 100% !important;
   min-width: 0 !important;
   padding: 10px !important; 
 }
 
-/* 按钮文字边距 - 改为10px */
-.nav__item-text {
+/* 创建按钮基础样式 */
+.sidebar__create-button__container {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 10px !important; 
+}
+
+/* 导航按钮文字边距 - 改为10px */
+.sidebar__navigation__item__text,
+.sidebar__button__text {
   margin-left: 10px !important; /* 改为10px */
   min-width: 0 !important;
   font-size: 14px !important; /* 字号改为14px */
   transition: opacity 0.01s ease-out !important; /* 快速透明度过渡，这里让文字慢一点变透明可以顺滑 */
 }
 
-/* 收起状态下的文字隐藏 */
-[data-expanded="false"] .nav__item-text {
+/* 创建按钮文字边距 */
+.sidebar__create-button__text {
+  margin-left: 10px !important; /* 改为10px */
+  min-width: 0 !important;
+  font-size: 14px !important; /* 字号改为14px */
+  transition: opacity 0.01s ease-out !important; /* 快速透明度过渡，这里让文字慢一点变透明可以顺滑 */
+}
+
+/* 收起状态下的导航按钮文字隐藏 */
+[data-expanded="false"] .sidebar__navigation__item__text,
+[data-expanded="false"] .sidebar__button__text {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
   margin-left: 0 !important;
 }
 
-/* 收起状态下的右侧内容隐藏 */
-[data-expanded="false"] .nav__item-badge {
+/* 收起状态下的创建按钮文字隐藏 */
+[data-expanded="false"] .sidebar__create-button__text {
+  opacity: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  margin-left: 0 !important;
+}
+
+/* 收起状态下的导航按钮右侧内容隐藏 */
+[data-expanded="false"] .sidebar__navigation__item__badge,
+[data-expanded="false"] .sidebar__button__badge {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
 }
 
-/* 收起状态下的按钮宽度调整 */
-[data-expanded="false"] .nav__item-box {
+/* 收起状态下的创建按钮右侧内容隐藏 */
+[data-expanded="false"] .sidebar__create-button__badge {
+  opacity: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 收起状态下的导航按钮宽度调整 */
+[data-expanded="false"] .sidebar__navigation__item__container,
+[data-expanded="false"] .sidebar__button__container {
+  width: 2.75rem !important; /* w-11 = 44px */
+  min-width: 2.75rem !important;
+}
+
+/* 收起状态下的创建按钮宽度调整 */
+[data-expanded="false"] .sidebar__create-button__container {
   width: 2.75rem !important; /* w-11 = 44px */
   min-width: 2.75rem !important;
 }
 
 /* Header组件样式 */
-.nav__logo {
+.sidebar__header__logo {
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.nav__toggle-icon {
+.sidebar__header__toggle-icon {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* 收起状态下的logo隐藏 */
-[data-expanded="false"] .nav__logo {
+[data-expanded="false"] .sidebar__header__logo {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
 }
 
 /* 展开状态下的按钮翻转（指向右侧） */
-[data-expanded="true"] .nav__toggle-icon {
+[data-expanded="true"] .sidebar__header__toggle-icon {
   transform: scaleX(-1) !important;
 }
 
 /* 收起状态下的按钮不翻转（指向左侧） */
-[data-expanded="false"] .nav__toggle-icon {
+[data-expanded="false"] .sidebar__header__toggle-icon {
   transform: scaleX(1) !important;
 }
 
 /* 用户信息组件样式 */
-.nav__user-info {
+.sidebar__user-profile__info {
   min-width: 0 !important;
   max-width: 120px !important; /* 限制最大宽度 */
   overflow: hidden !important;
 }
 
-.nav__user-name,
-.nav__user-email {
+.sidebar__user-profile__name,
+.sidebar__user-profile__email {
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   font-size: 14px !important; /* 字号改为14px */
   overflow: hidden !important;
@@ -103,20 +144,20 @@
 }
 
 /* 用户邮箱单独设置12px */
-.nav__user-email {
+.sidebar__user-profile__email {
   font-size: 12px !important; /* 邮箱字号改为12px */
 }
 
 /* 收起状态下的用户信息隐藏 */
-[data-expanded="false"] .nav__user-name,
-[data-expanded="false"] .nav__user-email {
+[data-expanded="false"] .sidebar__user-profile__name,
+[data-expanded="false"] .sidebar__user-profile__email {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
 }
 
 /* 收起状态下的用户按钮宽度调整 - 不改变justify-content */
-[data-expanded="false"] .nav__user-box {
+[data-expanded="false"] .sidebar__user-profile__container {
   width: 2.75rem !important; /* w-11 = 44px */
   min-width: 2.75rem !important;
   border-radius: 0 !important; /* 删除矩形框 */
@@ -125,7 +166,7 @@
 }
 
 /* Header组件的收起状态控制 */
-[data-expanded="false"] .nav__heading-text {
+[data-expanded="false"] .sidebar__header__title {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
@@ -146,7 +187,7 @@
 }
 
 /* 切换按钮基础样式 - 44×44尺寸，padding 10 */
-.nav__toggle-btn {
+.sidebar__header__toggle {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
   border-radius: 0.5rem !important; /* rounded-lg */
   width: 2.75rem !important; /* w-11 = 44px */
@@ -157,7 +198,7 @@
 }
 
 /* 收起状态下的按钮样式 */
-[data-expanded="false"] .nav__toggle-btn {
+[data-expanded="false"] .sidebar__header__toggle {
   width: 2.75rem !important; /* w-11 = 44px */
   height: 2.75rem !important; /* h-11 = 44px */
   min-width: 2.75rem !important;
@@ -166,7 +207,7 @@
 }
 
 /* 展开状态下的按钮样式 */
-[data-expanded="true"] .nav__toggle-btn {
+[data-expanded="true"] .sidebar__header__toggle {
   width: 2.75rem !important; /* w-11 = 44px */
   height: 2.75rem !important; /* h-11 = 44px */
   min-width: 2.75rem !important;
@@ -175,9 +216,65 @@
 }
 
 /* 图标大小调整 - 24×24像素 */
-.nav__toggle-icon {
+.sidebar__header__toggle-icon {
   width: 24px !important;
   height: 24px !important;
+}
+
+/* QATree子项样式 */
+.sidebar__navigation__qa-tree__item__container {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 10px !important;
+}
+
+.sidebar__navigation__qa-tree__item__text {
+  margin-left: 10px !important;
+  min-width: 0 !important;
+  font-size: 14px !important;
+  transition: opacity 0.01s ease-out !important;
+}
+
+.sidebar__navigation__qa-tree__item__icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.sidebar__navigation__qa-tree__item__dropdown {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease-in-out !important;
+}
+
+.group:hover .sidebar__navigation__qa-tree__item__dropdown {
+  opacity: 1 !important;
+}
+
+/* QATree下拉菜单样式 */
+.sidebar__navigation__qa-tree__dropdown__menu {
+  min-width: 150px !important;
+  width: 150px !important;
+  max-width: 150px !important;
+}
+
+.sidebar__navigation__qa-tree__dropdown__item {
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+}
+
+/* 用户下拉菜单样式 */
+.sidebar__user-profile__dropdown__menu {
+  width: 231.83px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.sidebar__user-profile__dropdown__item {
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+}
+
+.sidebar__user-profile__dropdown__section {
+  padding: 4px 0 !important;
 }
 
 
