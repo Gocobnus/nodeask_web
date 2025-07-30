@@ -74,11 +74,18 @@
 
 /* ------------------------------ 创建按钮 ------------------------------ */
 
-/* 创建按钮样式 */
+/* 默认状态 */
 .sidebar__create-button__container.create-button {
   background-color: var(--bg-create-button) !important;
   color: var(--text-create-button) !important;
 }
+
+/* hover状态 */
+.sidebar__create-button__container.create-button:hover {
+  opacity: 0.85 !important;
+}
+
+/* ------------------------------ 子图谱按钮 ------------------------------ */
 
 /* 图谱子项选中状态背景色 */
 .qa-tree-item-selected {

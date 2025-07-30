@@ -124,7 +124,7 @@ export default function SidebarButton({
         className={cn(
           `${getContainerClass()} flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-300 ease-in-out w-full`,
           isPrimary
-            ? "create-button text-default-50 hover:opacity-80"
+            ? "create-button"
             : isSelected
               ? "selected"
               : ""
