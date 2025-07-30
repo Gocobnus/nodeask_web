@@ -100,8 +100,8 @@ function QATreeItem({
           <div
             className={`sidebar__navigation__qa-tree__item__container flex w-11 h-11 items-center justify-center rounded-large cursor-pointer transition-colors ${
               isSelected 
-                ? "bg-default-100 text-foreground" 
-                : "text-default-500 hover:bg-default-50"
+                ? "selected" 
+                : ""
             }`}
             onClick={handleClick}
           >
@@ -122,17 +122,17 @@ function QATreeItem({
       {/* 连接线 - 只保留一条线，不要连接点，left-[22px] 是调整竖线与容器边界的距离 */}
       <div className="absolute left-[22px] top-0 bottom-0 w-px bg-default-200 -translate-x-0.5"></div>
       
-      <div className="ml-[20px] pl-[6px]"> 
+      <div className="ml-[20px] pl-[16px]"> 
         <div
           /* 下面是调整按钮的padding的 px-2.5=10px */
           className={`sidebar__navigation__qa-tree__item__container flex w-full items-center px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
             isSelected 
-              ? "bg-default-100 text-foreground qa-tree-item-selected" 
-              : "text-default-500 hover:bg-default-50"
+              ? "selected" 
+              : ""
           }`}
           onClick={handleClick}
         >
-          <span className="sidebar__navigation__qa-tree__item__text text-small font-medium truncate pr-2 leading-5 flex-1 min-w-0">
+          <span className="sidebar__navigation__qa-tree__item__text text-small font-medium truncate leading-5 flex-1 min-w-0">
             {tree.name}
           </span>
           <div data-dropdown-trigger className="flex-shrink-0">

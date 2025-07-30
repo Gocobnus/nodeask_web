@@ -87,15 +87,47 @@
 
 /* ------------------------------ 子图谱按钮 ------------------------------ */
 
-/* 图谱子项选中状态背景色 */
-.qa-tree-item-selected {
-  background-color: var(--bg-selected-sub) !important;
+/* 默认状态 */
+.sidebar__navigation__qa-tree__item__container {
+  color: var(--text-default) !important;
 }
 
-/* 图谱子项选中状态的文字颜色 */
-.qa-tree-item-selected span {
-  color: var(--text-primary) !important;
+/* hover状态 */
+/* 背景色 */
+.sidebar__navigation__qa-tree__item__container:hover {
+  background-color: var(--bg-hover) !important;
 }
+
+/* 文字颜色 */
+.sidebar__navigation__qa-tree__item__container:hover .sidebar__navigation__qa-tree__item__text {
+  color: var(--text-hover) !important;
+}
+
+/* 图标颜色 */
+.sidebar__navigation__qa-tree__item__container:hover .sidebar__navigation__qa-tree__item__icon svg {
+  color: var(--icon-hover) !important;
+}
+
+
+/* 选中状态 */
+/* 背景色 */
+.sidebar__navigation__qa-tree__item__container.selected {
+  background-color: var(--bg-selected) !important;
+}
+
+/* 文字颜色 */
+.sidebar__navigation__qa-tree__item__container.selected .sidebar__navigation__qa-tree__item__text {
+  color: var(--text-selected) !important;
+}
+
+/* 图标颜色 */
+.sidebar__navigation__qa-tree__item__container.selected .sidebar__navigation__qa-tree__item__icon svg {
+  color: var(--icon-selected) !important;
+}
+
+
+
+
 
 /* 切换按钮图标颜色 */
 .sidebar__header__toggle-icon {

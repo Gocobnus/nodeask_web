@@ -78,11 +78,11 @@ export default function SidebarButton({
   const getBadgeClass = () => {
     switch (type) {
       case 'create-button':
-        return 'sidebar__create-button__badge';
+        return 'sidebar__create-button__icon';
       case 'navigation-item':
-        return 'sidebar__navigation__item__badge';
+        return 'sidebar__navigation__item__icon';
       default:
-        return 'sidebar__button__badge';
+        return 'sidebar__navigation__item__icon';
     }
   };
 
@@ -138,7 +138,6 @@ export default function SidebarButton({
               height={24}
               className={cn(
                 "transition-all duration-300 ease-in-out",
-                isPrimary ? "text-default-50" : (isSelected ? "text-foreground" : "text-default-500")
               )}
             />
           )}

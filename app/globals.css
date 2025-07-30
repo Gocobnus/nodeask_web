@@ -25,8 +25,7 @@
 }
 
 /* 导航按钮基础样式 - 添加宽度动画和padding */
-.sidebar__navigation__item__container,
-.sidebar__button__container {
+.sidebar__navigation__item__container {
   width: 100% !important;
   min-width: 0 !important;
   padding: 10px !important; 
@@ -40,8 +39,7 @@
 }
 
 /* 导航按钮文字边距 - 改为10px */
-.sidebar__navigation__item__text,
-.sidebar__button__text {
+.sidebar__navigation__item__text {
   margin-left: 10px !important; /* 改为10px */
   min-width: 0 !important;
   font-size: 14px !important; /* 字号改为14px */
@@ -57,8 +55,7 @@
 }
 
 /* 收起状态下的导航按钮文字隐藏 */
-[data-expanded="false"] .sidebar__navigation__item__text,
-[data-expanded="false"] .sidebar__button__text {
+[data-expanded="false"] .sidebar__navigation__item__text {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
@@ -73,24 +70,17 @@
   margin-left: 0 !important;
 }
 
-/* 收起状态下的导航按钮右侧内容隐藏 */
-[data-expanded="false"] .sidebar__navigation__item__badge,
-[data-expanded="false"] .sidebar__button__badge {
-  opacity: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
-}
 
-/* 收起状态下的创建按钮右侧内容隐藏 */
-[data-expanded="false"] .sidebar__create-button__badge {
+
+/* 收起状态下的导航按钮右侧内容隐藏（下拉图标等） */
+[data-expanded="false"] .sidebar__navigation__item__container .sidebar__navigation__item__icon:last-child {
   opacity: 0 !important;
   width: 0 !important;
   overflow: hidden !important;
 }
 
 /* 收起状态下的导航按钮宽度调整 */
-[data-expanded="false"] .sidebar__navigation__item__container,
-[data-expanded="false"] .sidebar__button__container {
+[data-expanded="false"] .sidebar__navigation__item__container {
   width: 2.75rem !important; /* w-11 = 44px */
   min-width: 2.75rem !important;
 }
@@ -229,7 +219,6 @@
 }
 
 .sidebar__navigation__qa-tree__item__text {
-  margin-left: 10px !important;
   min-width: 0 !important;
   font-size: 14px !important;
   transition: opacity 0.01s ease-out !important;
