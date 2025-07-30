@@ -126,8 +126,8 @@ export default function SidebarButton({
           isPrimary
             ? "create-button text-default-50 hover:opacity-80"
             : isSelected
-              ? "bg-default-100 text-foreground"
-              : "text-default-500"
+              ? "selected"
+              : ""
         )}
         onClick={onClick}
       >

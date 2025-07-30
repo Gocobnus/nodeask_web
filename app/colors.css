@@ -37,6 +37,10 @@
 
 /* ------------------------------ 导航按钮 ------------------------------ */
 
+/* 默认状态 */
+.sidebar__navigation__item__container:not(.create-button) {
+  color: var(--text-default) !important;
+}
 /* ------hover状态------ */
 /* 背景色 */
 .sidebar__navigation__item__container:not(.create-button):hover {
@@ -52,16 +56,23 @@
 }
 
 /* ------选中状态------ */
-/* 导航按钮选中状态背景色（排除创建按钮） */
-.sidebar__navigation__item__container:not(.create-button).bg-default-100,
-.sidebar__button__container:not(.create-button).bg-default-100 {
+/* 背景色 */
+.sidebar__navigation__item__container:not(.create-button).selected {
   background-color: var(--bg-selected) !important;
 }
 
-.sidebar__navigation__item__container:not(.create-button).bg-default-100 .sidebar__navigation__item__text,
-.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__text {
+/* 文字颜色 */
+.sidebar__navigation__item__container:not(.create-button).selected .sidebar__navigation__item__text {
   color: var(--text-selected) !important;
 }
+
+/* 图标颜色 */
+.sidebar__navigation__item__container:not(.create-button).selected .sidebar__navigation__item__icon svg {
+  color: var(--icon-selected) !important;
+}
+
+
+/* ------------------------------ 创建按钮 ------------------------------ */
 
 /* 创建按钮样式 */
 .sidebar__create-button__container.create-button {
@@ -115,7 +126,6 @@
   color: var(--icon-hover) !important;
 }
 
-.sidebar__navigation__item__container.bg-default-100 .sidebar__navigation__item__icon svg,
 .sidebar__create-button__container.bg-default-100 .sidebar__create-button__icon svg,
 .sidebar__button__container.bg-default-100 .sidebar__button__icon svg {
   color: var(--icon-selected) !important;
