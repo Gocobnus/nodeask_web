@@ -244,11 +244,12 @@ export default function Navigation({
     return "home";
   };
 
-  const handleNavItemClick = (key: string, href?: string) => {
-    setIsQATreeManuallySelected(false);
+  const handleNavItemClick = async (key: string, href?: string) => {
     if (href) {
-      router.push(href);
+      await router.push(href);
     }
+    // 路由跳转完成后再更新状态
+    setIsQATreeManuallySelected(false);
   };
 
   const handleQATreeToggle = () => {
