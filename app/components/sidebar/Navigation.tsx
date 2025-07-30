@@ -225,7 +225,10 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
     if (pathname.startsWith("/discover")) {
       return isQATreeManuallySelected ? "qatree-list" : "discover";
     }
-    if (pathname.startsWith("/qatree/")) return "qatree-list";
+    if (pathname.startsWith("/qatree/")) {
+      // 当在子图谱页面时，主图谱不应该被选中
+      return "none";
+    }
     return "home";
   };
 
@@ -282,7 +285,7 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
       <SidebarButton
         icon="/icons/sidebar/my-graphs.svg"
         title="我的图谱"
-        isSelected={selectedKey === "qatree-list"}
+        isSelected={selectedKey === "qatree-list" && !pathname.startsWith("/qatree/")}
         isCompact={isCompact}
         onClick={handleQATreeToggle}
         type="navigation-item"
