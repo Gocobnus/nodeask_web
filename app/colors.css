@@ -35,17 +35,23 @@
   background-color: var(--bg-sidebar) !important;
 }
 
-/* 导航按钮 hover，sidebar__button__container是默认的按钮 */
-.sidebar__navigation__item__container:not(.create-button):hover,
-.sidebar__button__container:not(.create-button):hover {
+/* ------------------------------ 导航按钮 ------------------------------ */
+
+/* ------hover状态------ */
+/* 背景色 */
+.sidebar__navigation__item__container:not(.create-button):hover {
   background-color: var(--bg-hover) !important;
 }
-
-.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__text,
-.sidebar__button__container:not(.create-button):hover .sidebar__button__text {
+/* 文字颜色 */
+.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__text {
   color: var(--text-hover) !important;
 }
+/* 图标颜色 */
+.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__icon svg {
+  color: var(--icon-hover) !important;
+}
 
+/* ------选中状态------ */
 /* 导航按钮选中状态背景色（排除创建按钮） */
 .sidebar__navigation__item__container:not(.create-button).bg-default-100,
 .sidebar__button__container:not(.create-button).bg-default-100 {
@@ -75,7 +81,10 @@
 
 /* 切换按钮图标颜色 */
 .sidebar__header__toggle-icon {
-  color: var(--primary-lighter) !important;
+  color: var(--icon-default) !important;
+}
+.sidebar__header__toggle-icon:hover {
+  color: var(--icon-hover) !important;
 }
 
 /* Header 组件样式 */
@@ -89,11 +98,10 @@
 
 /* 切换按钮悬停效果 */
 .sidebar__header__toggle:hover {
-  background-color: rgb(240 240 240) !important;
+  background-color: var(--bg-hover) !important;
 }
 
 /* 通用图标颜色规则 */
-.sidebar__navigation__item__icon svg,
 .sidebar__create-button__icon svg,
 .sidebar__button__icon svg,
 .sidebar__user-profile__dropdown__item svg,
@@ -101,7 +109,6 @@
   color: var(--icon-default) !important;
 }
 
-.sidebar__navigation__item__container:hover .sidebar__navigation__item__icon svg,
 .sidebar__create-button__container:hover .sidebar__create-button__icon svg,
 .sidebar__button__container:hover .sidebar__button__icon svg,
 .sidebar__navigation__qa-tree__dropdown__item:hover svg {
