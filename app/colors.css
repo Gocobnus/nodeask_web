@@ -1,10 +1,7 @@
 /* ===== 颜色变量定义 ===== */
 :root {
   /* 主色调 */
-  --primary-color: #7828c8;
-  --primary-light: #ae7ede;
-  --primary-lighter: #AE7EDE;
-  --primary-dark: #6020a0;
+  --logo-color: #ae7ede;
   
 
   /* 背景色 */
@@ -39,7 +36,7 @@
 
 /* Header 组件样式 */
 .sidebar__header__logo {
-  background-color: var(--primary-light) !important;
+  background-color: var(--logo-color) !important;
 }
 
 .sidebar__header__logo span {

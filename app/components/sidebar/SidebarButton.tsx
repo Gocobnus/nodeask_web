@@ -119,7 +119,15 @@ export default function SidebarButton({
   const IconComponent = getIconComponent();
 
   return (
-    <Tooltip content={title} placement="right" isDisabled={!isCompact}>
+    <Tooltip 
+      content={title} 
+      placement="right" 
+      isDisabled={!isCompact}
+      offset={4}
+      classNames={{
+        content: "bg-[#F9F9F9] text-[#666666]"
+      }}
+    >
       <div
         className={cn(
           `${getContainerClass()} flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-300 ease-in-out w-full`,
