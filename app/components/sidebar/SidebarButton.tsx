@@ -3,10 +3,20 @@
 
 import React from "react";
 import { Tooltip } from "@heroui/react";
-import { Icon } from "@iconify/react";
 import { cn } from "@heroui/react";
-import Image from "next/image";
-import DiscoverIcon from "../../../public/icons/sidebar/discover.svg";
+import {
+  HomeIcon,
+  CreateIcon,
+  DiscoverIcon,
+  MyGraphsIcon,
+  ExpandCollapseIcon,
+  MoreIcon,
+  DropdownIcon,
+  SettingsIcon,
+  LogoutIcon,
+  RenameIcon,
+  DeleteIcon
+} from "../icons";
 
 interface SidebarButtonProps {
   icon: string;
@@ -30,7 +40,6 @@ export default function SidebarButton({
   type = 'default'
 }: SidebarButtonProps) {
   const isPrimary = variant === 'primary';
-  const isLocalIcon = icon.startsWith('/');
 
   // 根据type确定使用的类名
   const getContainerClass = () => {
@@ -77,6 +86,38 @@ export default function SidebarButton({
     }
   };
 
+  // 根据icon路径获取对应的图标组件
+  const getIconComponent = () => {
+    switch (icon) {
+      case "/icons/sidebar/home.svg":
+        return HomeIcon;
+      case "/icons/sidebar/create.svg":
+        return CreateIcon;
+      case "/icons/sidebar/discover.svg":
+        return DiscoverIcon;
+      case "/icons/sidebar/my-graphs.svg":
+        return MyGraphsIcon;
+      case "/icons/sidebar/expand-collapse.svg":
+        return ExpandCollapseIcon;
+      case "/icons/sidebar/more.svg":
+        return MoreIcon;
+      case "/icons/sidebar/dropdown.svg":
+        return DropdownIcon;
+      case "/icons/sidebar/settings.svg":
+        return SettingsIcon;
+      case "/icons/sidebar/logout.svg":
+        return LogoutIcon;
+      case "/icons/sidebar/rename.svg":
+        return RenameIcon;
+      case "/icons/sidebar/delete.svg":
+        return DeleteIcon;
+      default:
+        return null;
+    }
+  };
+
+  const IconComponent = getIconComponent();
+
   return (
     <Tooltip content={title} placement="right" isDisabled={!isCompact}>
       <div
@@ -91,32 +132,14 @@ export default function SidebarButton({
         onClick={onClick}
       >
         <span className={`${getIconClass()} flex-shrink-0 w-6 h-6 flex items-center justify-center`}>
-          {icon === "/icons/sidebar/discover.svg" ? (
-            <DiscoverIcon
+          {IconComponent && (
+            <IconComponent
               width={24}
               height={24}
               className={cn(
                 "transition-all duration-300 ease-in-out",
                 isPrimary ? "text-default-50" : (isSelected ? "text-foreground" : "text-default-500")
               )}
-            />
-          ) : isLocalIcon ? (
-            <Image
-              src={icon}
-              alt={title}
-              width={24}
-              height={24}
-              className="transition-all duration-300 ease-in-out"
-            />
-          ) : (
-            <Icon
-              className={cn(
-                "transition-all duration-300 ease-in-out",
-                isPrimary ? "text-default-50" : (isSelected ? "text-foreground" : "text-default-500")
-              )}
-              icon={icon}
-              width={24}
-              height={24}
             />
           )}
         </span>

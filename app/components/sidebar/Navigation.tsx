@@ -9,11 +9,15 @@ import {
   DropdownMenu,
   DropdownItem
 } from "@heroui/react";
-import { Icon } from "@iconify/react";
 import { mockQATrees } from "../../lib/mock-data";
 import { createActionHandler } from "../../lib/selection-utils";
 import SidebarButton from "./SidebarButton";
-import Image from "next/image";
+import {
+  MoreIcon,
+  RenameIcon,
+  DeleteIcon,
+  DropdownIcon
+} from "../icons";
 
 // 知识图谱操作下拉菜单组件
 function QATreeDropdown({ treeId }: { treeId: string }) {
@@ -25,9 +29,7 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
   return (
     <Dropdown>
       <DropdownTrigger>
-        <Image
-          src="/icons/sidebar/more.svg"
-          alt="更多操作"
+        <MoreIcon
           width={18}
           height={18}
           className="sidebar__navigation__qa-tree__item__dropdown opacity-0 group-hover:opacity-100 w-[18px] h-[18px]"
@@ -43,10 +45,8 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           key="rename"
           className="sidebar__navigation__qa-tree__dropdown__item text-default-500 data-[hover=true]:text-default-500 py-1 text-small"
           startContent={
-            <Image 
-              src="/icons/sidebar/rename.svg"
-              alt="重命名"
-              width={20} 
+            <RenameIcon
+              width={20}
               height={20}
               className="text-default-300"
             />
@@ -59,9 +59,7 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           className="sidebar__navigation__qa-tree__dropdown__item text-danger-500 data-[hover=true]:text-danger-500 py-1 text-small"
           color="danger"
           startContent={
-            <Image
-              src="/icons/sidebar/delete.svg"
-              alt="删除"
+            <DeleteIcon
               width={20}
               height={20}
               className="text-danger-500"
@@ -107,11 +105,12 @@ function QATreeItem({
             }`}
             onClick={handleClick}
           >
-            <Icon
+            <div
               className={`sidebar__navigation__qa-tree__item__icon ${isSelected ? "text-foreground" : "text-default-500"}`}
-              icon="solar:document-linear"
-              width={20}
-            />
+            >
+              {/* 这里需要一个文档图标，暂时使用文字 */}
+              <span className="text-sm">📄</span>
+            </div>
           </div>
         </div>
       </div>
@@ -123,7 +122,7 @@ function QATreeItem({
       {/* 连接线 - 只保留一条线，不要连接点，left-[22px] 是调整竖线与容器边界的距离 */}
       <div className="absolute left-[22px] top-0 bottom-0 w-px bg-default-200 -translate-x-0.5"></div>
       
-      <div className="ml-[20px] pl-[14px]"> {/* 修改为 ml-3，使竖线与右侧按钮距离为 20px + 12px + 16px = 48px，竖线到右侧按钮为12px */}
+      <div className="ml-[20px] pl-[6px]"> 
         <div
           /* 下面是调整按钮的padding的 px-2.5=10px */
           className={`sidebar__navigation__qa-tree__item__container flex w-full items-center px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
@@ -288,9 +287,7 @@ export default function Navigation({ isCompact = false, setIsCompact }: Navigati
         onClick={handleQATreeToggle}
         type="navigation-item"
         endContent={
-          <Image
-            src="/icons/sidebar/dropdown.svg"
-            alt="展开收起"
+          <DropdownIcon
             width={16}
             height={16}
             className={`transition-colors ${

@@ -21,6 +21,12 @@
   --text-secondary: #9353d3;
   --text-default: #666666;
   --text-light: #999999;
+
+  /* 图标颜色 */
+  --icon-default: #666666;
+  --icon-hover: #9353d3;
+  --icon-selected: #6020a0;
+  --icon-primary: #7828c8;
 }
 
 /* ===== 颜色样式统一管理 ===== */
@@ -34,10 +40,9 @@
 .sidebar__button__container:not(.create-button):hover {
   background-color: var(--bg-hover) !important;
 }
+
 .sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__text,
-.sidebar__navigation__item__container:not(.create-button):hover .sidebar__navigation__item__icon .iconify,
-.sidebar__button__container:not(.create-button):hover .sidebar__button__text,
-.sidebar__button__container:not(.create-button):hover .sidebar__button__icon .iconify {
+.sidebar__button__container:not(.create-button):hover .sidebar__button__text {
   color: var(--text-hover) !important;
 }
 
@@ -48,9 +53,7 @@
 }
 
 .sidebar__navigation__item__container:not(.create-button).bg-default-100 .sidebar__navigation__item__text,
-.sidebar__navigation__item__container:not(.create-button).bg-default-100 .sidebar__navigation__item__icon .iconify,
-.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__text,
-.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__icon .iconify {
+.sidebar__button__container:not(.create-button).bg-default-100 .sidebar__button__text {
   color: var(--text-selected) !important;
 }
 
@@ -67,11 +70,6 @@
 
 /* 图谱子项选中状态的文字颜色 */
 .qa-tree-item-selected span {
-  color: var(--text-primary) !important;
-}
-
-/* 图谱子项选中状态的图标颜色 */
-.qa-tree-item-selected .iconify {
   color: var(--text-primary) !important;
 }
 
@@ -94,18 +92,29 @@
   background-color: rgb(240 240 240) !important;
 }
 
-/* Discover 图标颜色规则 */
-.sidebar__navigation__item__container .sidebar__navigation__item__icon svg,
-.sidebar__button__container .sidebar__button__icon svg {
-  color: blue !important;
+/* 通用图标颜色规则 */
+.sidebar__navigation__item__icon svg,
+.sidebar__create-button__icon svg,
+.sidebar__button__icon svg,
+.sidebar__user-profile__dropdown__item svg,
+.sidebar__navigation__qa-tree__dropdown__item svg {
+  color: var(--icon-default) !important;
 }
 
 .sidebar__navigation__item__container:hover .sidebar__navigation__item__icon svg,
-.sidebar__button__container:hover .sidebar__button__icon svg {
-  color: purple !important;
+.sidebar__create-button__container:hover .sidebar__create-button__icon svg,
+.sidebar__button__container:hover .sidebar__button__icon svg,
+.sidebar__navigation__qa-tree__dropdown__item:hover svg {
+  color: var(--icon-hover) !important;
 }
 
 .sidebar__navigation__item__container.bg-default-100 .sidebar__navigation__item__icon svg,
+.sidebar__create-button__container.bg-default-100 .sidebar__create-button__icon svg,
 .sidebar__button__container.bg-default-100 .sidebar__button__icon svg {
-  color: red !important;
+  color: var(--icon-selected) !important;
+}
+
+/* 创建按钮图标颜色 */
+.sidebar__create-button__container.create-button .sidebar__create-button__icon svg {
+  color: var(--text-create-button) !important;
 } 

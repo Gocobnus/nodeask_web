@@ -3,26 +3,20 @@
 
 import React from "react";
 import { Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection, Avatar } from "@heroui/react";
-import Image from "next/image";
 import { mockUser } from "../../lib/mock-data";
 import { createActionHandler } from "../../lib/selection-utils";
+import { SettingsIcon, LogoutIcon, OpenIcon } from "../icons";
 
 // 下拉箭头图标
 function AvatarDropdownIcon(props: React.ComponentProps<"svg">) {
   return (
-    <svg
-      {...props}
-      fill="none"
-      height="20"
-      viewBox="0 0 20 20"
-      width="20"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M10 3L14 7H6L10 3Z"
-        fill="currentColor"
+    <div style={{ transform: 'rotate(90deg)' }}>
+      <OpenIcon
+        {...props}
+        width={20}
+        height={20}
       />
-    </svg>
+    </div>
   );
 }
 
@@ -87,11 +81,9 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
               key="settings"
               className="sidebar__user-profile__dropdown__item py-[4px] text-default-500"
               startContent={
-                <Image
-                  src="/icons/sidebar/settings.svg"
-                  alt="设置"
-                  width={16}
-                  height={16}
+                <SettingsIcon
+                  width={20}
+                  height={20}
                   className="text-default-300"
                 />
               }
@@ -105,11 +97,9 @@ export default function UserProfile({ isCompact = false }: UserProfileProps) {
               key="logout"
               className="sidebar__user-profile__dropdown__item pt-[4px] text-default-500"
               startContent={
-                <Image
-                  src="/icons/sidebar/logout.svg"
-                  alt="退出登录"
-                  width={16}
-                  height={16}
+                <LogoutIcon
+                  width={20}
+                  height={20}
                   className="text-default-300"
                 />
               }

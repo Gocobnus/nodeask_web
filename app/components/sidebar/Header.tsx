@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Button } from "@heroui/react";
-import Image from "next/image";
+import { ExpandCollapseIcon } from "../icons";
 import { sidebarConfig } from "./sidebar-config";
 
 const BrandIcon = ({ className }: { className?: string }) => {
@@ -39,9 +39,7 @@ export default function Header({ isCompact = false, onToggle }: HeaderProps) {
         disableAnimation
         onPress={onToggle}
       >
-        <Image 
-          src="/icons/sidebar/expand-collapse.svg"
-          alt="展开缩放"
+        <ExpandCollapseIcon 
           width={24} 
           height={24}
           className="sidebar__header__toggle-icon transition-transform duration-300 ease-in-out"
