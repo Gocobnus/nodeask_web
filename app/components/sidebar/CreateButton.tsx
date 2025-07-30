@@ -9,11 +9,16 @@ import SidebarButton from "./SidebarButton";
 
 interface CreateButtonProps {
   isCompact?: boolean;
+  onNavigate?: () => void;
 }
 
-export default function CreateButton({ isCompact }: CreateButtonProps) {
+export default function CreateButton({ isCompact, onNavigate }: CreateButtonProps) {
   const router = useRouter();
   const handleCreateQATree = () => {
+    // 通知父组件重置选中状态
+    if (onNavigate) {
+      onNavigate();
+    }
     // 直接跳转到首页开始新的问答对话
     router.push("/");
   };

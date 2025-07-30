@@ -29,11 +29,13 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
   return (
     <Dropdown>
       <DropdownTrigger>
-        <MoreIcon
-          width={18}
-          height={18}
-          className="sidebar__navigation__qa-tree__item__dropdown opacity-0 group-hover:opacity-100 w-[18px] h-[18px]"
-        />
+        <div className="sidebar__navigation__qa-tree__item__icon opacity-0 group-hover:opacity-100">
+          <MoreIcon
+            width={18}
+            height={18}
+            className="w-[18px] h-[18px]"
+          />
+        </div>
       </DropdownTrigger>
       <DropdownMenu 
         aria-label="知识图谱操作" 
@@ -200,14 +202,25 @@ function CollapsibleSection({
 interface NavigationProps {
   isCompact?: boolean;
   setIsCompact?: (v: boolean) => void;
+  isQATreeManuallySelected?: boolean;
+  setIsQATreeManuallySelected?: (v: boolean) => void;
 }
 
-export default function Navigation({ isCompact = false, setIsCompact }: NavigationProps) {
+export default function Navigation({ 
+  isCompact = false, 
+  setIsCompact,
+  isQATreeManuallySelected: externalIsQATreeManuallySelected,
+  setIsQATreeManuallySelected: externalSetIsQATreeManuallySelected
+}: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   
   const [isQATreeExpanded, setIsQATreeExpanded] = useState(true);
-  const [isQATreeManuallySelected, setIsQATreeManuallySelected] = useState(false);
+  const [internalIsQATreeManuallySelected, setInternalIsQATreeManuallySelected] = useState(false);
+  
+  // 使用外部状态或内部状态
+  const isQATreeManuallySelected = externalIsQATreeManuallySelected ?? internalIsQATreeManuallySelected;
+  const setIsQATreeManuallySelected = externalSetIsQATreeManuallySelected ?? setInternalIsQATreeManuallySelected;
 
   // 获取当前图谱ID（从路径中提取）
   const getCurrentTreeId = () => {

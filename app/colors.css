@@ -137,6 +137,7 @@
   color: var(--icon-hover) !important;
 }
 
+
 /* Header 组件样式 */
 .sidebar__header__logo {
   background-color: var(--primary-light) !important;
@@ -151,26 +152,3 @@
   background-color: var(--bg-hover) !important;
 }
 
-/* 通用图标颜色规则 */
-.sidebar__create-button__icon svg,
-.sidebar__button__icon svg,
-.sidebar__user-profile__dropdown__item svg,
-.sidebar__navigation__qa-tree__dropdown__item svg {
-  color: var(--icon-default) !important;
-}
-
-.sidebar__create-button__container:hover .sidebar__create-button__icon svg,
-.sidebar__button__container:hover .sidebar__button__icon svg,
-.sidebar__navigation__qa-tree__dropdown__item:hover svg {
-  color: var(--icon-hover) !important;
-}
-
-.sidebar__create-button__container.bg-default-100 .sidebar__create-button__icon svg,
-.sidebar__button__container.bg-default-100 .sidebar__button__icon svg {
-  color: var(--icon-selected) !important;
-}
-
-/* 创建按钮图标颜色 */
-.sidebar__create-button__container.create-button .sidebar__create-button__icon svg {
-  color: var(--text-create-button) !important;
-} 

@@ -13,6 +13,7 @@ import { sidebarConfig } from "./sidebar-config";
 export default function Sidebar() {
   const [isCompact, setIsCompact] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isQATreeManuallySelected, setIsQATreeManuallySelected] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -20,6 +21,10 @@ export default function Sidebar() {
 
   const toggleCompact = () => {
     setIsCompact(!isCompact);
+  };
+
+  const handleNavigate = () => {
+    setIsQATreeManuallySelected(false);
   };
 
   return (
@@ -33,13 +38,18 @@ export default function Sidebar() {
       <Spacer y={8} />
 
       {/* 2. 创建按钮 */}
-      <CreateButton isCompact={isCompact} />
+      <CreateButton isCompact={isCompact} onNavigate={handleNavigate} />
 
       <Spacer y={6} />
 
       {/* 3. 导航区域 */}
       <ScrollShadow className={isCompact ? "flex-1 -mr-2 pr-2" : "flex-1 -mr-6 pr-6"}>
-        <Navigation isCompact={isCompact} setIsCompact={setIsCompact} />
+        <Navigation 
+          isCompact={isCompact} 
+          setIsCompact={setIsCompact}
+          isQATreeManuallySelected={isQATreeManuallySelected}
+          setIsQATreeManuallySelected={setIsQATreeManuallySelected}
+        />
       </ScrollShadow>
 
       <Spacer y={8} />

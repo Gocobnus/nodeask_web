@@ -5,7 +5,14 @@
 @source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant light (&:is(.light *));
 
-
+/* 侧边栏文本不可选中 */
+.nav,
+.nav * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
 
 /* 展开状态（默认） */
 [data-expanded="true"] {
@@ -78,6 +85,7 @@
   width: 0 !important;
   overflow: hidden !important;
 }
+
 
 /* 收起状态下的导航按钮宽度调整 */
 [data-expanded="false"] .sidebar__navigation__item__container {
@@ -224,19 +232,6 @@
   transition: opacity 0.01s ease-out !important;
 }
 
-.sidebar__navigation__qa-tree__item__icon {
-  width: 24px !important;
-  height: 24px !important;
-}
-
-.sidebar__navigation__qa-tree__item__dropdown {
-  opacity: 0 !important;
-  transition: opacity 0.2s ease-in-out !important;
-}
-
-.group:hover .sidebar__navigation__qa-tree__item__dropdown {
-  opacity: 1 !important;
-}
 
 /* QATree下拉菜单样式 */
 .sidebar__navigation__qa-tree__dropdown__menu {
