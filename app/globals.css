@@ -170,18 +170,18 @@
   font-size: 14px !important; /* 字号改为14px */
 }
 
-/* 图谱下拉菜单宽度控制 - 只针对图谱菜单 */
+/* 图谱下拉菜单外层容器 */
 [data-slot="content"]:has([aria-label="知识图谱操作"]) {
-  min-width: 128px !important;
-  width: 128px !important;
-  max-width: 128px !important;
+  min-width: 8rem !important;
+  width: 8rem !important;
+  max-width: 8rem !important;
   background-color: var(--bg-sidebar) !important;
 }
-/* QATree下拉菜单按钮样式 */
+/* 内层容器 */
 .sidebar__navigation__qa-tree__dropdown__menu {
-  min-width: 120px !important;
-  width: 120px !important;
-  max-width: 120px !important;
+  min-width: 7.5rem !important;
+  width: 7.5rem !important;
+  max-width: 7.5rem !important;
 }
 
 
@@ -249,11 +249,12 @@
   max-width: none !important;
   border: 1px solid var(--border-default) !important;
   background-color: var(--bg-sidebar) !important;
+  padding: 0px !important;
 }
 
 /* 用户菜单-内层容器 */
 .sidebar__user-profile__dropdown__menu {
-  width: calc(100% - 8px) !important; /* 减去左右各1rem的padding */
+  width: 100% !important; 
   min-width: 0 !important;
   max-width: none !important;
 }
@@ -263,10 +264,7 @@
   font-size: 14px !important;
 }
 
-.sidebar__user-profile__dropdown__section {
-  padding: 4px 0 !important;
-  
-}
+
 
 
 
