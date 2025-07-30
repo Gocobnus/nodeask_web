@@ -2,7 +2,7 @@
 
 export const sidebarConfig = {
   // 通用样式
-  borderStyle: 'border-r border-divider',
+  borderStyle: 'border-r border-default-300',
   headerHeight: 'h-16',         // 64px (Header固定高度)
 } as const;
 

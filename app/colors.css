@@ -17,16 +17,18 @@
   --text-create-button: #F9F9F9;
   --text-hover: #9353d3;
   --text-selected: #6020a0;
-
-  --text-secondary: #9353d3;
+  --text-delete: #f31260;
   --text-default: #666666;
-  --text-light: #999999;
+  --text-name: #11181C;
 
   /* 图标颜色 */
   --icon-default: #666666;
   --icon-hover: #9353d3;
   --icon-selected: #6020a0;
-  --icon-primary: #7828c8;
+  --icon-delete: #f31260;
+
+  /* 点击动画颜色 */
+  --click-animation: #9353d3;
 }
 
 /* ===== 颜色样式统一管理 ===== */
@@ -35,12 +37,42 @@
   background-color: var(--bg-sidebar) !important;
 }
 
+/* Header 组件样式 */
+.sidebar__header__logo {
+  background-color: var(--primary-light) !important;
+}
+
+.sidebar__header__logo span {
+  color: var(--text-create-button) !important;
+}
+
+/* 切换按钮悬停效果 */
+.sidebar__header__toggle:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* ------------------------------ 切换按钮 ------------------------------ */
+
+/* 默认样式 */
+.sidebar__header__toggle-icon {
+  color: var(--icon-default) !important;
+}
+/* hover状态 */
+.sidebar__header__toggle-icon:hover {
+  color: var(--icon-hover) !important;
+}
+
+
 /* ------------------------------ 导航按钮 ------------------------------ */
 
 /* 默认状态 */
 .sidebar__navigation__item__container:not(.create-button) {
   color: var(--text-default) !important;
 }
+.sidebar__navigation__item__container:not(.create-button) svg {
+  color: var(--icon-default) !important;
+}
+
 /* ------hover状态------ */
 /* 背景色 */
 .sidebar__navigation__item__container:not(.create-button):hover {
@@ -79,6 +111,9 @@
   background-color: var(--bg-create-button) !important;
   color: var(--text-create-button) !important;
 }
+.sidebar__create-button__container svg {
+  color: var(--text-create-button) !important;
+}
 
 /* hover状态 */
 .sidebar__create-button__container.create-button:hover {
@@ -91,6 +126,10 @@
 .sidebar__navigation__qa-tree__item__container {
   color: var(--text-default) !important;
 }
+.sidebar__navigation__qa-tree__item__container svg {
+  color: var(--icon-default) !important;
+}
+
 
 /* hover状态 */
 /* 背景色 */
@@ -125,30 +164,107 @@
   color: var(--icon-selected) !important;
 }
 
+/* ------------------------------ 更多菜单 ------------------------------ */
 
+/* 默认状态 */
+/* 默认非删除选项） */
 
-
-
-/* 切换按钮图标颜色 */
-.sidebar__header__toggle-icon {
+.sidebar__navigation__qa-tree__dropdown__item:not([data-key="delete"]) {
+  color: var(--text-default) !important;
+}
+.sidebar__navigation__qa-tree__dropdown__item:not([data-key="delete"]) svg {
   color: var(--icon-default) !important;
 }
-.sidebar__header__toggle-icon:hover {
+
+/* 默认删除选项 */
+.sidebar__navigation__qa-tree__dropdown__item[data-key="delete"] {
+  color: var(--text-delete) !important;
+}
+.sidebar__navigation__qa-tree__dropdown__item[data-key="delete"] svg {
+  color: var(--icon-delete) !important;
+}
+
+/* hover状态 */
+.sidebar__navigation__qa-tree__dropdown__item:not([data-key="delete"]):hover {
+  color: var(--text-hover) !important;
+}
+.sidebar__navigation__qa-tree__dropdown__item:not([data-key="delete"]):hover svg{
   color: var(--icon-hover) !important;
 }
 
 
-/* Header 组件样式 */
-.sidebar__header__logo {
-  background-color: var(--primary-light) !important;
+/* ------------------------------ 用户信息菜单 ------------------------------ */
+
+/* 默认状态 */
+
+.sidebar__user-profile__container svg {
+  color: var(--icon-default) !important;
+}
+.sidebar__user-profile__container .sidebar__user-profile__name {
+  color: var(--text-name) !important;
+}
+.sidebar__user-profile__container .sidebar__user-profile__email {
+  color: var(--text-default) !important;
 }
 
-.sidebar__header__logo span {
-  color: var(--bg-primary) !important;
-}
-
-/* 切换按钮悬停效果 */
-.sidebar__header__toggle:hover {
+/* hover状态 */
+[data-expanded="true"] .sidebar__user-profile__container:hover {
   background-color: var(--bg-hover) !important;
+  color: var(--click-animation) !important;
 }
 
+.sidebar__user-profile__container:hover svg{
+  color: var(--icon-hover) !important;
+}
+
+.sidebar__user-profile__container:hover .sidebar__user-profile__name {
+  color: var(--text-hover) !important;
+}
+
+.sidebar__user-profile__container:hover .sidebar__user-profile__email {
+  color: var(--text-hover) !important;
+}
+
+/* 选中状态 */
+[data-expanded="true"] .sidebar__user-profile__container.selected {
+  background-color: var(--bg-selected) !important;
+}
+.sidebar__user-profile__container.selected svg{
+  color: var(--icon-selected) !important;
+}
+.sidebar__user-profile__container.selected .sidebar__user-profile__name {
+  color: var(--text-selected) !important;
+}
+
+.sidebar__user-profile__container.selected .sidebar__user-profile__email {
+  color: var(--text-selected) !important;
+}
+
+/* ------------------------------ 用户资料下拉菜单 ------------------------------ */
+
+/* 默认状态 */
+.sidebar__user-profile__dropdown__item {
+  color: var(--text-default) !important;
+}
+
+.sidebar__user-profile__dropdown__item svg {
+  color: var(--icon-default) !important;
+}
+
+/* hover状态 */
+.sidebar__user-profile__dropdown__item:hover {
+  color: var(--text-hover) !important;
+}
+
+.sidebar__user-profile__dropdown__item:hover svg {
+  color: var(--icon-hover) !important;
+}
+
+/* 用户信息项中的文字 hover 效果 */
+.sidebar__user-profile__dropdown__item:hover .text-small {
+  color: var(--text-hover) !important;
+}
+
+.sidebar__user-profile__dropdown__item:hover .text-tiny {
+  color: var(--text-hover) !important;
+}

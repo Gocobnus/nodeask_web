@@ -158,9 +158,8 @@
 [data-expanded="false"] .sidebar__user-profile__container {
   width: 2.75rem !important; /* w-11 = 44px */
   min-width: 2.75rem !important;
-  border-radius: 0 !important; /* 删除矩形框 */
-  border: none !important; /* 收起状态下隐藏边框 */
-  /* 不设置 justify-content: center，保持头像在左侧 */
+  border-radius: 0.875rem !important; 
+  border: 1px solid transparent !important; /* 使用透明边框避免闪烁 */
 }
 
 /* Header组件的收起状态控制 */
@@ -173,16 +172,19 @@
 
 /* 图谱下拉菜单宽度控制 - 只针对图谱菜单 */
 [data-slot="content"]:has([aria-label="知识图谱操作"]) {
-  min-width: 150px !important;
-  width: 150px !important;
-  max-width: 150px !important;
+  min-width: 128px !important;
+  width: 128px !important;
+  max-width: 128px !important;
+  background-color: var(--bg-sidebar) !important;
+}
+/* QATree下拉菜单按钮样式 */
+.sidebar__navigation__qa-tree__dropdown__menu {
+  min-width: 120px !important;
+  width: 120px !important;
+  max-width: 120px !important;
 }
 
-[data-slot="content"]:has([aria-label="用户菜单"]) {
-  width: 231.83px !important;
-  min-width: 0 !important;
-  max-width: none !important;
-}
+
 
 /* 切换按钮基础样式 - 44×44尺寸，padding 10 */
 .sidebar__header__toggle {
@@ -233,21 +235,25 @@
 }
 
 
-/* QATree下拉菜单样式 */
-.sidebar__navigation__qa-tree__dropdown__menu {
-  min-width: 150px !important;
-  width: 150px !important;
-  max-width: 150px !important;
-}
+
 
 .sidebar__navigation__qa-tree__dropdown__item {
   padding: 8px 12px !important;
   font-size: 14px !important;
 }
 
-/* 用户下拉菜单样式 */
+/* 用户菜单-外层容器 */
+[data-slot="content"]:has([aria-label="用户菜单"]) {
+  width: 229.83px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border: 1px solid var(--border-default) !important;
+  background-color: var(--bg-sidebar) !important;
+}
+
+/* 用户菜单-内层容器 */
 .sidebar__user-profile__dropdown__menu {
-  width: 231.83px !important;
+  width: calc(100% - 8px) !important; /* 减去左右各1rem的padding */
   min-width: 0 !important;
   max-width: none !important;
 }
@@ -259,6 +265,7 @@
 
 .sidebar__user-profile__dropdown__section {
   padding: 4px 0 !important;
+  
 }
 
 

@@ -33,7 +33,7 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
           <MoreIcon
             width={18}
             height={18}
-            className="w-[18px] h-[18px]"
+            className="more-icon"
           />
         </div>
       </DropdownTrigger>
@@ -45,12 +45,12 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
       >
         <DropdownItem
           key="rename"
-          className="sidebar__navigation__qa-tree__dropdown__item text-default-500 data-[hover=true]:text-default-500 py-1 text-small"
+          className="sidebar__navigation__qa-tree__dropdown__item data-[hover=true]:bg-secondary-50"
           startContent={
             <RenameIcon
               width={20}
               height={20}
-              className="text-default-300"
+              className="rename-icon"
             />
           }
         >
@@ -58,13 +58,12 @@ function QATreeDropdown({ treeId }: { treeId: string }) {
         </DropdownItem>
         <DropdownItem
           key="delete"
-          className="sidebar__navigation__qa-tree__dropdown__item text-danger-500 data-[hover=true]:text-danger-500 py-1 text-small"
-          color="danger"
+          className="sidebar__navigation__qa-tree__dropdown__item data-[hover=true]:bg-secondary-50"
           startContent={
             <DeleteIcon
               width={20}
               height={20}
-              className="text-danger-500"
+              className="delete-icon"
             />
           }
         >
