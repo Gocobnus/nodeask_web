@@ -21,7 +21,7 @@ interface HeaderProps {
 
 export default function Header({ isCompact = false, onToggle }: HeaderProps) {
   return (
-    <div className={`${sidebarConfig.headerHeight} flex items-center justify-between transition-all duration-300 ease-in-out`}>
+    <div className={`flex items-center justify-between transition-all duration-300 ease-in-out`}>
       <div className={`flex items-center min-w-0 transition-all duration-300 ease-in-out ${
         isCompact ? 'w-0 overflow-hidden flex-none gap-0' : 'flex-1 gap-2'
       }`}>

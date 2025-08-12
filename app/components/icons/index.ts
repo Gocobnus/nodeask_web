@@ -10,4 +10,7 @@ export { default as SettingsIcon } from "../../../public/icons/sidebar/settings.
 export { default as LogoutIcon } from "../../../public/icons/sidebar/logout.svg";
 export { default as RenameIcon } from "../../../public/icons/sidebar/rename.svg";
 export { default as DeleteIcon } from "../../../public/icons/sidebar/delete.svg";
-export { default as OpenIcon } from "../../../public/icons/sidebar/open.svg"; 
+export { default as OpenIcon } from "../../../public/icons/sidebar/open.svg";
+
+// 首页图标组件导出
+export { default as SendIcon } from "../../../public/icons/homepage/send.svg"; 

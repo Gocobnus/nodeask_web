@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Spacer, ScrollShadow } from "@heroui/react";
+import "./sidebar.css";
 import Header from "./Header";
 import CreateButton from "./CreateButton";
 import Navigation from "./Navigation";

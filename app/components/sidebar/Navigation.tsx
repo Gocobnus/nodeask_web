@@ -307,7 +307,7 @@ export default function Navigation({
             width={16}
             height={16}
             className={`transition-colors ${
-              isQATreeExpanded ? "rotate-270" : "rotate-180"
+              isQATreeExpanded ? "-rotate-90" : "rotate-180"
             }`}
           />
         }
