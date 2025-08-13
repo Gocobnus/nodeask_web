@@ -28,7 +28,7 @@ export default function InputArea({
         placeholder,
         showOnlyWhenEditable: false,
         includeChildren: true,
-        emptyEditorClass: 'is-editor-empty',
+        emptyNodeClass: 'is-editor-empty',
       }),
     ],
     content: "",
@@ -40,7 +40,7 @@ export default function InputArea({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'search-section__input',
+        class: 'search-section__editor',
         style: 'outline:none;box-shadow:none;border:none;',
         'data-placeholder': placeholder,
       }
@@ -89,10 +89,14 @@ export default function InputArea({
       <div className="search-section__inner-container">
         {/* 输入框（Tiptap） */}
         {editor ? (
-          <EditorContent
-            editor={editor}
-            onKeyDown={handleKeyDown}
-          />
+          <div className="search-section__input">
+            <div className="search-section__scroller">
+              <EditorContent
+                editor={editor}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+          </div>
         ) : (
           <div
             className="search-section__input search-section__placeholder"
