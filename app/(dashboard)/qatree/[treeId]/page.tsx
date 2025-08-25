@@ -1,6 +1,3 @@
-// 知识图谱详情页面
-// 动态路由页面，根据treeId显示对应图谱的问答界面
-// 现在在dashboard路由组中，侧边栏保持持久化
 "use client";
 
 import { mockQATrees } from "../../../lib/mock-data";
