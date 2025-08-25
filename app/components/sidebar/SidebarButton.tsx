@@ -95,7 +95,7 @@ export default function SidebarButton({
         return CreateIcon;
       case "/icons/sidebar/discover.svg":
         return DiscoverIcon;
-      case "/icons/sidebar/my-graphs.svg":
+      case "/icons/sidebar/my-tree.svg":
         return MyGraphsIcon;
       case "/icons/sidebar/expand-collapse.svg":
         return ExpandCollapseIcon;

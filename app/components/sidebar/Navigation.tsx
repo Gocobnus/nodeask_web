@@ -296,7 +296,7 @@ export default function Navigation({
       
       {/* 我的图谱 - 可折叠项 */}
       <SidebarButton
-        icon="/icons/sidebar/my-graphs.svg"
+        icon="/icons/sidebar/my-tree.svg"
         title="我的图谱"
         isSelected={selectedKey === "qatree-list" && !pathname.startsWith("/qatree/")}
         isCompact={isCompact}
