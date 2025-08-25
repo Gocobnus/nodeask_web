@@ -13,4 +13,8 @@ export { default as DeleteIcon } from "../../../public/icons/sidebar/delete.svg"
 export { default as OpenIcon } from "../../../public/icons/sidebar/open.svg";
 
 // 首页图标组件导出
-export { default as SendIcon } from "../../../public/icons/homepage/send.svg"; 
+export { default as SendIcon } from "../../../public/icons/homepage/send.svg";
+
+// 卡片图标组件导出
+export { default as PullIcon } from "../../../public/icons/card/pull.svg";
+export { default as StopIcon } from "../../../public/icons/card/stop.svg"; 

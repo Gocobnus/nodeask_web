@@ -19,8 +19,10 @@ export interface ACardProps {
   content: string;
   isGenerating?: boolean;
   isCompleted?: boolean;
+  isSelected?: boolean;
   onPause?: () => void;
   onCollapse?: () => void;
   onExpand?: () => void;
   onCopy?: () => void;
+  onClick?: () => void;
 }

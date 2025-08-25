@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ACardProps } from "../../../types/qacard";
+import { PullIcon, StopIcon } from "../../icons";
 import "./answercard.css";
 
 export default function AnswerCard({
@@ -9,14 +10,19 @@ export default function AnswerCard({
   content,
   isGenerating = false,
   isCompleted = false,
+  isSelected = false,
   onPause,
   onCollapse,
   onExpand,
-  onCopy
+  onCopy,
+  onClick
 }: ACardProps) {
 
   return (
-    <div className="acard__background-card">
+    <div 
+      className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''}`}
+      onClick={onClick}
+    >
       {/* 标题栏 */}
       <div className="acard__header">
         <div className="acard__title">
@@ -31,10 +37,7 @@ export default function AnswerCard({
               type="button"
               aria-label="暂停回答"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <rect x="3" y="2" width="3" height="12" fill="currentColor" rx="1"/>
-                <rect x="10" y="2" width="3" height="12" fill="currentColor" rx="1"/>
-              </svg>
+              <StopIcon width={24} height={24} />
             </button>
           )}
           
@@ -45,15 +48,13 @@ export default function AnswerCard({
             type="button"
             aria-label="收起卡片"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 10L8 6L12 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <PullIcon width={24} height={24} />
           </button>
         </div>
       </div>
 
       {/* 回答卡 */}
-      <div className="acard__answer-card">
+      <div className="acard__answer">
         {/* Tabs区域 */}
         <div className="acard__tabs">
           <div className="acard__tab acard__tab--active">

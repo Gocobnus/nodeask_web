@@ -1,13 +1,36 @@
 .acard__background-card {
-  width: 420px;
-  height: 500px;
-  background-color: var(--qacard-bg-primary);
-  border-radius: var(--qacard-border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 10px;
+  /* ACard 尺寸和样式变量 */
+  --acard-width: 380px;
+  --acard-height: 760px;
+  --acard-inner-margin-horizontal: 8px;
+  --acard-inner-margin-top: 0px;
+  --acard-inner-margin-bottom: 16px;
+  --acard-border-radius: 20px;
+  
+  /* 背景卡样式 */
+  width: var(--acard-width);
+  height: var(--acard-height);
+  background-color: var(--acard-bg-primary);
+  border-radius: var(--acard-border-radius);
+  box-shadow: 4px 2px 16px rgba(0, 0, 0, 0.25);
+  border: 3px solid transparent;
   display: flex;
   flex-direction: column;
   margin-bottom: 16px;
+  transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.acard__background-card:hover {
+  box-shadow: 4px 2px 16px 4px rgba(0, 0, 0, 0.25);
+}
+
+.acard__background-card:active {
+  border-color: var(--acard-bg-selected-border);
+}
+
+.acard__background-card--selected {
+  border-color: var(--acard-bg-selected-border);
+  box-shadow: 4px 2px 16px 4px rgba(0, 0, 0, 0.25);
 }
 
 /* 标题栏 */
@@ -17,15 +40,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  margin-bottom: 10px;
 }
 
 /* 标题文字 */
 .acard__title {
-  color: var(--text-create-button);
-  font-size: 14px;
+  color: var(--acard-text-default);
+  font-size: 16px;
   font-weight: 500;
   flex: 1;
+  max-width: 262px; /* 380px - 32px(padding) - 70px(按钮区域) - 16px(margin) */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -36,41 +59,42 @@
 .acard__header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* 圆形按钮基础样式 */
+/* 按钮基础样式 */
 .acard__header-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   border: none;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-create-button);
+  background: none;
+  color: var(--acard-icon-default);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease-in-out;
+  padding: 0;
 }
 
 .acard__header-btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  opacity: 0.8;
 }
 
 .acard__header-btn:active {
   transform: scale(0.95);
 }
 
-/* 回答卡容器 - 400px × 432px */
-.acard__answer-card {
-  width: 400px;
-  height: 432px;
-  background-color: var(--qacard-bg-content);
-  border-radius: 8px;
+/* 回答卡容器 */
+.acard__answer {
+  margin: var(--acard-inner-margin-top) var(--acard-inner-margin-horizontal) var(--acard-inner-margin-bottom);
+  background-color: var(--acard-bg-content);
+  border-radius: 20px;
+  box-shadow: 4px 2px 16px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1;
 }
 
 /* Tabs区域 */
@@ -94,8 +118,8 @@
 }
 
 .acard__tab--active {
-  color: var(--qacard-bg-primary);
-  border-bottom-color: var(--qacard-bg-primary);
+  color: var(--acard-bg-primary);
+  border-bottom-color: var(--acard-bg-primary);
   font-weight: 500;
 }
 
@@ -110,7 +134,7 @@
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
-  color: var(--qacard-text-primary);
+  color: var(--acard-text-primary);
 }
 
 /* 底部操作栏 */
@@ -130,7 +154,7 @@
   height: 32px;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
-  background-color: var(--qacard-bg-content);
+  background-color: var(--acard-bg-content);
   color: var(--icon-default);
   cursor: pointer;
   display: flex;
@@ -163,7 +187,7 @@
     margin: 0 16px 16px 16px;
   }
   
-  .acard__answer-card {
+  .acard__answer {
     width: 100%;
     height: auto;
     min-height: 350px;
