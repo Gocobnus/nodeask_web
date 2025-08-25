@@ -12,7 +12,6 @@ export interface QANode {
 
 export interface QCardProps {
   question: string;
-  onSubmit?: () => void;
 }
 
 export interface ACardProps {
