@@ -1,0 +1,46 @@
+/* ===== QCard问题卡片样式 ===== */
+
+/* 问题卡片容器 */
+.qcard__container {
+  max-width: 420px;
+  width: 100%;
+  background-color: var(--qacard-bg-content);
+  border-radius: var(--qacard-border-radius);
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* 问题内容 */
+.qcard__content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--qacard-text-primary);
+  margin-bottom: 16px;
+}
+
+/* 操作区域 */
+.qcard__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 提交按钮 */
+.qcard__submit-btn {
+  padding: 8px 16px;
+  background-color: var(--qacard-bg-primary);
+  color: var(--text-create-button);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.qcard__submit-btn:hover {
+  opacity: 0.9;
+}
+
+.qcard__submit-btn:active {
+  transform: scale(0.98);
+}

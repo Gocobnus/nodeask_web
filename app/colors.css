@@ -31,4 +31,10 @@
   --border-default: #666666;
   
   /* 滚动条颜色 */
+  
+  /* QACard专用变量 */
+  --qacard-bg-primary: #ae7ede;
+  --qacard-bg-content: #ffffff;
+  --qacard-text-primary: #11181C;
+  --qacard-border-radius: 12px;
 }
