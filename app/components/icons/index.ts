@@ -2,7 +2,7 @@
 export { default as HomeIcon } from "../../../public/icons/sidebar/home.svg";
 export { default as CreateIcon } from "../../../public/icons/sidebar/create.svg";
 export { default as DiscoverIcon } from "../../../public/icons/sidebar/discover.svg";
-export { default as MyGraphsIcon } from "../../../public/icons/sidebar/my-tree.svg";
+export { default as TreeListIcon } from "../../../public/icons/sidebar/treelist.svg";
 export { default as ExpandCollapseIcon } from "../../../public/icons/sidebar/expand-collapse.svg";
 export { default as MoreIcon } from "../../../public/icons/sidebar/more.svg";
 export { default as DropdownIcon } from "../../../public/icons/sidebar/dropdown.svg";

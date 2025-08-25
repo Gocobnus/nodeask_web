@@ -8,7 +8,7 @@ import {
   HomeIcon,
   CreateIcon,
   DiscoverIcon,
-  MyGraphsIcon,
+  TreeListIcon,
   ExpandCollapseIcon,
   MoreIcon,
   DropdownIcon,
@@ -95,8 +95,8 @@ export default function SidebarButton({
         return CreateIcon;
       case "/icons/sidebar/discover.svg":
         return DiscoverIcon;
-      case "/icons/sidebar/my-tree.svg":
-        return MyGraphsIcon;
+      case "/icons/sidebar/treelist.svg":
+        return TreeListIcon;
       case "/icons/sidebar/expand-collapse.svg":
         return ExpandCollapseIcon;
       case "/icons/sidebar/more.svg":
