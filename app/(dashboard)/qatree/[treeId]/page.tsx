@@ -32,7 +32,7 @@ export default function QATreePage({ params }: QATreePageProps) {
   // 创建临时模拟数据用于展示卡片效果
   const mockCardData = {
     title: "什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？",
-    content: "React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。"
+    content: "React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。"
   };
 
   // 在客户端挂载前不渲染QACard组件
@@ -51,12 +51,19 @@ export default function QATreePage({ params }: QATreePageProps) {
         title={mockCardData.title}
         content={mockCardData.content}
         isGenerating={true}
-        isCompleted={false}
+        isCompleted={true}
         isSelected={isSelected}
         onPause={() => console.log('暂停回答')}
         onCollapse={() => console.log('收起卡片')}
         onExpand={() => console.log('展开更多')}
-        onCopy={() => console.log('复制内容')}
+        onCopy={async () => {
+          try {
+            await navigator.clipboard.writeText(mockCardData.content);
+            console.log('内容已复制到剪贴板');
+          } catch (err) {
+            console.error('复制失败:', err);
+          }
+        }}
         onClick={() => setIsSelected(!isSelected)}
         onDelete={() => console.log('删除卡片')}
       />

@@ -18,4 +18,6 @@ export { default as SendIcon } from "../../../public/icons/homepage/send.svg";
 // 卡片图标组件导出
 export { default as PullIcon } from "../../../public/icons/card/pull.svg";
 export { default as StopIcon } from "../../../public/icons/card/stop.svg";
-export { default as CardDeleteIcon } from "../../../public/icons/card/delete.svg"; 
+export { default as CardDeleteIcon } from "../../../public/icons/card/delete.svg";
+export { default as CopyIcon } from "../../../public/icons/card/copy.svg";
+export { default as ExplodeIcon } from "../../../public/icons/card/explode.svg"; 

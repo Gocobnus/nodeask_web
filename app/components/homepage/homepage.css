@@ -37,7 +37,7 @@
   /* 输入框相关变量，减少硬编码 */
   --input-line-height: 24px;
   --input-padding-top: 12px;
-  --input-padding-bottom: 20px;
+  --input-padding-bottom: 12px;
   --input-max-lines: 13;
   --input-content-max-h: calc(var(--input-line-height) * var(--input-max-lines));
 }

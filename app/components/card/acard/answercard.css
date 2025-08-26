@@ -16,7 +16,6 @@
   border: 3px solid transparent;
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
   position: relative;
   transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
@@ -177,7 +176,7 @@
 
 /* 底部操作栏 */
 .acard__footer {
-  height: 48px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -187,27 +186,17 @@
 
 /* 底部按钮基础样式 */
 .acard__footer-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background-color: var(--acard-bg-content);
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
   color: var(--icon-default);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease-in-out;
-}
-
-.acard__footer-btn:hover {
-  background-color: var(--bg-hover);
-  color: var(--icon-hover);
-  border-color: var(--icon-hover);
-}
-
-.acard__footer-btn:active {
-  transform: scale(0.95);
+  margin-bottom: 20px;
+  padding: 0;
 }
 
 /* 按钮隐藏状态 */
@@ -238,10 +227,14 @@
     padding: 12px 16px;
   }
   
-  .acard__header-btn,
+  .acard__header-btn {
+    width: 24px;
+    height: 24px;
+  }
+
   .acard__footer-btn {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
   }
   
   .acard__title {

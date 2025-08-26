@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { ACardProps } from "../../../types/qacard";
-import { PullIcon, StopIcon, CardDeleteIcon } from "../../icons";
+import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon } from "../../icons";
 import "./answercard.css";
 
 export default function AnswerCard({
@@ -98,9 +98,7 @@ export default function AnswerCard({
             type="button"
             aria-label="展开更多"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ExplodeIcon width={20} height={20} />
           </button>
 
           {/* 复制按钮 - 只在完成后显示 */}
@@ -110,10 +108,7 @@ export default function AnswerCard({
             type="button"
             aria-label="复制内容"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <rect x="2" y="4" width="8" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-              <path d="M6 2V3C6 3.55228 6.44772 4 7 4H13C13.5523 4 14 4.44772 14 5V11" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-            </svg>
+            <CopyIcon width={20} height={20} />
           </button>
         </div>
       </div>
