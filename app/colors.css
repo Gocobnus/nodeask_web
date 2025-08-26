@@ -31,12 +31,14 @@
   --border-default: #666666;
 
   /* 滚动条颜色 */
---scrollbar-thumb: #a1a1aa;  
+  --scrollbar-thumb: #a1a1aa;  
 
+  /* 阴影颜色 */
+  --shadow-default: rgba(0, 0, 0, 0.25);
   
   /* 卡片颜色变量 */
   --acard-bg-primary: #C9A9E9;
-  --acard-bg-content: #ffffff;
+  --acard-bg-content: #F9F9F9;
   --acard-bg-selected-border: #7828c8;
   --acard-text-default: #27272a;
   --acard-icon-default: #27272a;

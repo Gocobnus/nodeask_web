@@ -20,6 +20,25 @@ export default function QATreePage({ params }: QATreePageProps) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // 处理外部点击取消选中
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      // 如果点击的不是卡片内部，则取消选中
+      if (!target.closest('.acard__background-card')) {
+        setIsSelected(false);
+      }
+    };
+
+    if (isSelected) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSelected]);
   
   // 根据treeId查找对应的图谱数据
   const qaTree = mockQATrees.find(tree => tree.id === treeId);
@@ -64,7 +83,7 @@ export default function QATreePage({ params }: QATreePageProps) {
             console.error('复制失败:', err);
           }
         }}
-        onClick={() => setIsSelected(!isSelected)}
+        onClick={() => setIsSelected(true)}
         onDelete={() => console.log('删除卡片')}
       />
     </div>

@@ -99,7 +99,7 @@ function QATreeItem({
       <div className="group relative">
         <div className="ml-6 pl-6">
           <div
-            className={`sidebar__navigation__qa-tree__item__container flex w-11 h-11 items-center justify-center rounded-large cursor-pointer transition-colors ${
+            className={`sidebar__navigation__qa-tree__item__container flex w-11 h-11 items-center justify-center rounded-large cursor-pointer transition-all duration-200 ease-in-out ${
               isSelected 
                 ? "selected" 
                 : ""
@@ -126,7 +126,7 @@ function QATreeItem({
       <div className="ml-[20px] pl-[16px]"> 
         <div
           /* 下面是调整按钮的padding的 px-2.5=10px */
-          className={`sidebar__navigation__qa-tree__item__container flex w-full items-center px-2.5 rounded-lg h-11 cursor-pointer transition-colors ${
+          className={`sidebar__navigation__qa-tree__item__container flex w-full items-center px-2.5 rounded-lg h-11 cursor-pointer transition-all duration-200 ease-in-out ${
             isSelected 
               ? "selected" 
               : ""
@@ -163,26 +163,26 @@ function CollapsibleSection({
   
   return (
     <div 
-      className={`relative overflow-hidden transition-all ${
+      className={`relative overflow-hidden transition-all duration-200 ease-in-out ${
         isExpanded 
-          ? 'duration-300 ease-out max-h-[400px] opacity-100' 
-          : 'duration-300 ease-in max-h-0 opacity-0'
+          ? 'max-h-[400px] opacity-100' 
+          : 'max-h-0 opacity-0'
       }`}
     >
       <div 
-        className={`relative transition-transform ${
+        className={`relative transition-transform duration-200 ease-in-out ${
           isExpanded 
-            ? 'duration-300 ease-out transform translate-y-0' 
-            : 'duration-300 ease-in transform -translate-y-full'
+            ? 'transform translate-y-0' 
+            : 'transform -translate-y-full'
         }`}
       >
         {childrenArray.map((child, index) => (
           <div
             key={index}
-            className={`transition-all ${
+            className={`transition-all duration-200 ease-in-out ${
               isExpanded 
-                ? 'duration-300 ease-out opacity-100 transform translate-y-0' 
-                : 'duration-300 ease-in opacity-0 transform -translate-y-4'
+                ? 'opacity-100 transform translate-y-0' 
+                : 'opacity-0 transform -translate-y-4'
             }`}
             style={{
               transitionDelay: isExpanded 
@@ -306,7 +306,7 @@ export default function Navigation({
           <DropdownIcon
             width={16}
             height={16}
-            className={`transition-colors ${
+            className={`transition-all duration-200 ease-in-out ${
               isQATreeExpanded ? "-rotate-90" : "rotate-180"
             }`}
           />

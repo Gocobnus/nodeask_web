@@ -12,7 +12,7 @@
   height: var(--acard-height);
   background-color: var(--acard-bg-primary);
   border-radius: var(--acard-border-radius);
-  box-shadow: 4px 2px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 2px 16px var(--shadow-default);
   border: 3px solid transparent;
   display: flex;
   flex-direction: column;
@@ -21,7 +21,7 @@
 }
 
 .acard__background-card:hover {
-  box-shadow: 4px 2px 16px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 2px 16px 4px var(--shadow-default);
 }
 
 .acard__background-card:active {
@@ -30,44 +30,44 @@
 
 .acard__background-card--selected {
   border-color: var(--acard-bg-selected-border);
-  box-shadow: 4px 2px 16px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 2px 16px 4px var(--shadow-default);
 }
 
 /* 删除按钮样式 */
 .acard__delete-btn {
   position: absolute;
-  top: -35px;
+  top: -40px; /* 调整位置，使其与下方元素间距为4px */
   right: 16px;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: none;
-  color: #F31260;
+  color: var(--icon-delete);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   z-index: 10;
   padding: 0;
-  opacity: 1;
-  transform: scale(1) translateY(0);
+  opacity: 0;
+  border-radius: 6px;
 }
 
-/* 根据父元素hover状态控制删除按钮 */
-.acard__background-card:not(:hover):not(.acard__background-card--selected) .acard__delete-btn {
-  opacity: 0;
-  transform: scale(0.8) translateY(5px);
-  pointer-events: none;
+
+/* 只在卡片选中时显示删除按钮 */
+.acard__background-card--selected .acard__delete-btn {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
 }
 
 .acard__delete-btn:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
+  background-color: color-mix(in srgb, var(--icon-delete) 15%, transparent); /* 使用删除按钮颜色的半透明版本 */
 }
 
 .acard__delete-btn:active {
-  transform: scale(0.95);
+  background-color: color-mix(in srgb, var(--icon-delete) 25%, transparent);
 }
 
 /* 标题栏 */
@@ -96,13 +96,12 @@
 .acard__header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
 /* 按钮基础样式 */
 .acard__header-btn {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: none;
   color: var(--acard-icon-default);
@@ -110,16 +109,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
   padding: 0;
+  border-radius: 6px;
 }
 
 .acard__header-btn:hover {
-  opacity: 0.8;
+  background-color: color-mix(in srgb, var(--acard-icon-default) 15%, transparent);
 }
 
 .acard__header-btn:active {
-  transform: scale(0.95);
+  background-color: color-mix(in srgb, var(--acard-icon-default) 50%, transparent);
 }
 
 /* 回答卡容器 */
@@ -127,11 +127,12 @@
   margin: var(--acard-inner-margin-top) var(--acard-inner-margin-horizontal) var(--acard-inner-margin-bottom);
   background-color: var(--acard-bg-content);
   border-radius: 20px;
-  box-shadow: 4px 2px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 2px 16px var(--shadow-default);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   flex: 1;
+  min-height: 0; /* 确保flex子元素能正确收缩 */
 }
 
 /* Tabs区域 */
@@ -155,7 +156,6 @@
 
 .acard__tab--active {
   color: var(--acard-bg-primary);
-  border-bottom-color: var(--acard-bg-primary);
   font-weight: 500;
 }
 
@@ -166,7 +166,7 @@
 /* 回答内容区域 */
 .acard__content {
   flex: 1;
-  margin: 4px 0 12px 0; /* 上下使用margin防止滚动时文字突破 */
+  margin: 0px 0 12px 0; /* 上下使用margin防止滚动时文字突破 */
   padding: 0 20px 0 20px; /* 左右padding，右侧减少为滚动条留空间 */
   overflow-y: auto;
   font-size: 14px;
@@ -186,18 +186,25 @@
 
 /* 底部操作栏 */
 .acard__footer {
-  height: 40px;
+  height: 40px; /* 包含padding的总高度 */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px 20px 20px;
+  padding: 0 12px 20px 12px;
+  flex-shrink: 0;
+}
+
+/* 为了保持卡片高度固定，当footer不存在时用占位元素 */
+.acard__answer:not(:has(.acard__footer))::after {
+  content: '';
+  height: 40px; /* 与footer相同的高度 */
   flex-shrink: 0;
 }
 
 /* 底部按钮基础样式 */
 .acard__footer-btn {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   border: none;
   background: none;
   color: var(--icon-default);
@@ -206,6 +213,16 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  border-radius: 6px;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.acard__footer-btn:hover {
+  background-color: color-mix(in srgb, var(--icon-default) 15%, transparent);
+}
+
+.acard__footer-btn:active {
+  background-color: color-mix(in srgb, var(--icon-default) 50%, transparent);
 }
 
 /* 按钮隐藏状态 */

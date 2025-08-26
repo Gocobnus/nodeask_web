@@ -124,13 +124,16 @@ export default function SidebarButton({
       placement="right" 
       isDisabled={!isCompact}
       offset={4}
+      size="sm"
+      radius="sm"
+      closeDelay={0}
       classNames={{
-        content: "bg-[#F9F9F9] text-[#666666]"
+        content: "bg-[#F9F9F9] text-[#666666]",
       }}
     >
       <div
         className={cn(
-          `${getContainerClass()} flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-300 ease-in-out w-full`,
+          `${getContainerClass()} flex items-center min-h-11 rounded-large cursor-pointer transition-all duration-200 ease-in-out w-full`,
           isPrimary
             ? "create-button"
             : isSelected
@@ -145,17 +148,17 @@ export default function SidebarButton({
               width={24}
               height={24}
               className={cn(
-                "transition-all duration-300 ease-in-out",
+                "transition-all duration-200 ease-in-out",
               )}
             />
           )}
         </span>
-        <span className={`${getTextClass()} text-base font-medium transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap flex-1`}>
+        <span className={`${getTextClass()} text-base font-medium transition-all duration-200 ease-in-out overflow-hidden whitespace-nowrap flex-1`}>
           {title}
         </span>
         
         {endContent && (
-          <span className={`${getBadgeClass()} transition-all duration-300 ease-in-out flex-shrink-0`}>
+          <span className={`${getBadgeClass()} transition-all duration-200 ease-in-out flex-shrink-0`}>
             {endContent}
           </span>
         )}

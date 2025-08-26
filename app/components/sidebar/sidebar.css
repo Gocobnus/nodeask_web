@@ -55,6 +55,13 @@
   background-color: var(--bg-hover) !important;
 }
 
+/* 切换按钮按下效果 */
+.sidebar__header__toggle:active {
+  background-color: var(--bg-selected) !important;
+  opacity: 0.8 !important;
+  transition: opacity 0.1s ease-in-out, background-color 0.1s ease-in-out !important;
+}
+
 /* 收起状态下的logo隐藏 */
 [data-expanded="false"] .sidebar__header__logo {
   opacity: 0 !important;
@@ -190,7 +197,8 @@
 .sidebar__create-button__container {
   width: 100% !important;
   min-width: 0 !important;
-  padding: 10px !important; 
+  padding: 10px !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 /* 创建按钮文字边距 */
@@ -198,7 +206,7 @@
   margin-left: 10px !important; /* 改为10px */
   min-width: 0 !important;
   font-size: 14px !important; /* 字号改为14px */
-  transition: opacity 0.01s ease-out !important; /* 快速透明度过渡，这里让文字慢一点变透明可以顺滑 */
+  transition: opacity 0.01s ease-out !important; /* 与导航栏按钮文字保持一致 */
 }
 
 /* 收起状态下的创建按钮文字隐藏 */
@@ -227,6 +235,12 @@
 /* hover状态 */
 .sidebar__create-button__container.create-button:hover {
   opacity: 0.85 !important;
+}
+
+/* 按下状态 */
+.sidebar__create-button__container.create-button:active {
+  opacity: 0.75 !important;
+  transition: opacity 0.2s ease-in-out !important;
 }
 
 /* ===== 子图谱按钮样式 ===== */
@@ -412,7 +426,6 @@
   width: 229.83px !important;
   min-width: 0 !important;
   max-width: none !important;
-  border: 1px solid var(--border-default) !important;
   background-color: var(--bg-sidebar) !important;
   padding: 0px !important;
 }
