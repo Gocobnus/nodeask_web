@@ -58,6 +58,7 @@ export default function QATreePage({ params }: QATreePageProps) {
         onExpand={() => console.log('展开更多')}
         onCopy={() => console.log('复制内容')}
         onClick={() => setIsSelected(!isSelected)}
+        onDelete={() => console.log('删除卡片')}
       />
     </div>
   );

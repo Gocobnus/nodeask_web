@@ -17,6 +17,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 16px;
+  position: relative;
   transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
 }
 
@@ -31,6 +32,43 @@
 .acard__background-card--selected {
   border-color: var(--acard-bg-selected-border);
   box-shadow: 4px 2px 16px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* 删除按钮样式 */
+.acard__delete-btn {
+  position: absolute;
+  top: -35px;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: #F31260;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  z-index: 10;
+  padding: 0;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* 根据父元素hover状态控制删除按钮 */
+.acard__background-card:not(:hover):not(.acard__background-card--selected) .acard__delete-btn {
+  opacity: 0;
+  transform: scale(0.8) translateY(5px);
+  pointer-events: none;
+}
+
+.acard__delete-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.acard__delete-btn:active {
+  transform: scale(0.95);
 }
 
 /* 标题栏 */
@@ -100,7 +138,6 @@
 /* Tabs区域 */
 .acard__tabs {
   height: 40px;
-  border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -145,7 +182,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  border-top: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 

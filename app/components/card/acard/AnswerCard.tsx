@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { ACardProps } from "../../../types/qacard";
-import { PullIcon, StopIcon } from "../../icons";
+import { PullIcon, StopIcon, CardDeleteIcon } from "../../icons";
 import "./answercard.css";
 
 export default function AnswerCard({
@@ -15,14 +15,33 @@ export default function AnswerCard({
   onCollapse,
   onExpand,
   onCopy,
-  onClick
+  onClick,
+  onDelete
 }: ACardProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div 
       className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''}`}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* 删除按钮 - CSS控制显示/隐藏 */}
+      {onDelete && (
+        <button
+          className="acard__delete-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          type="button"
+          aria-label="删除卡片"
+        >
+          <CardDeleteIcon width={24} height={24} />
+        </button>
+      )}
+
       {/* 标题栏 */}
       <div className="acard__header">
         <div className="acard__title">
