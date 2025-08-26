@@ -166,12 +166,22 @@
 /* 回答内容区域 */
 .acard__content {
   flex: 1;
-  padding: 16px 20px;
+  margin: 4px 0 12px 0; /* 上下使用margin防止滚动时文字突破 */
+  padding: 0 20px 0 20px; /* 左右padding，右侧减少为滚动条留空间 */
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6; /* 增加行间距，可调整为1.4-2.0之间 */
   color: var(--acard-text-primary);
   white-space: pre-wrap; /* 保留换行和空格 */
+  box-sizing: border-box;
+  /* 滚动条样式 */
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
+  scrollbar-gutter: stable; /* 为滚动条预留空间 */
+}
+
+/* WebKit浏览器滚动条样式 */
+.acard__content::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent);
 }
 
 /* 底部操作栏 */
@@ -180,7 +190,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 20px 20px 20px;
   flex-shrink: 0;
 }
 
@@ -195,7 +205,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
   padding: 0;
 }
 

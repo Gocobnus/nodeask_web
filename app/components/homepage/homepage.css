@@ -95,7 +95,7 @@
 
 /* 让编辑器根节点填满滚动容器，不占用 padding */
 .search-section__scroller { height: auto; max-height: var(--input-content-max-h); overflow-y: auto; padding-right: 8px; }
-/* 仅调整滚动条颜色更浅（不改任何其它样式） */
+/* 调整滚动条颜色 */
 .search-section__scroller { scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent; }
 .search-section__scroller::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent); }
 .search-section__input .search-section__editor { padding: 0; margin: 0; min-height: 24px; }

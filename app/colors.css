@@ -29,8 +29,10 @@
 
   /* 边框颜色 */
   --border-default: #666666;
-  
+
   /* 滚动条颜色 */
+--scrollbar-thumb: #a1a1aa;  
+
   
   /* 卡片颜色变量 */
   --acard-bg-primary: #C9A9E9;
