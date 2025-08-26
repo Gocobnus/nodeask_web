@@ -45,21 +45,20 @@
   color: var(--icon-default) !important;
 }
 
-/* hover状态 */
-.sidebar__header__toggle-icon:hover {
-  color: var(--icon-hover) !important;
-}
-
 /* 切换按钮悬停效果 */
 .sidebar__header__toggle:hover {
   background-color: var(--bg-hover) !important;
 }
 
+/* 按钮悬停时图标变色 */
+.sidebar__header__toggle:hover .sidebar__header__toggle-icon {
+  color: var(--icon-hover) !important;
+}
+
 /* 切换按钮按下效果 */
 .sidebar__header__toggle:active {
-  background-color: var(--bg-selected) !important;
-  opacity: 0.8 !important;
-  transition: opacity 0.1s ease-in-out, background-color 0.1s ease-in-out !important;
+  background-color: color-mix(in srgb, var(--icon-selected) 20%, transparent) !important;
+  transition: background-color 0.1s ease-in-out !important;
 }
 
 /* 收起状态下的logo隐藏 */
@@ -239,8 +238,7 @@
 
 /* 按下状态 */
 .sidebar__create-button__container.create-button:active {
-  opacity: 0.75 !important;
-  transition: opacity 0.2s ease-in-out !important;
+  background-color: color-mix(in srgb, var(--bg-create-button) 20%, #180828) !important;
 }
 
 /* ===== 子图谱按钮样式 ===== */

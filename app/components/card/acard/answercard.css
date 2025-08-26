@@ -150,7 +150,6 @@
   font-size: 14px;
   color: var(--text-default);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.2s ease-in-out;
 }
 

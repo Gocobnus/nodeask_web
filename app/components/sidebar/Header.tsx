@@ -31,19 +31,17 @@ export default function Header({ isCompact = false, onToggle }: HeaderProps) {
         </span>
       </div>
       
-      <Button
-        isIconOnly
-        className="sidebar__header__toggle h-11 w-11 min-w-11 min-h-11 transition-all duration-300 ease-in-out"
-        size="sm"
-        variant="light"
-        onPress={onToggle}
+      <button
+        type="button"
+        className="sidebar__header__toggle h-11 w-11 min-w-11 min-h-11 transition-all duration-300 ease-in-out flex items-center justify-center"
+        onClick={onToggle}
       >
         <ExpandCollapseIcon 
           width={24} 
           height={24}
           className="sidebar__header__toggle-icon transition-transform duration-300 ease-in-out"
         />
-      </Button>
+      </button>
     </div>
   );
 } 
