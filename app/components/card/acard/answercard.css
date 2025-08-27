@@ -111,12 +111,11 @@
 }
 
 /* 按钮基础样式 */
-.acard__header-btn {
+.acard__icon-btn {
   width: 32px;
   height: 32px;
   border: none;
   background: none;
-  color: var(--acard-icon-default);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -126,8 +125,12 @@
   border-radius: 6px;
 }
 
-.acard__header-btn svg {
+.acard__icon-btn svg {
   transition: transform 0.3s ease-in-out;
+}
+
+.acard__header-btn {
+  color: var(--acard-icon-default);
 }
 
 .acard__header-btn:hover {
@@ -136,6 +139,18 @@
 
 .acard__header-btn:active {
   background-color: color-mix(in srgb, var(--acard-icon-default) 50%, transparent);
+}
+
+.acard__footer-btn {
+  color: var(--icon-default);
+}
+
+.acard__footer-btn:hover {
+  background-color: color-mix(in srgb, var(--icon-default) 15%, transparent);
+}
+
+.acard__footer-btn:active {
+  background-color: color-mix(in srgb, var(--icon-default) 50%, transparent);
 }
 
 /* 回答卡容器 */
@@ -227,33 +242,6 @@
   content: '';
   height: 40px;
   flex-shrink: 0;
-}
-
-.acard__footer-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  color: var(--icon-default);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: 6px;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-
-.acard__footer-btn:hover {
-  background-color: color-mix(in srgb, var(--icon-default) 15%, transparent);
-}
-
-.acard__footer-btn:active {
-  background-color: color-mix(in srgb, var(--icon-default) 50%, transparent);
-}
-
-.acard__btn--hidden {
-  display: none !important;
 }
 
 /* 响应式设计 */

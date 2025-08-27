@@ -2,9 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Tooltip } from "@heroui/react";
 import { ACardProps } from "../../../types/qacard";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon } from "../../icons";
+import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
 
 export default function AnswerCard({
@@ -20,7 +20,6 @@ export default function AnswerCard({
   onClick,
   onDelete
 }: ACardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -95,14 +94,6 @@ export default function AnswerCard({
     }
   }, [activeTab, content, isCollapsed]);
 
-  // 当切换到回答标签页时，立即更新高度
-  useEffect(() => {
-    if (activeTab === 'answer' && contentRef.current) {
-      const contentHeight = contentRef.current.scrollHeight || 0;
-      setAnswerContentHeight(contentHeight);
-    }
-  }, [activeTab]);
-
   return (
     <motion.div 
       className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''} ${isCollapsed ? 'acard__background-card--collapsed' : ''}`}
@@ -114,22 +105,13 @@ export default function AnswerCard({
         ease: [0.25, 0.46, 0.45, 0.94] 
       }}
       onClick={handleCardClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="acard__background-card-wrapper">
         {/* 删除按钮 - CSS控制显示/隐藏 */}
         {onDelete && (
-          <Tooltip 
+          <CustomTooltip 
             placement="left"
             content="删除" 
-            closeDelay={0}
-            size="sm"
-            radius="sm"
-            offset={4}
-            classNames={{
-              content: "bg-[#27272a] text-[#ffffff]"
-            }}
           >
             <button
               className="acard__delete-btn"
@@ -142,7 +124,7 @@ export default function AnswerCard({
             >
               <CardDeleteIcon width={24} height={24} />
             </button>
-          </Tooltip>
+          </CustomTooltip>
         )}
 
         {/* 标题栏 */}
@@ -151,51 +133,37 @@ export default function AnswerCard({
             {title}
           </div>
           <div className="acard__header-actions">
-                        {/* 暂停回答按钮 - 只在生成中显示 */}
+              {/* 暂停回答按钮 - 只在生成中显示 */}
               {isGenerating && (
-                <Tooltip 
+                <CustomTooltip 
                   content="暂停回答" 
-                  closeDelay={0}
-                  size="sm" 
-                  radius="sm"
                   placement="bottom"
-                  offset={4}
-                  classNames={{
-                    content: "bg-[#27272a] text-[#ffffff]"
-                  }}
                 >
                   <button
-                    className="acard__header-btn"
+                    className="acard__icon-btn acard__header-btn"
                     onClick={onPause}
                     type="button"
                     aria-label="暂停回答"
                   >
                     <StopIcon width={24} height={24} />
                   </button>
-                </Tooltip>
+                </CustomTooltip>
               )}
               
               {/* 收起/展开按钮 */}
-              <Tooltip 
+              <CustomTooltip 
                 content={isCollapsed ? "展开" : "收起"} 
-                closeDelay={0}
-                size="sm" 
-                radius="sm"
                 placement="bottom"
-                offset={4}
-                classNames={{
-                  content: "bg-[#27272a] text-[#ffffff]"
-                }}
               >
                 <button
-                  className="acard__header-btn"
+                  className="acard__icon-btn acard__header-btn"
                   onClick={handleCollapseToggle}
                   type="button"
                   aria-label={isCollapsed ? "展开" : "收起"}
                 >
                   <PullIcon width={24} height={24} className={isCollapsed ? "rotate-180" : ""} />
                 </button>
-              </Tooltip>
+              </CustomTooltip>
           </div>
         </div>
 
@@ -237,12 +205,6 @@ export default function AnswerCard({
                 flex: activeTab === 'answer' ? '1' : 'none'
               }}
             >
-              {/* 调试信息 - 临时显示 */}
-              {process.env.NODE_ENV === 'development' && (
-                <div style={{fontSize: '10px', color: '#666', marginBottom: '8px'}}>
-                  activeTab: {activeTab}, answerContentHeight: {answerContentHeight}px
-                </div>
-              )}
               {activeTab === 'answer' ? (
                 content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.\n\n支持多行文本显示，可以包含各种格式的内容。"
               ) : (
@@ -254,50 +216,36 @@ export default function AnswerCard({
             <div className="acard__footer">
               {/* 展开按钮 - 只在回答tab且完成后显示 */}
               {activeTab === 'answer' && isCompleted && (
-                <Tooltip 
+                <CustomTooltip 
                   content="展开" 
-                  closeDelay={0}
-                  size="sm" 
-                  radius="sm"
                   placement="bottom"
-                  offset={4}
-                  classNames={{
-                    content: "bg-[#27272a] text-[#ffffff]"
-                  }}
                 >
                   <button
-                    className="acard__footer-btn"
+                    className="acard__icon-btn acard__footer-btn"
                     onClick={onExpand}
                     type="button"
                     aria-label="展开"
                   >
                     <ExplodeIcon width={20} height={20} />
                   </button>
-                </Tooltip>
+                </CustomTooltip>
               )}
 
               {/* 复制按钮 - 只在回答tab且完成后显示 */}
               {activeTab === 'answer' && isCompleted && (
-                <Tooltip 
+                <CustomTooltip 
                   content="复制" 
-                  closeDelay={0}
-                  size="sm" 
-                  radius="sm"
                   placement="bottom"
-                  offset={4}
-                  classNames={{
-                    content: "bg-[#27272a] text-[#ffffff]"
-                  }}
                 >
                   <button
-                    className="acard__footer-btn"
+                    className="acard__icon-btn acard__footer-btn"
                     onClick={onCopy}
                     type="button"
                     aria-label="复制"
                   >
                     <CopyIcon width={20} height={20} />
                   </button>
-                </Tooltip>
+                </CustomTooltip>
               )}
             </div>
           </div>
