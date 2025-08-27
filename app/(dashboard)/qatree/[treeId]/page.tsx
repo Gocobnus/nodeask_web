@@ -51,13 +51,13 @@ export default function QATreePage({ params }: QATreePageProps) {
   // 创建临时模拟数据用于展示卡片效果
   const mockCardData = {
     title: "什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？",
-    content: "React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。React的useState Hook是一个函数，允许你在函数组件中添加state。它返回一个数组，包含当前状态值和一个可以更新状态的函数。\n\n例如：\n```javascript\nconst [count, setCount] = useState(0);\n```\n\n这里count是状态值，setCount是更新函数，0是初始值。"
+    content: "React的useState Hook是"
   };
 
   // 在客户端挂载前不渲染QACard组件
   if (!isMounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-6">
+      <div className="flex items-start justify-center min-h-screen p-6 pt-[15vh]">
         {/* 加载占位 */}
         <div className="w-[380px] h-[452px] bg-gray-200 rounded-lg animate-pulse"></div>
       </div>
@@ -65,7 +65,7 @@ export default function QATreePage({ params }: QATreePageProps) {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-6">
+    <div className="flex items-start justify-center min-h-screen p-6 pt-[15vh]">
       <AnswerCard
         title={mockCardData.title}
         content={mockCardData.content}

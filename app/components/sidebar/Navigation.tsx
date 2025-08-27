@@ -163,14 +163,14 @@ function CollapsibleSection({
   
   return (
     <div 
-      className={`relative overflow-hidden transition-all duration-200 ease-in-out ${
+      className={`relative overflow-hidden transition-all duration-400 ease-in-out ${
         isExpanded 
           ? 'max-h-[400px] opacity-100' 
           : 'max-h-0 opacity-0'
       }`}
     >
       <div 
-        className={`relative transition-transform duration-200 ease-in-out ${
+        className={`relative transition-transform duration-400 ease-in-out ${
           isExpanded 
             ? 'transform translate-y-0' 
             : 'transform -translate-y-full'
