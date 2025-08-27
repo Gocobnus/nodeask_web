@@ -101,7 +101,7 @@ export default function AnswerCard({
         height: isCollapsed ? 48 : 'auto'
       }}
       transition={{ 
-        duration: 0.4, 
+        duration: 0.3, 
         ease: [0.25, 0.46, 0.45, 0.94] 
       }}
       onClick={handleCardClick}
@@ -175,7 +175,7 @@ export default function AnswerCard({
             height: isCollapsed ? 0 : 'auto'
           }}
           transition={{ 
-            duration: 0.4, 
+            duration: 0.3, 
             ease: [0.25, 0.46, 0.45, 0.94] 
           }}
         >
