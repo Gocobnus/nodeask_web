@@ -117,43 +117,67 @@ export default function AnswerCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 删除按钮 - CSS控制显示/隐藏 */}
-      {onDelete && (
-        <Tooltip 
-          placement="left"
-          content="删除" 
-          closeDelay={0}
-          size="sm"
-          radius="sm"
-          offset={4}
-          classNames={{
-            content: "bg-[#27272a] text-[#ffffff]"
-          }}
-        >
-          <button
-            className="acard__delete-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
+      <div className="acard__background-card-wrapper">
+        {/* 删除按钮 - CSS控制显示/隐藏 */}
+        {onDelete && (
+          <Tooltip 
+            placement="left"
+            content="删除" 
+            closeDelay={0}
+            size="sm"
+            radius="sm"
+            offset={4}
+            classNames={{
+              content: "bg-[#27272a] text-[#ffffff]"
             }}
-            type="button"
-            aria-label="删除"
           >
-            <CardDeleteIcon width={24} height={24} />
-          </button>
-        </Tooltip>
-      )}
+            <button
+              className="acard__delete-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              type="button"
+              aria-label="删除"
+            >
+              <CardDeleteIcon width={24} height={24} />
+            </button>
+          </Tooltip>
+        )}
 
-      {/* 标题栏 */}
-      <div className="acard__header">
-        <div className="acard__title">
-          {title}
-        </div>
-        <div className="acard__header-actions">
-                      {/* 暂停回答按钮 - 只在生成中显示 */}
-            {isGenerating && (
+        {/* 标题栏 */}
+        <div className="acard__header">
+          <div className="acard__title">
+            {title}
+          </div>
+          <div className="acard__header-actions">
+                        {/* 暂停回答按钮 - 只在生成中显示 */}
+              {isGenerating && (
+                <Tooltip 
+                  content="暂停回答" 
+                  closeDelay={0}
+                  size="sm" 
+                  radius="sm"
+                  placement="bottom"
+                  offset={4}
+                  classNames={{
+                    content: "bg-[#27272a] text-[#ffffff]"
+                  }}
+                >
+                  <button
+                    className="acard__header-btn"
+                    onClick={onPause}
+                    type="button"
+                    aria-label="暂停回答"
+                  >
+                    <StopIcon width={24} height={24} />
+                  </button>
+                </Tooltip>
+              )}
+              
+              {/* 收起/展开按钮 */}
               <Tooltip 
-                content="暂停回答" 
+                content={isCollapsed ? "展开" : "收起"} 
                 closeDelay={0}
                 size="sm" 
                 radius="sm"
@@ -165,140 +189,120 @@ export default function AnswerCard({
               >
                 <button
                   className="acard__header-btn"
-                  onClick={onPause}
+                  onClick={handleCollapseToggle}
                   type="button"
-                  aria-label="暂停回答"
+                  aria-label={isCollapsed ? "展开" : "收起"}
                 >
-                  <StopIcon width={24} height={24} />
+                  <PullIcon width={24} height={24} className={isCollapsed ? "rotate-180" : ""} />
                 </button>
               </Tooltip>
-            )}
-            
-            {/* 收起/展开按钮 */}
-            <Tooltip 
-              content={isCollapsed ? "展开" : "收起"} 
-              closeDelay={0}
-              size="sm" 
-              radius="sm"
-              placement="bottom"
-              offset={4}
-              classNames={{
-                content: "bg-[#27272a] text-[#ffffff]"
-              }}
-            >
-              <button
-                className="acard__header-btn"
-                onClick={handleCollapseToggle}
-                type="button"
-                aria-label={isCollapsed ? "展开" : "收起"}
-              >
-                <PullIcon width={24} height={24} className={isCollapsed ? "rotate-180" : ""} />
-              </button>
-            </Tooltip>
-        </div>
-      </div>
-
-      {/* 回答卡 */}
-      <motion.div 
-        className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
-        animate={{
-          opacity: isCollapsed ? 0 : 1,
-          height: isCollapsed ? 0 : 'auto'
-        }}
-        transition={{ 
-          duration: 0.4, 
-          ease: [0.25, 0.46, 0.45, 0.94] 
-        }}
-      >
-        {/* Tabs区域 */}
-        <div className="acard__tabs">
-          <div 
-            className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
-            onClick={() => setActiveTab('answer')}
-          >
-            回答
-          </div>
-          <div 
-            className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
-            onClick={() => setActiveTab('related')}
-          >
-            相关问题
           </div>
         </div>
 
-        {/* 内容区域 */}
-        <div 
-          className="acard__content" 
-          ref={contentRef}
-          style={{
-            height: activeTab === 'answer' ? 'auto' : (answerContentHeight ? `${answerContentHeight}px` : 'auto'),
-            flex: activeTab === 'answer' ? '1' : 'none'
+        {/* 回答卡 */}
+        <motion.div 
+          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
+          animate={{
+            opacity: isCollapsed ? 0 : 1,
+            height: isCollapsed ? 0 : 'auto'
+          }}
+          transition={{ 
+            duration: 0.4, 
+            ease: [0.25, 0.46, 0.45, 0.94] 
           }}
         >
-          {/* 调试信息 - 临时显示 */}
-          {process.env.NODE_ENV === 'development' && (
-            <div style={{fontSize: '10px', color: '#666', marginBottom: '8px'}}>
-              activeTab: {activeTab}, answerContentHeight: {answerContentHeight}px
+          <div className="acard__answer-content-wrapper">
+            {/* Tabs区域 */}
+            <div className="acard__tabs">
+              <div 
+                className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
+                onClick={() => setActiveTab('answer')}
+              >
+                回答
+              </div>
+              <div 
+                className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
+                onClick={() => setActiveTab('related')}
+              >
+                相关问题
+              </div>
             </div>
-          )}
-          {activeTab === 'answer' ? (
-            content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果。\n\n支持多行文本显示，可以包含各种格式的内容。"
-          ) : (
-            "这里会显示相关问题的内容。可以包含推荐的后续问题、相关主题链接等。当前是占位内容，实际使用时会根据回答内容智能生成相关问题。"
-          )}
-        </div>
 
-        {/* 底部操作栏 - 始终显示以保持高度一致 */}
-        <div className="acard__footer">
-          {/* 展开按钮 - 只在回答tab且完成后显示 */}
-          {activeTab === 'answer' && isCompleted && (
-            <Tooltip 
-              content="展开" 
-              closeDelay={0}
-              size="sm" 
-              radius="sm"
-              placement="bottom"
-              offset={4}
-              classNames={{
-                content: "bg-[#27272a] text-[#ffffff]"
+            {/* 内容区域 */}
+            <div 
+              className="acard__content" 
+              ref={contentRef}
+              style={{
+                height: activeTab === 'answer' ? 'auto' : (answerContentHeight ? `${answerContentHeight}px` : 'auto'),
+                flex: activeTab === 'answer' ? '1' : 'none'
               }}
             >
-              <button
-                className="acard__footer-btn"
-                onClick={onExpand}
-                type="button"
-                aria-label="展开"
-              >
-                <ExplodeIcon width={20} height={20} />
-              </button>
-            </Tooltip>
-          )}
+              {/* 调试信息 - 临时显示 */}
+              {process.env.NODE_ENV === 'development' && (
+                <div style={{fontSize: '10px', color: '#666', marginBottom: '8px'}}>
+                  activeTab: {activeTab}, answerContentHeight: {answerContentHeight}px
+                </div>
+              )}
+              {activeTab === 'answer' ? (
+                content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.\n\n支持多行文本显示，可以包含各种格式的内容。"
+              ) : (
+                "这里会显示相关问题的内容。可以包含推荐的后续问题、相关主题链接等。当前是占位内容，实际使用时会根据回答内容智能生成相关问题。"
+              )}
+            </div>
 
-          {/* 复制按钮 - 只在回答tab且完成后显示 */}
-          {activeTab === 'answer' && isCompleted && (
-            <Tooltip 
-              content="复制" 
-              closeDelay={0}
-              size="sm" 
-              radius="sm"
-              placement="bottom"
-              offset={4}
-              classNames={{
-                content: "bg-[#27272a] text-[#ffffff]"
-              }}
-            >
-              <button
-                className="acard__footer-btn"
-                onClick={onCopy}
-                type="button"
-                aria-label="复制"
-              >
-                <CopyIcon width={20} height={20} />
-              </button>
-            </Tooltip>
-          )}
-        </div>
-      </motion.div>
+            {/* 底部操作栏 - 始终显示以保持高度一致 */}
+            <div className="acard__footer">
+              {/* 展开按钮 - 只在回答tab且完成后显示 */}
+              {activeTab === 'answer' && isCompleted && (
+                <Tooltip 
+                  content="展开" 
+                  closeDelay={0}
+                  size="sm" 
+                  radius="sm"
+                  placement="bottom"
+                  offset={4}
+                  classNames={{
+                    content: "bg-[#27272a] text-[#ffffff]"
+                  }}
+                >
+                  <button
+                    className="acard__footer-btn"
+                    onClick={onExpand}
+                    type="button"
+                    aria-label="展开"
+                  >
+                    <ExplodeIcon width={20} height={20} />
+                  </button>
+                </Tooltip>
+              )}
+
+              {/* 复制按钮 - 只在回答tab且完成后显示 */}
+              {activeTab === 'answer' && isCompleted && (
+                <Tooltip 
+                  content="复制" 
+                  closeDelay={0}
+                  size="sm" 
+                  radius="sm"
+                  placement="bottom"
+                  offset={4}
+                  classNames={{
+                    content: "bg-[#27272a] text-[#ffffff]"
+                  }}
+                >
+                  <button
+                    className="acard__footer-btn"
+                    onClick={onCopy}
+                    type="button"
+                    aria-label="复制"
+                  >
+                    <CopyIcon width={20} height={20} />
+                  </button>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
