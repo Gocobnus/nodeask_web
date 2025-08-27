@@ -51,7 +51,7 @@ export default function QATreePage({ params }: QATreePageProps) {
   // 创建临时模拟数据用于展示卡片效果
   const mockCardData = {
     title: "什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？",
-    content: "React的useState Hook是"
+    content: "React的useState Hook是React"
   };
 
   // 在客户端挂载前不渲染QACard组件

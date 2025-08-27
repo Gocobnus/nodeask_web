@@ -143,8 +143,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: calc(var(--acard-min-height) - var(--header-height) - 24px); /* 280px - 48px - 24px = 208px */
-  max-height: calc(var(--acard-max-height) - var(--header-height) - 24px); /* 760px - 48px - 24px = 688px */
+  min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom)); 
+  max-height: calc(var(--acard-max-height) - var(--header-height) - var(--acard-inner-margin-bottom)); 
   transform-origin: top center;
   will-change: height, opacity;
 
