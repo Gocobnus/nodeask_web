@@ -275,15 +275,6 @@
     padding: 12px 16px;
   }
   
-  .acard__header-btn {
-    width: 24px;
-    height: 24px;
-  }
-
-  .acard__footer-btn {
-    width: 20px;
-    height: 20px;
-  }
   
   .acard__title {
     font-size: 13px;
@@ -315,9 +306,4 @@
     padding: 0 12px;
   }
   
-  .acard__header-btn,
-  .acard__footer-btn {
-    width: 26px;
-    height: 26px;
-  }
 }
