@@ -16,7 +16,7 @@
   border-radius: var(--acard-border-radius);
   box-shadow: 4px 2px 16px var(--shadow-default);
   border: none;
-  outline: 3px solid transparent;
+  outline: 2px solid transparent;
   outline-offset: 0;
   position: relative;
   transition: box-shadow 0.2s ease-in-out, outline-color 0.2s ease-in-out;
@@ -48,6 +48,10 @@
   max-height: var(--card-max-height);
 }
 
+.acard__background-card--collapsed .acard__background-card-wrapper {
+  min-height: 0;
+}
+
 /* 删除按钮 */
 .acard__delete-btn {
   position: absolute;
@@ -62,17 +66,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s ease-in-out;
   z-index: 10;
   padding: 0;
   opacity: 0;
   border-radius: 6px;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.95);
 }
 
 .acard__background-card--selected .acard__delete-btn {
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: scale(1);
   pointer-events: auto;
+  visibility: visible;
 }
 
 .acard__delete-btn:hover {
