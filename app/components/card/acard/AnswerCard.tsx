@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -100,7 +100,7 @@ export default function AnswerCard({
       animate={{
         height: isCollapsed ? 48 : 'auto'
       }}
-      transition={{ 
+      transition={{
         duration: 0.3, 
         ease: [0.25, 0.46, 0.45, 0.94] 
       }}
@@ -170,14 +170,6 @@ export default function AnswerCard({
         {/* 回答卡 */}
         <motion.div 
           className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
-          animate={{
-            opacity: isCollapsed ? 0 : 1,
-            height: isCollapsed ? 0 : 'auto'
-          }}
-          transition={{ 
-            duration: 0.3, 
-            ease: [0.25, 0.46, 0.45, 0.94] 
-          }}
         >
           <div className="acard__answer-content-wrapper">
             {/* Tabs区域 */}
@@ -206,7 +198,7 @@ export default function AnswerCard({
               }}
             >
               {activeTab === 'answer' ? (
-                content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.\n\n支持多行文本显示，可以包含各种格式的内容。"
+                content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"
               ) : (
                 "这里会显示相关问题的内容。可以包含推荐的后续问题、相关主题链接等。当前是占位内容，实际使用时会根据回答内容智能生成相关问题。"
               )}
