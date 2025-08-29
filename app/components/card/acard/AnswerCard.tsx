@@ -26,6 +26,17 @@ export default function AnswerCard({
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const iconVariants = {
+    open: {
+      opacity: 1,
+      transition: { delay: 0.3, duration: 0.2 }
+    },
+    closed: {
+      opacity: 0,
+      transition: { duration: 0.01 }
+    }
+  };
+
   // 处理卡片点击 - 如果未选中则选中，如果已选中则保持选中
   const handleCardClick = () => {
     if (!isSelected && onClick) {
@@ -212,14 +223,16 @@ export default function AnswerCard({
                   content="展开" 
                   placement="bottom"
                 >
-                  <button
+                  <motion.button
                     className="acard__icon-btn acard__footer-btn"
                     onClick={onExpand}
                     type="button"
                     aria-label="展开"
+                    variants={iconVariants}
+                    animate={isCollapsed ? "closed" : "open"}
                   >
                     <ExplodeIcon width={20} height={20} />
-                  </button>
+                  </motion.button>
                 </CustomTooltip>
               )}
 
@@ -229,14 +242,16 @@ export default function AnswerCard({
                   content="复制" 
                   placement="bottom"
                 >
-                  <button
+                  <motion.button
                     className="acard__icon-btn acard__footer-btn"
                     onClick={onCopy}
                     type="button"
                     aria-label="复制"
+                    variants={iconVariants}
+                    animate={isCollapsed ? "closed" : "open"}
                   >
                     <CopyIcon width={20} height={20} />
-                  </button>
+                  </motion.button>
                 </CustomTooltip>
               )}
             </div>
