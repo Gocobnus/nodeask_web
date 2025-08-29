@@ -181,6 +181,13 @@ export default function AnswerCard({
         {/* 回答卡 */}
         <motion.div 
           className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
+          // animate={{
+          //   opacity: isCollapsed ? 0 : 1
+          // }}
+          // transition={{
+          //   duration: 0.3, 
+          //   ease: [0.25, 0.46, 0.45, 0.94] 
+          // }}
         >
           <div className="acard__answer-content-wrapper">
             {/* Tabs区域 */}
