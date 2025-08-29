@@ -151,6 +151,7 @@
 
 .acard__footer-btn {
   color: var(--icon-default);
+  margin-top: -6px;
 }
 
 .acard__footer-btn:hover {
@@ -239,9 +240,9 @@
 .acard__footer {
   height: 40px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 0 12px 20px 12px;
+  padding: 0 12px 0px 12px;
   flex-shrink: 0;
 }
 
