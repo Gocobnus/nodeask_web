@@ -26,4 +26,5 @@ export interface ACardProps {
   onCopy?: () => void;
   onClick?: () => void;
   onDelete?: () => void;
+  onFollowUp?: () => void;
 }

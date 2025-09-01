@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
-import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon } from "../../icons";
+import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
 
@@ -18,7 +18,8 @@ export default function AnswerCard({
   onExpand,
   onCopy,
   onClick,
-  onDelete
+  onDelete,
+  onFollowUp
 }: ACardProps) {
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -225,7 +226,7 @@ export default function AnswerCard({
             {/* 底部操作栏 - 始终显示以保持高度一致 */}
             <div className="acard__footer">
               {/* 展开按钮 - 只在回答tab且完成后显示 */}
-              {activeTab === 'answer' && isCompleted && (
+              {activeTab === 'answer' && isCompleted && onExpand ? (
                 <CustomTooltip 
                   content="展开" 
                   placement="bottom"
@@ -241,10 +242,26 @@ export default function AnswerCard({
                     <ExplodeIcon width={20} height={20} />
                   </motion.button>
                 </CustomTooltip>
+              ) : <div />}
+
+              {/* 追问按钮 - 仅在特定条件下显示 */}
+              {activeTab === 'answer' && isCompleted && onFollowUp && (
+                <button
+                  className="acard__follow-up-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFollowUp();
+                  }}
+                  type="button"
+                  aria-label="追问卡片知识"
+                >
+                  <span>追问卡片知识</span>
+                  <SendIcon />
+                </button>
               )}
 
               {/* 复制按钮 - 只在回答tab且完成后显示 */}
-              {activeTab === 'answer' && isCompleted && (
+              {activeTab === 'answer' && isCompleted && onCopy ? (
                 <CustomTooltip 
                   content="复制" 
                   placement="bottom"
@@ -260,7 +277,7 @@ export default function AnswerCard({
                     <CopyIcon width={20} height={20} />
                   </motion.button>
                 </CustomTooltip>
-              )}
+              ) : <div />}
             </div>
           </div>
         </motion.div>
