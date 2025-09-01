@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
+import { Button } from "@heroui/react";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
@@ -244,20 +245,21 @@ export default function AnswerCard({
                 </CustomTooltip>
               ) : <div />}
 
-              {/* 追问按钮 - 仅在特定条件下显示 */}
               {activeTab === 'answer' && isCompleted && onFollowUp && (
-                <button
-                  className="acard__follow-up-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onFollowUp();
-                  }}
-                  type="button"
-                  aria-label="追问卡片知识"
-                >
-                  <span>追问卡片知识</span>
-                  <SendIcon />
-                </button>
+                <div className="acard__follow-up-wrapper">
+                  <Button
+                    size="sm"
+                    variant="solid"
+                    className="custom-follow-up-btn"
+                    endContent={<SendIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFollowUp();
+                    }}
+                  >
+                    追问卡片知识
+                  </Button>
+                </div>
               )}
 
               {/* 复制按钮 - 只在回答tab且完成后显示 */}

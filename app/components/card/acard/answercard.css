@@ -234,51 +234,15 @@
   flex-shrink: 0;
 }
 
-.acard__follow-up-btn {
-  display: flex;
-  align-items: center;
-  width: 160px;
-  height: 36px;
-  border-radius: 20px;
-  background-color: var(--acard-bg-primary);
-  color: var(--acard-text-default);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0 16px 0px 20px; 
-  position: relative;
-  top: 4px;
-  box-shadow: 4px 2px 16px var(--shadow-default);
+.acard__follow-up-wrapper {
   opacity: 0;
   visibility: hidden;
-  pointer-events: none;
-  transition: ease-in-out, opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.1s ease-in-out;
-  border: none; /* Explicitly remove border */
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
-.acard__follow-up-btn span {
-  flex-grow: 1;
-  text-align: center;
-  margin-right: 8px; 
-}
-
-/* Show the button when the card is hovered, but only if it's not collapsed */
-.acard__background-card:hover .acard__answer:not(.acard__answer--collapsed) .acard__follow-up-btn {
+.acard__background-card:hover .acard__answer:not(.acard__answer--collapsed) .acard__follow-up-wrapper {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto;
-}
-
-.acard__follow-up-btn:hover {
-  background-color: color-mix(in srgb, var(--acard-bg-content) 20%, var(--acard-bg-primary));
-}
-
-.acard__follow-up-btn:active {
-  background-color: color-mix(in srgb, var(--acard-bg-content) 60%, var(--acard-bg-primary));
-}
-
-.acard__follow-up-btn svg {
-  flex-shrink: 0;
 }
 
 /* 保持卡片高度一致，以回答tab为标准 */
@@ -342,4 +306,19 @@
     padding: 0 12px;
   }
   
+}
+
+.custom-follow-up-btn {
+  width: 180px;
+  height: 36px;
+  border-radius: 20px !important;
+  background-color: var(--acard-bg-primary) !important;
+  box-shadow: 4px 2px 16px var(--shadow-default);
+  position: relative;
+  top: 4px;
+  padding: 0 16px 0 20px !important;
+  color: var(--acard-text-default) !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
+  border: none !important;
 }
