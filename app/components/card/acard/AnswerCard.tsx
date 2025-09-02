@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
 import { Button } from "@heroui/react";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon } from "../../icons";
@@ -87,7 +87,7 @@ export default function AnswerCard({
       const updateHeight = () => {
         // 只有在回答标签页时才更新高度
         if (activeTab === 'answer') {
-          const contentHeight = contentRef.current?.scrollHeight || 0;
+          const contentHeight = contentRef.current?.offsetHeight || 0;
           setAnswerContentHeight(contentHeight);
         }
       };
@@ -193,20 +193,24 @@ export default function AnswerCard({
         >
           <div className="acard__answer-content-wrapper">
             {/* Tabs区域 */}
-            <div className="acard__tabs">
-              <div 
-                className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
-                onClick={() => setActiveTab('answer')}
-              >
-                回答
+            <LayoutGroup>
+              <div className="acard__tabs">
+                <div 
+                  className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
+                  onClick={() => setActiveTab('answer')}
+                >
+                  回答
+                  {activeTab === 'answer' && <motion.div className="acard__tab-underline" layoutId="underline" transition={{ type: 'tween', duration: 0.2 }} />}
+                </div>
+                <div 
+                  className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
+                  onClick={() => setActiveTab('related')}
+                >
+                  相关问题
+                  {activeTab === 'related' && <motion.div className="acard__tab-underline" layoutId="underline" transition={{ type: 'tween', duration: 0.2 }} />}
+                </div>
               </div>
-              <div 
-                className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
-                onClick={() => setActiveTab('related')}
-              >
-                相关问题
-              </div>
-            </div>
+            </LayoutGroup>
 
             {/* 内容区域 */}
             <div 
@@ -245,7 +249,7 @@ export default function AnswerCard({
                 </CustomTooltip>
               ) : <div />}
 
-              {activeTab === 'answer' && isCompleted && onFollowUp && (
+              {isCompleted && onFollowUp && (
                 <div className="acard__follow-up-wrapper">
                   <Button
                     size="sm"

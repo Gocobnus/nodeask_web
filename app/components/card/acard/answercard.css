@@ -191,6 +191,7 @@
   color: var(--text-default);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  position: relative;
 }
 
 .acard__tab--active {
@@ -200,6 +201,15 @@
 
 .acard__tab:hover:not(.acard__tab--active) {
   color: var(--text-hover);
+}
+
+.acard__tab-underline {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--acard-bg-primary);
 }
 
 /* 内容区域 */
