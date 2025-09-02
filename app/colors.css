@@ -42,5 +42,10 @@
   --acard-bg-selected-border: #7828c8;
   --acard-text-default: #27272a;
   --acard-icon-default: #27272a;
+
+  --acard-text-related-question: #52525b;
+  --acard-text-related-question-hover: #9353d3;
+  --acard-underline-related-question: #666666;
+
   
 }

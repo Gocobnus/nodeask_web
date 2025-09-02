@@ -1,6 +1,6 @@
 .acard__background-card {
   --acard-width: 380px;
-  --acard-min-height: 280px;
+  --acard-min-height: 344px;
   --acard-max-height: 760px;
   --acard-inner-margin-horizontal: 8px;
   --acard-inner-margin-top: 0px;
@@ -9,6 +9,8 @@
   --header-height: 48px;
   --card-min-height: var(--acard-min-height);
   --card-max-height: var(--acard-max-height);
+  --footer-height: 52px;
+  --tabs-height: 40px;
   
   width: var(--acard-width);
   height: auto;
@@ -23,14 +25,8 @@
 }
 
 .acard__background-card:hover {
-  box-shadow: 4px 2px 16px 4px var(--shadow-default);
-}
-
-
-
-.acard__background-card--selected {
-  outline-color: var(--acard-bg-selected-border);
-  box-shadow: 4px 2px 16px 4px var(--shadow-default);
+  cursor: pointer;
+  background-color: color-mix(in srgb, var(--acard-bg-primary) 95%, #ffffff);
 }
 
 
@@ -177,7 +173,7 @@
 
 /* Tabs */
 .acard__tabs {
-  height: 40px;
+  height: var(--tabs-height);
   display: flex;
   align-items: center;
   gap: 24px;
@@ -205,7 +201,7 @@
 
 .acard__tab-underline {
   position: absolute;
-  bottom: 2px;
+  bottom: -1px;
   left: 0;
   right: 0;
   height: 2px;
@@ -216,7 +212,7 @@
 .acard__content {
   flex: 1;
   margin: 0 0 0px 0;
-  padding: 0 20px;
+  padding: 8px 20px 0px 20px;
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
@@ -225,7 +221,7 @@
   box-sizing: border-box;
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
-  min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - 40px - 40px);
+  min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
 }
 
 .acard__content::-webkit-scrollbar-thumb {
@@ -236,7 +232,7 @@
 
 /* 底部操作栏 */
 .acard__footer {
-  height: 52px;
+  height: var(--footer-height);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -248,6 +244,8 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  position: relative;
+  top: 4px;
 }
 
 .acard__background-card:hover .acard__answer:not(.acard__answer--collapsed) .acard__follow-up-wrapper {
@@ -315,6 +313,11 @@
   .acard__footer {
     padding: 0 12px;
   }
+
+  .acard__related-questions-list {
+    min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
+
+  }
   
 }
 
@@ -324,11 +327,56 @@
   border-radius: 20px !important;
   background-color: var(--acard-bg-primary) !important;
   box-shadow: 4px 2px 16px var(--shadow-default);
-  position: relative;
-  top: 4px;
   padding: 0 16px 0 20px !important;
   color: var(--acard-text-default) !important;
   font-weight: 500 !important;
   font-size: 15px !important;
   border: none !important;
+}
+
+/* 相关问题列表样式 */
+.acard__related-questions-list {
+  padding: 0 0px; /* 微调内边距 */
+}
+
+
+.acard__related-question-item {
+  position: relative;
+  padding: 8px 0px 8px 0px;  
+  font-size: 14px;
+  border-radius: 12px;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  color: var(--acard-text-related-question);
+  cursor: pointer;
+}
+
+.acard__related-question-item:first-child {
+  padding-top: 0px;
+}
+
+.acard__related-question-item:hover {
+  /* 将背景色设置为透明，强制覆盖组件库的默认hover效果 */
+  background-color: transparent;
+  color: var(--acard-text-related-question-hover);
+}
+
+/* 使用伪元素创建真正的全宽下划线 */
+.acard__related-question-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: color-mix(in srgb, var(--acard-underline-related-question) 90%, transparent);
+}
+
+/* 覆盖组件库的默认 a11y 交互样式（移除点击/聚焦效果） */
+.acard__related-question-item[data-focus="true"],
+.acard__related-question-item[data-focus-visible="true"],
+.acard__related-question-item:focus,
+.acard__related-question-item:focus-visible {
+  background-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }

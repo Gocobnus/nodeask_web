@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
-import { Button } from "@heroui/react";
+import { Button, Listbox, ListboxItem } from "@heroui/react";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
@@ -39,28 +39,22 @@ export default function AnswerCard({
     }
   };
 
-  // 处理卡片点击 - 如果未选中则选中，如果已选中则保持选中
   const handleCardClick = () => {
     if (!isSelected && onClick) {
       onClick();
     }
   };
   
-  // 处理收起/展开切换
   const handleCollapseToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止事件冒泡
+    e.stopPropagation();
     
-    // 保存滚动位置
     if (!isCollapsed && contentRef.current) {
       setScrollPosition(contentRef.current.scrollTop);
     }
     
-    // 添加小延迟使动画更自然
     if (isCollapsed) {
-      // 展开时直接设置状态
       setIsCollapsed(false);
     } else {
-      // 收起时先触发动画，然后更新状态
       setIsCollapsed(true);
     }
     
@@ -68,34 +62,28 @@ export default function AnswerCard({
       onCollapse();
     }
     
-    // 确保卡片获得选中状态
     if (!isSelected && onClick) {
       onClick();
     }
   };
   
-  // 在展开后恢复滚动位置
   useEffect(() => {
     if (!isCollapsed && contentRef.current && scrollPosition > 0) {
       contentRef.current.scrollTop = scrollPosition;
     }
   }, [isCollapsed]);
 
-  // 监听回答标签页内容高度变化
   useEffect(() => {
     if (contentRef.current) {
       const updateHeight = () => {
-        // 只有在回答标签页时才更新高度
         if (activeTab === 'answer') {
           const contentHeight = contentRef.current?.offsetHeight || 0;
           setAnswerContentHeight(contentHeight);
         }
       };
       
-      // 立即更新一次
       updateHeight();
       
-      // 使用ResizeObserver监听内容高度变化
       const resizeObserver = new ResizeObserver(updateHeight);
       if (contentRef.current) {
         resizeObserver.observe(contentRef.current);
@@ -120,7 +108,6 @@ export default function AnswerCard({
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">
-        {/* 删除按钮 - CSS控制显示/隐藏 */}
         {onDelete && (
           <CustomTooltip 
             placement="left"
@@ -140,13 +127,11 @@ export default function AnswerCard({
           </CustomTooltip>
         )}
 
-        {/* 标题栏 */}
         <div className="acard__header">
           <div className="acard__title">
             {title}
           </div>
           <div className="acard__header-actions">
-              {/* 暂停回答按钮 - 只在生成中显示 */}
               {isGenerating && (
                 <CustomTooltip 
                   content="暂停回答" 
@@ -163,7 +148,6 @@ export default function AnswerCard({
                 </CustomTooltip>
               )}
               
-              {/* 收起/展开按钮 */}
               <CustomTooltip 
                 content={isCollapsed ? "展开" : "收起"} 
                 placement="bottom"
@@ -180,7 +164,6 @@ export default function AnswerCard({
           </div>
         </div>
 
-        {/* 回答卡 */}
         <motion.div 
           className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
           animate={{
@@ -192,7 +175,6 @@ export default function AnswerCard({
           }}
         >
           <div className="acard__answer-content-wrapper">
-            {/* Tabs区域 */}
             <LayoutGroup>
               <div className="acard__tabs">
                 <div 
@@ -212,7 +194,6 @@ export default function AnswerCard({
               </div>
             </LayoutGroup>
 
-            {/* 内容区域 */}
             <div 
               className="acard__content" 
               ref={contentRef}
@@ -224,13 +205,30 @@ export default function AnswerCard({
               {activeTab === 'answer' ? (
                 content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"
               ) : (
-                "这里会显示相关问题的内容。可以包含推荐的后续问题、相关主题链接等。当前是占位内容，实际使用时会根据回答内容智能生成相关问题。"
+                <div className="acard__related-questions-list">
+                  <Listbox
+                    aria-label="相关问题"
+                    selectionMode="none"
+                    onAction={(key) => console.log(`Chose related question: ${key}`)}
+                    itemClasses={{
+                      base: "acard__related-question-item",
+                    }}
+                    classNames={{
+                      base: "p-0",
+                      list: "gap-0",
+                    }}
+                  >
+                    <ListboxItem key="q1">如何更好地进行时间管理？</ListboxItem>
+                    <ListboxItem key="q2">有哪些值得推荐的深度学习入门书籍？</ListboxItem>
+                    <ListboxItem key="q3">如何克服公开演讲的恐惧？</ListboxItem>
+                    <ListboxItem key="q4">未来十年，最有前景的编程语言是什么？</ListboxItem>
+                    <ListboxItem key="q5">如何克服公开演讲的恐惧？</ListboxItem>
+                  </Listbox>
+                </div>
               )}
             </div>
 
-            {/* 底部操作栏 - 始终显示以保持高度一致 */}
             <div className="acard__footer">
-              {/* 展开按钮 - 只在回答tab且完成后显示 */}
               {activeTab === 'answer' && isCompleted && onExpand ? (
                 <CustomTooltip 
                   content="展开" 
@@ -266,7 +264,6 @@ export default function AnswerCard({
                 </div>
               )}
 
-              {/* 复制按钮 - 只在回答tab且完成后显示 */}
               {activeTab === 'answer' && isCompleted && onCopy ? (
                 <CustomTooltip 
                   content="复制" 
