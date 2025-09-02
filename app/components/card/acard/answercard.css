@@ -25,9 +25,13 @@
 }
 
 .acard__background-card:hover {
-  cursor: pointer;
-  background-color: color-mix(in srgb, var(--acard-bg-primary) 95%, #ffffff);
+  box-shadow: 4px 2px 16px 4px var(--shadow-default);
 }
+.acard__background-card--selected {
+  outline-color: var(--acard-bg-selected-border);
+  box-shadow: 4px 2px 16px 4px var(--shadow-default);
+}
+
 
 
 
