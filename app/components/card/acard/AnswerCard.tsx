@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
 import { Button, Listbox, ListboxItem, useDisclosure, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/react";
-import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon } from "../../icons";
+import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
 
@@ -285,7 +285,7 @@ export default function AnswerCard({
                       variants={iconVariants}
                       animate={isCollapsed ? "closed" : "open"}
                     >
-                      <ExplodeIcon width={20} height={20} />
+                      {isOpen ? <ContractIcon width={20} height={20} /> : <ExplodeIcon width={20} height={20} />}
                     </motion.button>
                   </CustomTooltip>
                 ) : <div />}
