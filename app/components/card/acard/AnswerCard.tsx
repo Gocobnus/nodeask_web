@@ -8,6 +8,14 @@ import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, Lo
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./answercard.css";
 
+const relatedQuestions = [
+  { key: "q1", text: "如何更好地进行时间管理？" },
+  { key: "q2", text: "有哪些值得推荐的深度学习入门书籍？" },
+  { key: "q3", text: "如何克服公开演讲的恐惧？" },
+  { key: "q4", text: "未来十年，最有前景的编程语言是什么？" },
+  { key: "q5", text: "如何设计一个高效的个人知识管理系统？" },
+];
+
 export default function AnswerCard({
   title,
   content,
@@ -28,6 +36,31 @@ export default function AnswerCard({
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
+
+  const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.classList.add('btn-active');
+  };
+
+  const handleButtonRelease = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.classList.remove('btn-active');
+  };
+  
+  // --- 修正后的统一复制处理函数 ---
+  const handleCopy = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (activeTab === 'related') {
+      const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
+      navigator.clipboard.writeText(questionsText).then(() => {
+        console.log("Related questions copied!");
+      });
+    } else {
+      if (onCopy) {
+        onCopy(); // 修正点 #1：不再传递参数
+      }
+    }
+  };
 
   const iconVariants = {
     open: {
@@ -120,6 +153,9 @@ export default function AnswerCard({
                 e.stopPropagation();
                 onDelete();
               }}
+              onMouseDown={handleButtonPress}
+              onMouseUp={handleButtonRelease}
+              onMouseLeave={handleButtonRelease}
               type="button"
               aria-label="删除"
             >
@@ -141,6 +177,9 @@ export default function AnswerCard({
                   <button
                     className="acard__icon-btn acard__header-btn"
                     onClick={onPause}
+                    onMouseDown={handleButtonPress}
+                    onMouseUp={handleButtonRelease}
+                    onMouseLeave={handleButtonRelease}
                     type="button"
                     aria-label="暂停回答"
                   >
@@ -156,6 +195,9 @@ export default function AnswerCard({
                 <button
                   className="acard__icon-btn acard__header-btn"
                   onClick={handleCollapseToggle}
+                  onMouseDown={handleButtonPress}
+                  onMouseUp={handleButtonRelease}
+                  onMouseLeave={handleButtonRelease}
                   type="button"
                   aria-label={isCollapsed ? "展开" : "收起"}
                 >
@@ -219,91 +261,72 @@ export default function AnswerCard({
                       list: "gap-0",
                     }}
                   >
-                    <ListboxItem key="q1">如何更好地进行时间管理？</ListboxItem>
-                    <ListboxItem key="q2">有哪些值得推荐的深度学习入门书籍？</ListboxItem>
-                    <ListboxItem key="q3">如何克服公开演讲的恐惧？</ListboxItem>
-                    <ListboxItem key="q4">未来十年，最有前景的编程语言是什么？</ListboxItem>
-                    <ListboxItem key="q5">如何克服公开演讲的恐惧？</ListboxItem>
+                    {relatedQuestions.map(q => (
+                      <ListboxItem key={q.key}>{q.text}</ListboxItem>
+                    ))}
                   </Listbox>
                 </div>
               )}
             </div>
-            <div className={`acard__footer ${activeTab === 'related' ? 'acard__footer--center' : ''}`}>
-              {activeTab === 'answer' ? (
-                <>
-                  {isCompleted && onExpand ? (
-                    <CustomTooltip 
-                      content="展开" 
-                      placement="bottom"
+            <div className="acard__footer">
+                {isCompleted && onExpand ? (
+                  <CustomTooltip 
+                    content={isOpen ? "收起" : "展开"} 
+                    placement="bottom"
+                  >
+                    <motion.button
+                      className="acard__icon-btn acard__footer-btn"
+                      onClick={onOpenChange}
+                      onMouseDown={handleButtonPress as any}
+                      onMouseUp={handleButtonRelease as any}
+                      onMouseLeave={handleButtonRelease as any}
+                      type="button"
+                      aria-label={isOpen ? "收起" : "展开"}
+                      variants={iconVariants}
+                      animate={isCollapsed ? "closed" : "open"}
                     >
-                      <motion.button
-                        className="acard__icon-btn acard__footer-btn"
-                        onClick={onOpenChange}
-                        type="button"
-                        aria-label="展开"
-                        variants={iconVariants}
-                        animate={isCollapsed ? "closed" : "open"}
-                      >
-                        <ExplodeIcon width={20} height={20} />
-                      </motion.button>
-                    </CustomTooltip>
-                  ) : <div />}
+                      <ExplodeIcon width={20} height={20} />
+                    </motion.button>
+                  </CustomTooltip>
+                ) : <div />}
 
-                  {isCompleted && onFollowUp && (
-                    <div className="acard__follow-up-wrapper">
-                      <Button
-                        size="sm"
-                        variant="solid"
-                        className="custom-follow-up-btn"
-                        endContent={<SendIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onFollowUp();
-                        }}
-                      >
-                        追问卡片知识
-                      </Button>
-                    </div>
-                  )}
-
-                  {isCompleted && onCopy ? (
-                    <CustomTooltip 
-                      content="复制" 
-                      placement="bottom"
+                {isCompleted && onFollowUp && (
+                  <div className="acard__follow-up-wrapper">
+                    <Button
+                      size="sm"
+                      variant="solid"
+                      className="custom-follow-up-btn"
+                      endContent={<SendIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFollowUp();
+                      }}
                     >
-                      <motion.button
-                        className="acard__icon-btn acard__footer-btn"
-                        onClick={onCopy}
-                        type="button"
-                        aria-label="复制"
-                        variants={iconVariants}
-                        animate={isCollapsed ? "closed" : "open"}
-                      >
-                        <CopyIcon width={20} height={20} />
-                      </motion.button>
-                    </CustomTooltip>
-                  ) : <div />}
-                </>
-              ) : (
-                <>
-                  {isCompleted && onFollowUp && (
-                    <div className="acard__follow-up-wrapper">
-                      <Button
-                        size="sm"
-                        variant="solid"
-                        className="custom-follow-up-btn"
-                        endContent={<SendIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onFollowUp();
-                        }}
-                      >
-                        追问卡片知识
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
+                      追问卡片知识
+                    </Button>
+                  </div>
+                )}
+
+                {isCompleted && onCopy ? (
+                  <CustomTooltip 
+                    content={activeTab === 'answer' ? "复制回答" : "复制问题列表"}
+                    placement="bottom"
+                  >
+                    <motion.button
+                      className="acard__icon-btn acard__footer-btn"
+                      onClick={handleCopy}
+                      onMouseDown={handleButtonPress as any}
+                      onMouseUp={handleButtonRelease as any}
+                      onMouseLeave={handleButtonRelease as any}
+                      type="button"
+                      aria-label="复制"
+                      variants={iconVariants}
+                      animate={isCollapsed ? "closed" : "open"}
+                    >
+                      <CopyIcon width={20} height={20} />
+                    </motion.button>
+                  </CustomTooltip>
+                ) : <div />}
             </div>
           </div>
         </motion.div>
@@ -366,11 +389,9 @@ export default function AnswerCard({
                         list: "gap-0",
                       }}
                     >
-                      <ListboxItem key="q1">如何更好地进行时间管理？</ListboxItem>
-                      <ListboxItem key="q2">有哪些值得推荐的深度学习入门书籍？</ListboxItem>
-                      <ListboxItem key="q3">如何克服公开演讲的恐惧？</ListboxItem>
-                      <ListboxItem key="q4">未来十年，最有前景的编程语言是什么？</ListboxItem>
-                      <ListboxItem key="q5">如何克服公开演讲的恐惧？</ListboxItem>
+                      {relatedQuestions.map(q => (
+                        <ListboxItem key={q.key}>{q.text}</ListboxItem>
+                      ))}
                     </Listbox>
                 </div>
               </DrawerBody>
@@ -379,7 +400,7 @@ export default function AnswerCard({
                   Close
                 </Button>
                 <Button onPress={() => {
-                  if(onCopy) onCopy();
+                  handleCopy(); // 修正点 #2：不再传递参数
                   onClose();
                 }}>Copy</Button>
               </DrawerFooter>

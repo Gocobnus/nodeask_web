@@ -457,3 +457,17 @@
 .acard-drawer-base {
   pointer-events: auto;
 }
+
+
+/* 为 :active 状态创建一个 JS 可控制的副本 */
+.acard__delete-btn.btn-active {
+  background-color: color-mix(in srgb, var(--icon-delete) 25%, transparent);
+}
+
+.acard__header-btn.btn-active {
+  background-color: color-mix(in srgb, var(--acard-icon-default) 50%, transparent);
+}
+
+.acard__footer-btn.btn-active {
+  background-color: color-mix(in srgb, var(--icon-default) 50%, transparent);
+}
