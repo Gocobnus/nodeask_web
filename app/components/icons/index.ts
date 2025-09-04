@@ -20,4 +20,6 @@ export { default as PullIcon } from "../../../public/icons/card/pull.svg";
 export { default as StopIcon } from "../../../public/icons/card/stop.svg";
 export { default as CardDeleteIcon } from "../../../public/icons/card/delete.svg";
 export { default as CopyIcon } from "../../../public/icons/card/copy.svg";
-export { default as ExplodeIcon } from "../../../public/icons/card/explode.svg"; 
+export { default as ExplodeIcon } from "../../../public/icons/card/explode.svg";
+export { default as LocationIcon } from "../../../public/icons/card/location.svg";
+export { default as CloseIcon } from "../../../public/icons/card/close.svg"; 
