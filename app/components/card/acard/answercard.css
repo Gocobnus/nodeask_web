@@ -244,6 +244,10 @@
   flex-shrink: 0;
 }
 
+.acard__footer--center {
+  justify-content: center;
+}
+
 .acard__follow-up-wrapper {
   opacity: 0;
   visibility: hidden;
