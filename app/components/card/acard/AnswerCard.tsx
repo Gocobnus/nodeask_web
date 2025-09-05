@@ -187,16 +187,9 @@ export default function AnswerCard({
         )}
 
         <div className="acard__header">
-          <CustomTooltip 
-            content={title} 
-            placement="top" 
-            className="acard__title-tooltip-content"
-          >
             <div className="acard__title">
               {title}
             </div>
-          </CustomTooltip>
-
           <div className="acard__header-actions">
               {isGenerating && (
                 <CustomTooltip 
