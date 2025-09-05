@@ -68,7 +68,6 @@ export default function AnswerCard({
   };
 
   const handleLocateClick = () => {
-    // 定位按钮的职责就是触发选中，无论当前状态如何
     if (onLocate) {
       onLocate();
     } else if (onClick) {
@@ -98,15 +97,16 @@ export default function AnswerCard({
     }
   };
 
-  const handleCardClick = () => {
-    // 卡片自身的点击逻辑保持简单：未选中时，触发选中
+  const handleCardClick = (e: React.MouseEvent) => {
+    // 卡片自身的点击事件需要阻止冒泡，以防止触发上层“画板”的取消选中逻辑
+    e.stopPropagation();
     if (!isSelected && onClick) {
       onClick();
     }
   };
   
   const handleCollapseToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止按钮点击冒泡到卡片，避免意外选中
+    e.stopPropagation();
     
     if (!isCollapsed && contentRef.current) {
       setScrollPosition(contentRef.current.scrollTop);
@@ -122,7 +122,6 @@ export default function AnswerCard({
       onCollapse();
     }
     
-    // 点击收起/展开按钮时，也应该触发选中
     if (!isSelected && onClick) {
       onClick();
     }
@@ -303,7 +302,7 @@ export default function AnswerCard({
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"
-                      onClick={onOpenChange}
+                      onClick={(e) => { e.stopPropagation(); onOpenChange(); }}
                       onMouseDown={handleButtonPress as any}
                       onMouseUp={handleButtonRelease as any}
                       onMouseLeave={handleButtonRelease as any}
@@ -396,6 +395,7 @@ export default function AnswerCard({
             </Listbox>
         </div>
         <div className="acard__drawer-footer">
+          {/* --- ✨ 核心修改在这里: 移除错误的 stopPropagation --- */}
           <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
             Close
           </Button>

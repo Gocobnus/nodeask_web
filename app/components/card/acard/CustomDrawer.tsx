@@ -90,8 +90,7 @@ export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, chi
             animate="visible"
             exit="hidden"
             variants={drawerVariants}
-            // 这行代码会“捕获”所有在 Drawer 内部发生的点击事件，
-            // 并调用 e.stopPropagation() 来阻止这个事件继续向父组件传播。
+            // 使用 onClick 捕获所有底层的点击事件，并阻止它们冒泡
             onClick={(e) => e.stopPropagation()}
           >
             <div 

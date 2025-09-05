@@ -20,30 +20,6 @@ export default function QATreePage({ params }: QATreePageProps) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // --- ✨ 核心修改在这里 ✨ ---
-  // 处理外部点击取消选中
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      
-      // 如果点击发生在卡片内部，或者发生在 Drawer 内部，都直接返回，不执行任何操作。
-      if (target.closest('.acard__background-card') || target.closest('.acard-drawer-base')) {
-        return;
-      }
-
-      // 只有当点击确实发生在外部时，才取消选中
-      setIsSelected(false);
-    };
-
-    if (isSelected) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isSelected]);
   
   // 根据treeId查找对应的图谱数据
   const qaTree = mockQATrees.find(tree => tree.id === treeId);
@@ -70,7 +46,11 @@ export default function QATreePage({ params }: QATreePageProps) {
   }
 
   return (
-    <div className="flex items-start justify-center min-h-screen p-6 pt-[15vh]">
+    // --- ✨ 核心修改 1: 在作为“画板”的容器上添加 onClick ---
+    <div 
+      className="flex items-start justify-center min-h-screen p-6 pt-[15vh]"
+      onClick={() => setIsSelected(false)} // 点击画板任何地方，都会取消选中
+    >
       <AnswerCard
         title={mockCardData.title}
         content={mockCardData.content}
@@ -89,6 +69,7 @@ export default function QATreePage({ params }: QATreePageProps) {
           }
         }}
         onClick={() => setIsSelected(true)}
+        onLocate={() => setIsSelected(true)}
         onDelete={() => console.log('删除卡片')}
         onFollowUp={() => console.log('点击了追问按钮')}
       />
