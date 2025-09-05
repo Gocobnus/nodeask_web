@@ -372,7 +372,7 @@ export default function AnswerCard({
                   </button>
                 </CustomTooltip>
               </DrawerHeader>
-              <DrawerBody>
+              <DrawerBody className="px-5 py-2">
                 <div className="drawer__content-area">
                   {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
                 </div>

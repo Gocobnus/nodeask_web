@@ -430,7 +430,7 @@
 .drawer__content-area {
   height: 400px;
   overflow-y: auto;
-  padding: 12px 20px;
+  padding: 12px 0;
   font-size: 14px;
   line-height: 1.6;
   color: var(--acard-text-primary);
@@ -444,7 +444,7 @@
 }
 
 .drawer__related-questions {
-  padding: 12px 20px;
+  padding: 12px 0;
 }
 
 /* 让外层容器和遮罩层都“可点击穿透” */
