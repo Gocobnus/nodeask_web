@@ -32,9 +32,6 @@
   box-shadow: 4px 2px 16px 4px var(--shadow-default);
 }
 
-
-
-
 .acard__background-card-wrapper {
   width: 100%;
   height: 100%;
@@ -232,8 +229,6 @@
   background-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent);
 }
 
-
-
 /* 底部操作栏 */
 .acard__footer {
   height: var(--footer-height);
@@ -344,7 +339,7 @@
 
 /* 相关问题列表样式 */
 .acard__related-questions-list {
-  padding: 0 0px; /* 微调内边距 */
+  padding: 0 0px;
 }
 
 
@@ -363,12 +358,10 @@
 }
 
 .acard__related-question-item:hover {
-  /* 将背景色设置为透明，强制覆盖组件库的默认hover效果 */
   background-color: transparent;
   color: var(--acard-text-related-question-hover);
 }
 
-/* 使用伪元素创建真正的全宽下划线 */
 .acard__related-question-item::after {
   content: '';
   position: absolute;
@@ -379,7 +372,6 @@
   background-color: color-mix(in srgb, var(--acard-underline-related-question) 90%, transparent);
 }
 
-/* 覆盖组件库的默认 a11y 交互样式（移除点击/聚焦效果） */
 .acard__related-question-item[data-focus="true"],
 .acard__related-question-item[data-focus-visible="true"],
 .acard__related-question-item:focus,
@@ -389,21 +381,47 @@
   box-shadow: none !important;
 }
 
-/* Drawer Styles */
-.acard__drawer .bg-overlay {
-  background-color: transparent;
+/* * DRAWER STYLES 
+ * This section provides the final, correct styles for the custom drawer.
+*/
+
+/* 1. Wrapper: Must be fixed, full-screen, and allow clicks to pass through. */
+.acard-drawer-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end; /* Drawer slides from the right */
+  pointer-events: none;      /* Allow clicks to pass through */
 }
 
-.acard__drawer .h-screen {
-  width: 480px;
-  box-shadow: -8px 0px 24px var(--shadow-default);
+/* 2. Backdrop: Also allows clicks to pass through. */
+.acard-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
 }
 
+/* 3. Drawer Base: This is the visible drawer. It must re-enable clicks. */
+.acard-drawer-base {
+  position: relative;
+  height: 100vh;
+  background-color: var(--bg-sidebar); /* Set background color */
+  box-shadow: -8px 0px 24px var(--shadow-default); 
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto; /* Re-enable pointer events for the drawer itself */
+  border-top-left-radius: 20px; 
+  border-bottom-left-radius: 20px;
+}
+
+/* --- Styles for elements inside the drawer --- */
 .drawer__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
+  flex-shrink: 0; /* Prevents shrinking */
 }
 
 .drawer__location-btn {
@@ -427,10 +445,11 @@
   background-color: color-mix(in srgb, var(--icon-default) 25%, transparent);
 }
 
+/* Let content and questions areas fill the remaining space */
 .drawer__content-area {
-  height: 400px;
+  flex: 1; /* Allow this area to grow */
   overflow-y: auto;
-  padding: 12px 0;
+  padding: 12px 20px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--acard-text-primary);
@@ -444,22 +463,19 @@
 }
 
 .drawer__related-questions {
-  padding: 12px 0;
+  padding: 12px 20px;
 }
 
-/* 让外层容器和遮罩层都“可点击穿透” */
-.acard-drawer-wrapper,
-.acard-drawer-backdrop {
-  pointer-events: none;
-}
-
-/* 让抽屉内容本身恢复可点击 */
-.acard-drawer-base {
-  pointer-events: auto;
+.acard__drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  flex-shrink: 0; /* Prevents shrinking */
 }
 
 
-/* 为 :active 状态创建一个 JS 可控制的副本 */
+/* JS-controlled active states for buttons */
 .acard__delete-btn.btn-active {
   background-color: color-mix(in srgb, var(--icon-delete) 25%, transparent);
 }
@@ -470,4 +486,52 @@
 
 .acard__footer-btn.btn-active {
   background-color: color-mix(in srgb, var(--icon-default) 50%, transparent);
+}
+
+/* --- Styles for Drawer Resize Handle --- */
+.drawer-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 10px;          /* 这是鼠标可以触发拖动的区域宽度 */
+  cursor: col-resize;   /* 当鼠标进入该区域时，显示左右拖动箭头 */
+  transform: translateX(-50%); /* 将拖动区域的中心对准抽屉边缘 */
+  z-index: 60;
+}
+/* --- Styles for Drawer Footer Buttons --- */
+
+/* 1. "Close" 按钮 (variant="light") */
+.drawer-btn-close {
+  /* heroui 的 "light" 按钮默认背景透明，主要修改字体颜色 */
+  color: var(--acard-text-primary, #4B5563) !important;
+}
+.drawer-btn-close:hover {
+  background-color: color-mix(in srgb, var(--acard-text-primary) 10%, transparent) !important;
+}
+
+
+/* --- Styles for Drawer Footer Buttons --- */
+
+/* 1. "Close" 按钮 (variant="light") */
+.drawer-btn-close {
+  /* heroui 的 "light" 按钮默认背景透明，主要修改字体颜色 */
+  color: var(--drawer-close-btn, #4B5563) !important;
+}
+.drawer-btn-close:hover {
+  background-color: color-mix(in srgb, var(--drawer-close-btn) 10%, transparent) !important;
+}
+
+
+/* 2. "Copy" 按钮 */
+.drawer-btn-copy {
+  /* heroui 的默认按钮通常是主题色，我们可以在这里覆盖它 */
+  background-color: var(--drawer-copy-btn) !important;
+  color: var(--drawer-text-copy-btn, #FFFFFF) !important;
+  border: none !important;
+}
+
+.drawer-btn-copy:hover {
+  /* 鼠标悬浮时可以设置一个更深的颜色 */
+  background-color: var(--drawer-copy-hover-btn) !important;
 }

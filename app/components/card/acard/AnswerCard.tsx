@@ -3,9 +3,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
-import { Button, Listbox, ListboxItem, useDisclosure, Drawer, DrawerContent, DrawerHeader, DrawerBody, DrawerFooter } from "@heroui/react";
+// 假设 ACardProps 增加了 onLocate
+interface CustomACardProps extends ACardProps {
+  onLocate?: () => void;
+}
+
+import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
+import { CustomDrawer } from './CustomDrawer';
 import "./answercard.css";
 
 const relatedQuestions = [
@@ -28,8 +34,9 @@ export default function AnswerCard({
   onCopy,
   onClick,
   onDelete,
-  onFollowUp
-}: ACardProps) {
+  onFollowUp,
+  onLocate
+}: CustomACardProps) {
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -45,7 +52,6 @@ export default function AnswerCard({
     e.currentTarget.classList.remove('btn-active');
   };
   
-  // --- 修正后的统一复制处理函数 ---
   const handleCopy = (e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -57,10 +63,28 @@ export default function AnswerCard({
       });
     } else {
       if (onCopy) {
-        onCopy(); // 修正点 #1：不再传递参数
+        onCopy();
       }
     }
   };
+
+
+  const handleLocateClick = () => {
+    if (onLocate) {
+      onLocate(); // 只调用 onLocate，不再关闭 drawer
+    }
+  };
+  
+  const handleDrawerCopy = () => {
+    const answerText = content || "";
+    const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
+    const combinedText = `回答:\n${answerText}\n\n相关问题:\n${questionsText}`;
+    
+    navigator.clipboard.writeText(combinedText).then(() => {
+      console.log("Drawer content copied!");
+    });
+  };
+
 
   const iconVariants = {
     open: {
@@ -331,83 +355,50 @@ export default function AnswerCard({
           </div>
         </motion.div>
       </div>
-      <Drawer
-        isOpen={isOpen}
-        isDismissable={false}
-        shouldBlockScroll={false}
-        backdrop="transparent"
-        motionProps={{
-          variants: {
-            enter: {
-              opacity: 1,
-              x: 0,
-            },
-            exit: {
-              x: 100,
-              opacity: 0, 
-            },
-          },
-        }}
-        onOpenChange={onOpenChange}
-        className="acard__drawer"
-        hideCloseButton={true}
-        classNames={{
-          wrapper: "acard-drawer-wrapper",
-          backdrop: "acard-drawer-backdrop",
-          base: "acard-drawer-base",
-        }}
-      >
-        <DrawerContent>
-          {(onClose) => (
-            <>
-              <DrawerHeader className="drawer__header">
-                <CustomTooltip content="定位卡片" placement="bottom">
-                  <button className="acard__icon-btn drawer__location-btn">
-                    <LocationIcon/>
-                  </button>
-                </CustomTooltip>
-                <CustomTooltip content="关闭" placement="bottom">
-                  <button className="acard__icon-btn drawer__close-btn" onClick={onOpenChange}>
-                    <CloseIcon />
-                  </button>
-                </CustomTooltip>
-              </DrawerHeader>
-              <DrawerBody className="px-5 py-2">
-                <div className="drawer__content-area">
-                  {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
-                </div>
-                <div className="drawer__related-questions">
-                  <Listbox
-                      aria-label="相关问题"
-                      selectionMode="none"
-                      onAction={(key) => console.log(`Chose related question: ${key}`)}
-                      itemClasses={{
-                        base: "acard__related-question-item",
-                      }}
-                      classNames={{
-                        base: "p-0",
-                        list: "gap-0",
-                      }}
-                    >
-                      {relatedQuestions.map(q => (
-                        <ListboxItem key={q.key}>{q.text}</ListboxItem>
-                      ))}
-                    </Listbox>
-                </div>
-              </DrawerBody>
-              <DrawerFooter>
-                <Button variant="light" onPress={onClose}>
-                  Close
-                </Button>
-                <Button onPress={() => {
-                  handleCopy(); // 修正点 #2：不再传递参数
-                  onClose();
-                }}>Copy</Button>
-              </DrawerFooter>
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
+      
+      <CustomDrawer isOpen={isOpen} onClose={onOpenChange} className="acard__drawer">
+        <div className="drawer__header">
+          <CustomTooltip content="定位卡片" placement="bottom">
+            <button className="acard__icon-btn drawer__location-btn" onClick={handleLocateClick}>
+              <LocationIcon/>
+            </button>
+          </CustomTooltip>
+          <CustomTooltip content="关闭" placement="bottom">
+            <button className="acard__icon-btn drawer__close-btn" onClick={onOpenChange}>
+              <CloseIcon />
+            </button>
+          </CustomTooltip>
+        </div>
+        <div className="drawer__content-area">
+          {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
+        </div>
+        <div className="drawer__related-questions">
+          <Listbox
+              aria-label="相关问题"
+              selectionMode="none"
+              onAction={(key) => console.log(`Chose related question: ${key}`)}
+              itemClasses={{
+                base: "acard__related-question-item",
+              }}
+              classNames={{
+                base: "p-0",
+                list: "gap-0",
+              }}
+            >
+              {relatedQuestions.map(q => (
+                <ListboxItem key={q.key}>{q.text}</ListboxItem>
+              ))}
+            </Listbox>
+        </div>
+        <div className="acard__drawer-footer">
+          <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
+            Close
+          </Button>
+          <Button onPress={handleDrawerCopy} className="drawer-btn-copy">
+            Copy
+          </Button>
+        </div>
+      </CustomDrawer>
     </motion.div>
   );
 }
