@@ -371,8 +371,8 @@ export default function AnswerCard({
             </button>
           </CustomTooltip>
         </div>
-        <div className="drawer__content-area">
-          <div className="drawer-section-title">回答</div>
+        <div className="drawer-section-title drawer__fixed-title">回答</div>
+        <div className="drawer__content-area drawer__content-area--with-fixed-title">
           {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
         </div>
         <div className="drawer__related-questions">

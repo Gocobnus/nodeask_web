@@ -82,7 +82,6 @@ export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, chi
       {isOpen && (
         <div className="acard-drawer-wrapper">
           <div className="acard-drawer-backdrop" />
-          {/* --- ✨ 核心修改在这里 ✨ --- */}
           <motion.div
             className={`acard-drawer-base ${className || ''}`}
             style={{ width: `${width}px` }}

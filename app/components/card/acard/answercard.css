@@ -462,6 +462,14 @@
   background-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent);
 }
 
+.drawer__content-area--with-fixed-title {
+  padding-top: 0;
+}
+
+.drawer__fixed-title {
+  padding: 0 20px;
+}
+
 .drawer__related-questions {
   padding: 12px 20px;
 }
