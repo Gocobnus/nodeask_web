@@ -535,3 +535,10 @@
   /* 鼠标悬浮时可以设置一个更深的颜色 */
   background-color: var(--drawer-copy-hover-btn) !important;
 }
+
+.drawer-section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--acard-text-default);
+  margin-bottom: 12px; /* 标题和下方内容的间距 */
+}

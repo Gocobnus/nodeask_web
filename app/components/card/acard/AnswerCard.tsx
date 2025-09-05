@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
-// 假设 ACardProps 增加了 onLocate
 interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
 }
@@ -68,10 +67,9 @@ export default function AnswerCard({
     }
   };
 
-
   const handleLocateClick = () => {
     if (onLocate) {
-      onLocate(); // 只调用 onLocate，不再关闭 drawer
+      onLocate();
     }
   };
   
@@ -189,9 +187,16 @@ export default function AnswerCard({
         )}
 
         <div className="acard__header">
-          <div className="acard__title">
-            {title}
-          </div>
+          <CustomTooltip 
+            content={title} 
+            placement="top" 
+            className="acard__title-tooltip-content"
+          >
+            <div className="acard__title">
+              {title}
+            </div>
+          </CustomTooltip>
+
           <div className="acard__header-actions">
               {isGenerating && (
                 <CustomTooltip 
@@ -369,10 +374,14 @@ export default function AnswerCard({
             </button>
           </CustomTooltip>
         </div>
+
+        {/* --- ✨ 逻辑修改在这里 ✨ --- */}
         <div className="drawer__content-area">
+          <div className="drawer-section-title">回答</div>
           {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
         </div>
         <div className="drawer__related-questions">
+          <div className="drawer-section-title">相关问题</div>
           <Listbox
               aria-label="相关问题"
               selectionMode="none"
@@ -390,6 +399,7 @@ export default function AnswerCard({
               ))}
             </Listbox>
         </div>
+
         <div className="acard__drawer-footer">
           <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
             Close
