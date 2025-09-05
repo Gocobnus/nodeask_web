@@ -12,17 +12,15 @@ interface CustomDrawerProps {
 }
 
 const drawerVariants = {
-  // 'exit' 对应 'hidden' 状态
   hidden: {
-    x: "100%", // 使用百分比代替 '100px' 以适应不同屏幕
+    x: "100%",
     opacity: 0,
     transition: {
       type: "tween",
       duration: 0.3,
-      ease: [0.4, 0, 0.6, 1] // 平滑的缓动曲线
+      ease: [0.4, 0, 0.6, 1]
     }
   },
-  // 'enter' 对应 'visible' 状态
   visible: {
     x: "0%",
     opacity: 1,
@@ -32,7 +30,7 @@ const drawerVariants = {
       ease: [0.4, 0, 0.2, 1]
     }
   },
-} as const; // 添加 as const 防止 TypeScript 类型报错
+} as const;
 
 
 export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, children, className }) => {
@@ -84,6 +82,7 @@ export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, chi
       {isOpen && (
         <div className="acard-drawer-wrapper">
           <div className="acard-drawer-backdrop" />
+          {/* --- ✨ 核心修改在这里 ✨ --- */}
           <motion.div
             className={`acard-drawer-base ${className || ''}`}
             style={{ width: `${width}px` }}
@@ -91,6 +90,9 @@ export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, chi
             animate="visible"
             exit="hidden"
             variants={drawerVariants}
+            // 这行代码会“捕获”所有在 Drawer 内部发生的点击事件，
+            // 并调用 e.stopPropagation() 来阻止这个事件继续向父组件传播。
+            onClick={(e) => e.stopPropagation()}
           >
             <div 
               className="drawer-resize-handle"

@@ -68,8 +68,11 @@ export default function AnswerCard({
   };
 
   const handleLocateClick = () => {
+    // 定位按钮的职责就是触发选中，无论当前状态如何
     if (onLocate) {
       onLocate();
+    } else if (onClick) {
+      onClick();
     }
   };
   
@@ -96,13 +99,14 @@ export default function AnswerCard({
   };
 
   const handleCardClick = () => {
+    // 卡片自身的点击逻辑保持简单：未选中时，触发选中
     if (!isSelected && onClick) {
       onClick();
     }
   };
   
   const handleCollapseToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // 阻止按钮点击冒泡到卡片，避免意外选中
     
     if (!isCollapsed && contentRef.current) {
       setScrollPosition(contentRef.current.scrollTop);
@@ -118,6 +122,7 @@ export default function AnswerCard({
       onCollapse();
     }
     
+    // 点击收起/展开按钮时，也应该触发选中
     if (!isSelected && onClick) {
       onClick();
     }
@@ -367,8 +372,6 @@ export default function AnswerCard({
             </button>
           </CustomTooltip>
         </div>
-
-        {/* --- ✨ 逻辑修改在这里 ✨ --- */}
         <div className="drawer__content-area">
           <div className="drawer-section-title">回答</div>
           {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
@@ -392,7 +395,6 @@ export default function AnswerCard({
               ))}
             </Listbox>
         </div>
-
         <div className="acard__drawer-footer">
           <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
             Close

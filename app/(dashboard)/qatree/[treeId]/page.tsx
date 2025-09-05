@@ -21,14 +21,19 @@ export default function QATreePage({ params }: QATreePageProps) {
     setIsMounted(true);
   }, []);
 
+  // --- ✨ 核心修改在这里 ✨ ---
   // 处理外部点击取消选中
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      // 如果点击的不是卡片内部，则取消选中
-      if (!target.closest('.acard__background-card')) {
-        setIsSelected(false);
+      
+      // 如果点击发生在卡片内部，或者发生在 Drawer 内部，都直接返回，不执行任何操作。
+      if (target.closest('.acard__background-card') || target.closest('.acard-drawer-base')) {
+        return;
       }
+
+      // 只有当点击确实发生在外部时，才取消选中
+      setIsSelected(false);
     };
 
     if (isSelected) {
@@ -89,4 +94,4 @@ export default function QATreePage({ params }: QATreePageProps) {
       />
     </div>
   );
-} 
+}

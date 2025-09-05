@@ -407,7 +407,7 @@
   position: relative;
   height: 100vh;
   background-color: var(--bg-sidebar); /* Set background color */
-  box-shadow: -8px 0px 24px var(--shadow-default); 
+  box-shadow: -4px 2px 16px var(--shadow-default);
   display: flex;
   flex-direction: column;
   pointer-events: auto; /* Re-enable pointer events for the drawer itself */
