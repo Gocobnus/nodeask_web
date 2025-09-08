@@ -21,6 +21,25 @@ const relatedQuestions = [
   { key: "q5", text: "如何设计一个高效的个人知识管理系统？" },
 ];
 
+const drawerVariants = {
+  hidden: {
+    y: "100%",
+    transition: {
+      type: "tween",
+      duration: 0.3,
+      ease: [0.4, 0, 0.6, 1]
+    }
+  },
+  visible: {
+    y: "0%",
+    transition: {
+      type: "tween",
+      duration: 0.3,
+      ease: [0.4, 0, 0.2, 1]
+    }
+  },
+} as const;
+
 export default function AnswerCard({
   title,
   content,
@@ -161,10 +180,7 @@ export default function AnswerCard({
       animate={{
         height: isCollapsed ? 48 : 'auto'
       }}
-      transition={{
-        duration: 0.3, 
-        ease: [0.25, 0.46, 0.45, 0.94] 
-      }}
+      variants={drawerVariants}
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">
