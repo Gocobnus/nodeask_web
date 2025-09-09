@@ -166,9 +166,6 @@ export default function AnswerCard({
       onCollapse();
     }
     
-    if (!isSelected && onClick) {
-      onClick();
-    }
   };
   
   useEffect(() => {
@@ -343,7 +340,13 @@ export default function AnswerCard({
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"
-                      onClick={(e) => { e.stopPropagation(); onOpenChange(); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (onClick) {
+                          onClick(e);
+                        }
+                        onOpenChange(); 
+                      }}
                       onMouseDown={handleButtonPress as any}
                       onMouseUp={handleButtonRelease as any}
                       onMouseLeave={handleButtonRelease as any}

@@ -39,8 +39,8 @@ export default function QATreePage({ params }: QATreePageProps) {
   const [isMounted, setIsMounted] = useState(false);
   
   const [cards, setCards] = useState<CardData[]>([
-    { id: 'q1', type: 'question', question: '如何创建node应用', avatar: 'https://i.pravatar.cc/150?u=zhangsan', x: 450, y: 100 },
-    { id: 'a1', type: 'answer', title: '什么是React的useState Hook？', content: '夜深人静，万籁俱寂。窗外偶有微风拂过树叶，发出细微的沙沙声，像', x: 450, y: 320 },
+    { id: 'q1', type: 'question', question: '如何创建node应用', avatar: 'https://i.pravatar.cc/150?u=zhangsan', x: 400, y: 100 },
+    { id: 'a1', type: 'answer', title: '什么是React的useState Hook？', content: '夜深人静，万籁俱寂。窗外偶有微风拂过树叶，发出细微的沙沙声，像', x: 400, y: 320 },
   ]);
 
   const [editingCard, setEditingCard] = useState<{ id: string; text: string } | null>(null);

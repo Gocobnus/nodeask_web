@@ -104,7 +104,7 @@ export default function ReusableTiptapEditor({
     if (editorContentEl && editorContentEl.contains(e.target as Node)) {
       return;
     }
-    editor?.chain().focus('end').run();
+    editor?.chain().focus().run();
   };
 
   const containerClass = variant === 'bottomBar' 

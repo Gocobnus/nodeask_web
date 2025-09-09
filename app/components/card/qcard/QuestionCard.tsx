@@ -57,9 +57,6 @@ export default function QuestionCard({
   const handleCollapseToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsCollapsed(prev => !prev);
-    if (!isSelected && onClick) {
-        onClick();
-    }
   };
 
   const iconVariants = {
