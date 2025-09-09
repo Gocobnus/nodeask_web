@@ -17,6 +17,7 @@ export default function QuestionCard({
   onClick,
   onDelete,
   onCopy,
+  onCopyError,
 }: QCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [isCopied, setIsCopied] = useState(false);
@@ -33,12 +34,17 @@ export default function QuestionCard({
     if (e) {
       e.stopPropagation();
     }
-    navigator.clipboard.writeText(question).then(() => {
-      console.log("Question copied!");
-      if (onCopy) {
-        onCopy();
-      }
-    });
+    navigator.clipboard.writeText(question)
+      .then(() => {
+        if (onCopy) {
+          onCopy();
+        }
+      })
+      .catch(err => {
+        if (onCopyError) {
+          onCopyError(err);
+        }
+      });
   };
 
   const handleCardClick = (e: React.MouseEvent) => {

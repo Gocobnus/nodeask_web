@@ -50,6 +50,7 @@ export default function AnswerCard({
   onCollapse,
   onExpand,
   onCopy,
+  onCopyError,
   onClick,
   onDelete,
   onFollowUp,
@@ -76,16 +77,29 @@ export default function AnswerCard({
     }
     if (activeTab === 'related') {
       const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
-      navigator.clipboard.writeText(questionsText).then(() => {
-        console.log("Related questions copied!");
-      });
+      navigator.clipboard.writeText(questionsText)
+        .then(() => {
+          if (onCopy) {
+            onCopy();
+          }
+        })
+        .catch(err => {
+          if (onCopyError) {
+            onCopyError(err);
+          }
+        });
     } else {
-      navigator.clipboard.writeText(content || "").then(() => {
-        console.log("Answer copied!");
-        if (onCopy) {
-          onCopy();
-        }
-      });
+      navigator.clipboard.writeText(content || "")
+        .then(() => {
+          if (onCopy) {
+            onCopy();
+          }
+        })
+        .catch(err => {
+          if (onCopyError) {
+            onCopyError(err);
+          }
+        });
     }
   };
 
@@ -102,9 +116,17 @@ export default function AnswerCard({
     const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
     const combinedText = `回答:\n${answerText}\n\n相关问题:\n${questionsText}`;
     
-    navigator.clipboard.writeText(combinedText).then(() => {
-      console.log("Drawer content copied!");
-    });
+    navigator.clipboard.writeText(combinedText)
+      .then(() => {
+        if (onCopy) {
+          onCopy();
+        }
+      })
+      .catch(err => {
+        if (onCopyError) {
+          onCopyError(err);
+        }
+      });
   };
 
 

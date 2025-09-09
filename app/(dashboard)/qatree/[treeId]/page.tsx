@@ -64,14 +64,7 @@ export default function QATreePage({ params }: QATreePageProps) {
         onPause={() => console.log('暂停回答')}
         onCollapse={() => console.log('收起卡片')}
         onExpand={() => console.log('展开更多')}
-        onCopy={async () => {
-          try {
-            await navigator.clipboard.writeText(mockCardData.content);
-            console.log('内容已复制到剪贴板');
-          } catch (err) {
-            console.error('复制失败:', err);
-          }
-        }}
+        onCopy={() => console.log('内容已复制到剪贴板')}
         onClick={() => setIsAnswerCardSelected(true)}
         onLocate={() => setIsAnswerCardSelected(true)}
         onDelete={() => console.log('删除回答卡片')}
@@ -82,7 +75,14 @@ export default function QATreePage({ params }: QATreePageProps) {
         avatar="https://i.pravatar.cc/150?u=zhangsan" // Using a public asset for the avatar
         isSelected={isQuestionCardSelected}
         onClick={() => setIsQuestionCardSelected(true)}
-        onCopy={() => console.log('Question copied')}
+        onCopy={() => {
+          console.log('Question copied');
+          // 在这里实现Toast提示
+        }}
+        onCopyError={(err) => {
+          console.error('Question copy failed:', err);
+          // 在这里实现错误Toast提示
+        }}
         onDelete={() => console.log('删除问题卡片')}
       />
     </div>

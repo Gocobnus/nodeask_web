@@ -18,6 +18,7 @@ export interface QCardProps {
   onClick?: () => void;
   onDelete?: () => void;
   onCopy?: () => void;
+  onCopyError?: (error: Error) => void;
 }
 
 export interface ACardProps {
@@ -30,6 +31,7 @@ export interface ACardProps {
   onCollapse?: () => void;
   onExpand?: () => void;
   onCopy?: () => void;
+  onCopyError?: (error: Error) => void;
   onClick?: () => void;
   onDelete?: () => void;
   onFollowUp?: () => void;
