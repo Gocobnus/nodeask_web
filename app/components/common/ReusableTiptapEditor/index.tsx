@@ -1,26 +1,50 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback, useEffect } from "react";
-import { SendIcon } from "../icons";
-import { EditorContent, useEditor } from "@tiptap/react";
+import React, { useCallback, useEffect } from "react";
+import { SendIcon } from "../../icons";
+import { EditorContent, useEditor, Editor } from "@tiptap/react";
+import { Extension } from '@tiptap/core';
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import "./editor.css";
 
-interface InputAreaProps {
-  onSubmit?: (value: string) => void;
+// 1. Define the custom extension
+const EnterKeyInterceptor = Extension.create({
+  name: 'enterKeyInterceptor',
+
+  addKeyboardShortcuts() {
+    return {
+      'Enter': () => {
+        // Check if the editor content is empty
+        if (this.editor.state.doc.textContent.trim().length === 0) {
+          // If it's empty, we handle it by doing nothing and stopping other commands.
+          return true;
+        }
+        // If it's not empty, we let other commands (like our handleSubmit) proceed.
+        return false;
+      },
+    };
+  },
+});
+
+interface ReusableTiptapEditorProps {
+  content: string;
+  onUpdate: (newContent: string) => void;
+  onSubmit: (submittedContent: string) => void;
   placeholder: string;
   disabled?: boolean;
+  isSubmitting?: boolean;
 }
 
-export default function InputArea({ 
+export default function ReusableTiptapEditor({ 
+  content,
+  onUpdate,
   onSubmit, 
   placeholder,
-  disabled = false 
-}: InputAreaProps) {
-  const [value, setValue] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  disabled = false,
+  isSubmitting = false,
+}: ReusableTiptapEditorProps) {
 
-  // 初始化 Tiptap 编辑器
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -28,15 +52,15 @@ export default function InputArea({
         placeholder,
         showOnlyWhenEditable: false,
         includeChildren: true,
-        emptyNodeClass: 'is-editor-empty',
+        emptyEditorClass: 'is-editor-empty',
       }),
+      EnterKeyInterceptor, // 2. Add the extension to the editor
     ],
-    content: "",
+    content: content,
     onUpdate: ({ editor }) => {
-      setValue(editor.getText());
+      onUpdate(editor.getText()); 
     },
-    editable: !(disabled),
-    // 避免 Next.js SSR / Hydration 不一致
+    editable: !disabled,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -47,47 +71,38 @@ export default function InputArea({
     }
   });
 
-  // 同步禁用态到编辑器
+  useEffect(() => {
+    if (editor && editor.getText() !== content) {
+      editor.commands.setContent(content, { emitUpdate: false });
+    }
+  }, [content, editor]);
+
   useEffect(() => {
     if (editor) {
       editor.setEditable(!(disabled || isSubmitting));
     }
   }, [editor, disabled, isSubmitting]);
 
-  // 处理提交
-  const handleSubmit = useCallback(async () => {
-    if (!value.trim() || isSubmitting || disabled) return;
+  const handleSubmit = useCallback(() => {
+    if (!content.trim() || isSubmitting || disabled) return;
+    onSubmit(content.trim());
+  }, [content, isSubmitting, disabled, onSubmit]);
 
-    setIsSubmitting(true);
-    try {
-      if (onSubmit) {
-        await onSubmit(value.trim());
-      }
-      setValue("");
-      if (editor) {
-        editor.commands.clearContent(true);
-      }
-    } catch (error) {
-      console.error('提交失败:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [value, isSubmitting, disabled, onSubmit, editor]);
-
-  // 处理键盘事件
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+    // 3. The Enter key logic is now primarily handled by the Tiptap extension.
+    // This handler is now just for submitting non-empty content.
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
   }, [handleSubmit]);
 
-
-
-    return (
+  return (
     <div className="search-section__input-container">
       <div className="search-section__inner-container">
-        {/* 输入框（Tiptap） */}
         {editor ? (
           <div className="search-section__input">
             <div className="search-section__scroller">
@@ -104,20 +119,15 @@ export default function InputArea({
             aria-hidden="true"
           />
         )}
-
-        {/* 底部区域 */}
         <div className="search-section__bottom-area">
-          {/* 功能组件 */}
           <div className="search-section__function-component">
-            {/* 暂时留空，为未来功能预留 */}
+            {/* Placeholder */}
           </div>
-
-          {/* 提交组件 */}
           <div className="search-section__submit-component">
             <button
               className="search-section__submit-button"
               onClick={handleSubmit}
-              disabled={!value.trim() || isSubmitting || disabled}
+              disabled={!content.trim() || isSubmitting || disabled}
               type="button"
             >
               {isSubmitting ? (

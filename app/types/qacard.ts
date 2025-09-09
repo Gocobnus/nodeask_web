@@ -15,7 +15,7 @@ export interface QCardProps {
   avatar?: string;
   isSelected?: boolean;
   isInitiallyCollapsed?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   onDelete?: () => void;
   onCopy?: () => void;
   onCopyError?: (error: Error) => void;
@@ -32,7 +32,7 @@ export interface ACardProps {
   onExpand?: () => void;
   onCopy?: () => void;
   onCopyError?: (error: Error) => void;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   onDelete?: () => void;
   onFollowUp?: () => void;
 }

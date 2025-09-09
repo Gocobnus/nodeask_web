@@ -3,7 +3,8 @@
 import { mockQATrees } from "../../../lib/mock-data";
 import { notFound } from "next/navigation";
 import { AnswerCard } from "../../../components/card/acard";
-import { QuestionCard } from "../../../components/card/qcard"; // Import QuestionCard
+import { QuestionCard } from "../../../components/card/qcard";
+import ReusableTiptapEditor from "../../../components/common/ReusableTiptapEditor";
 import { use, useEffect, useState } from "react";
 
 interface QATreePageProps {
@@ -12,86 +13,146 @@ interface QATreePageProps {
   }>;
 }
 
+// Using a Discriminated Union for type safety
+type QuestionCardData = {
+  id: string;
+  type: 'question';
+  question: string;
+  avatar?: string;
+  x: number;
+  y: number;
+};
+
+type AnswerCardData = {
+  id: string;
+  type: 'answer';
+  title: string;
+  content: string;
+  x: number;
+  y: number;
+};
+
+type CardData = QuestionCardData | AnswerCardData;
+
 export default function QATreePage({ params }: QATreePageProps) {
   const { treeId } = use(params);
   const [isMounted, setIsMounted] = useState(false);
-  const [isAnswerCardSelected, setIsAnswerCardSelected] = useState(false);
-  const [isQuestionCardSelected, setIsQuestionCardSelected] = useState(true);
+  
+  const [cards, setCards] = useState<CardData[]>([
+    { id: 'q1', type: 'question', question: '如何创建node应用', avatar: 'https://i.pravatar.cc/150?u=zhangsan', x: 450, y: 100 },
+    { id: 'a1', type: 'answer', title: '什么是React的useState Hook？', content: '夜深人静，万籁俱寂。窗外偶有微风拂过树叶，发出细微的沙沙声，像', x: 450, y: 320 },
+  ]);
 
-  // 避免水合错误
+  const [editingCard, setEditingCard] = useState<{ id: string; text: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
   
-  // 根据treeId查找对应的图谱数据
   const qaTree = mockQATrees.find(tree => tree.id === treeId);
-  
-  // 如果图谱不存在，返回404页面
   if (!qaTree) {
     notFound();
   }
 
-  // 创建临时模拟数据用于展示卡片效果
-  const mockCardData = {
-    title: "什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？什么是React的useState Hook？",
-    content: "夜深人静，万籁俱寂。窗外偶有微风拂过树叶，发出细微的沙沙声，像"
+  const handleCardClick = (card: CardData) => {
+    setSelectedCardId(card.id);
+    if (card.type === 'question') {
+      setEditingCard({ id: card.id, text: card.question });
+    }
   };
 
-  // 在客户端挂载前不渲染QACard组件
-  if (!isMounted) {
-    return (
-      <div className="flex items-start justify-center min-h-screen p-6 pt-[15vh]">
-        {/* 加载占位 */}
-        <div className="w-[380px] h-[452px] bg-gray-200 rounded-lg animate-pulse"></div>
-      </div>
+  const handleUpdate = (newText: string) => {
+    if (!editingCard) return;
+
+    setEditingCard({ ...editingCard, text: newText });
+
+    setCards(currentCards => 
+      currentCards.map(c => 
+        (c.id === editingCard.id && c.type === 'question') ? { ...c, question: newText } : c
+      )
     );
+  };
+
+  const handleSubmit = (submittedText: string) => {
+    setIsSubmitting(true);
+    console.log(`追问 (Follow-up question): ${submittedText}`);
+    setTimeout(() => {
+        setEditingCard(null);
+        setIsSubmitting(false);
+    }, 1000);
+  };
+
+  const handleExpand = () => {
+    console.log("Expand/Drawer button clicked");
+  };
+
+  const handleFollowUp = () => {
+    console.log("Follow-up button clicked");
+  };
+
+  if (!isMounted) {
+    return null;
   }
 
   return (
     <div 
-      className="flex items-start justify-center min-h-screen p-6 pt-[15vh] gap-4"
+      className="relative w-full h-screen p-6"
       onClick={() => {
-        setIsAnswerCardSelected(false);
-        setIsQuestionCardSelected(false);
+        setSelectedCardId(null);
+        setEditingCard(null);
       }}
     >
-      <AnswerCard
-        title={mockCardData.title}
-        content={mockCardData.content}
-        isGenerating={true}
-        isCompleted={true}
-        isSelected={isAnswerCardSelected}
-        onPause={() => console.log('暂停回答')}
-        onCollapse={() => console.log('收起卡片')}
-        onExpand={() => console.log('展开更多')}
-        onCopy={() => {
-          console.log('Answer copied');
-          // 在这里实现Toast提示
-        }}
-        onCopyError={(err) => {
-          console.error('Answer copy failed:', err);
-          // 在这里实现错误Toast提示
-        }}
-        onClick={() => setIsAnswerCardSelected(true)}
-        onLocate={() => setIsAnswerCardSelected(true)}
-        onDelete={() => console.log('删除回答卡片')}
-        onFollowUp={() => console.log('点击了追问按钮')}
-      />
-      <QuestionCard 
-        question="如何创建node应用"
-        avatar="https://i.pravatar.cc/150?u=zhangsan" // Using a public asset for the avatar
-        isSelected={isQuestionCardSelected}
-        onClick={() => setIsQuestionCardSelected(true)}
-        onCopy={() => {
-          console.log('Question copied');
-          // 在这里实现Toast提示
-        }}
-        onCopyError={(err) => {
-          console.error('Question copy failed:', err);
-          // 在这里实现错误Toast提示
-        }}
-        onDelete={() => console.log('删除问题卡片')}
-      />
+      {cards.map((card) => (
+        <div key={card.id} style={{ position: 'absolute', top: card.y, left: card.x }}>
+          {card.type === 'question' ? (
+            <QuestionCard 
+              question={card.question}
+              avatar={card.avatar}
+              isSelected={selectedCardId === card.id}
+              onClick={(e) => {
+                if (e) e.stopPropagation();
+                handleCardClick(card);
+              }}
+              onCopy={() => console.log('Question copied')}
+              onCopyError={(err) => console.error('Question copy failed:', err)}
+              onDelete={() => console.log('删除问题卡片')}
+            />
+          ) : (
+            <AnswerCard
+              title={card.title}
+              content={card.content}
+              isCompleted={true}
+              isSelected={selectedCardId === card.id}
+              onClick={(e) => {
+                if (e) e.stopPropagation();
+                setSelectedCardId(card.id);
+                setEditingCard(null);
+              }}
+              onCopy={() => console.log('Answer copied')}
+              onCopyError={(err) => console.error('Answer copy failed:', err)}
+              onExpand={handleExpand}
+              onFollowUp={handleFollowUp}
+            />
+          )}
+        </div>
+      ))}
+
+      {editingCard && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-transparent flex justify-center pointer-events-none">
+            <div className="w-full max-w-3xl pointer-events-auto">
+                <ReusableTiptapEditor
+                    content={editingCard.text}
+                    onUpdate={handleUpdate}
+                    onSubmit={handleSubmit}
+                    placeholder="输入内容以优化或追问..."
+                    isSubmitting={isSubmitting}
+                    disabled={isSubmitting}
+                />
+            </div>
+        </div>
+      )}
     </div>
   );
 }
