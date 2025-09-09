@@ -1,26 +1,21 @@
 'use client';
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react"; // Import useRef
 import { SendIcon } from "../../icons";
-import { EditorContent, useEditor, Editor } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension } from '@tiptap/core';
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import "./editor.css";
 
-// 1. Define the custom extension
 const EnterKeyInterceptor = Extension.create({
   name: 'enterKeyInterceptor',
-
   addKeyboardShortcuts() {
     return {
       'Enter': () => {
-        // Check if the editor content is empty
         if (this.editor.state.doc.textContent.trim().length === 0) {
-          // If it's empty, we handle it by doing nothing and stopping other commands.
           return true;
         }
-        // If it's not empty, we let other commands (like our handleSubmit) proceed.
         return false;
       },
     };
@@ -34,6 +29,7 @@ interface ReusableTiptapEditorProps {
   placeholder: string;
   disabled?: boolean;
   isSubmitting?: boolean;
+  variant?: 'homepage' | 'bottomBar';
 }
 
 export default function ReusableTiptapEditor({ 
@@ -43,7 +39,9 @@ export default function ReusableTiptapEditor({
   placeholder,
   disabled = false,
   isSubmitting = false,
+  variant = 'homepage',
 }: ReusableTiptapEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -54,7 +52,7 @@ export default function ReusableTiptapEditor({
         includeChildren: true,
         emptyEditorClass: 'is-editor-empty',
       }),
-      EnterKeyInterceptor, // 2. Add the extension to the editor
+      EnterKeyInterceptor,
     ],
     content: content,
     onUpdate: ({ editor }) => {
@@ -92,16 +90,33 @@ export default function ReusableTiptapEditor({
     if (e.nativeEvent.isComposing) {
       return;
     }
-    // 3. The Enter key logic is now primarily handled by the Tiptap extension.
-    // This handler is now just for submitting non-empty content.
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      if (!content.trim()) {
+        return;
+      }
       handleSubmit();
     }
-  }, [handleSubmit]);
+  }, [content, handleSubmit]);
+
+  const handleClickOnContainer = (e: React.MouseEvent) => {
+    const editorContentEl = containerRef.current?.querySelector('.ProseMirror');
+    if (editorContentEl && editorContentEl.contains(e.target as Node)) {
+      return;
+    }
+    editor?.chain().focus('end').run();
+  };
+
+  const containerClass = variant === 'bottomBar' 
+    ? "bottom-editor__container" 
+    : "search-section__input-container";
 
   return (
-    <div className="search-section__input-container">
+    <div 
+      ref={containerRef}
+      className={containerClass} 
+      onClick={handleClickOnContainer}
+    >
       <div className="search-section__inner-container">
         {editor ? (
           <div className="search-section__input">

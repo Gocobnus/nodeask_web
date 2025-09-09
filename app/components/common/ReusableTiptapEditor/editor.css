@@ -46,6 +46,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: text;
 }
 
 /* 内层容器 */
@@ -207,4 +208,25 @@
     height: 32px;
     font-size: 16px;
   }
+}
+
+/* ===== Bottom Editor Variant Styles ===== */
+
+.bottom-editor__container {
+  width: 100%; /* Override fixed width */
+  height: auto;
+  background-color: #fff;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 20px 20px 0 0; /* Only top corners rounded */
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.07); /* Top shadow */
+}
+
+/* Override inner container width */
+.bottom-editor__container .search-section__inner-container {
+  width: 100%;
+}
+
+/* Override input area width */
+.bottom-editor__container .search-section__input {
+  width: 100%;
 }
