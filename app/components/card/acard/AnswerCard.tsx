@@ -342,7 +342,8 @@ export default function AnswerCard({
                       className="acard__icon-btn acard__footer-btn"
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        if (onClick) {
+                        // Only trigger selection when opening the drawer
+                        if (!isOpen && onClick) {
                           onClick(e);
                         }
                         onOpenChange(); 
