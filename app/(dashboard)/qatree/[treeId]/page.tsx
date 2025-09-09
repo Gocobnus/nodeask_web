@@ -64,7 +64,14 @@ export default function QATreePage({ params }: QATreePageProps) {
         onPause={() => console.log('暂停回答')}
         onCollapse={() => console.log('收起卡片')}
         onExpand={() => console.log('展开更多')}
-        onCopy={() => console.log('内容已复制到剪贴板')}
+        onCopy={() => {
+          console.log('Answer copied');
+          // 在这里实现Toast提示
+        }}
+        onCopyError={(err) => {
+          console.error('Answer copy failed:', err);
+          // 在这里实现错误Toast提示
+        }}
         onClick={() => setIsAnswerCardSelected(true)}
         onLocate={() => setIsAnswerCardSelected(true)}
         onDelete={() => console.log('删除回答卡片')}
