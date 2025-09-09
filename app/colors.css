@@ -37,21 +37,28 @@
   /* 阴影颜色 */
   --shadow-default: rgba(0, 0, 0, 0.25);
   
-  /* 卡片颜色变量 */
+  /* a卡片颜色变量 */
   --acard-bg-primary: #C9A9E9;
   --acard-bg-content: #F9F9F9;
   --acard-bg-selected-border: #7828c8;
   --acard-text-default: #27272a;
   --acard-icon-default: #27272a;
+  --acard-text-primary: #27272a; /* Added missing variable */
 
   --acard-text-related-question: #52525b;
   --acard-text-related-question-hover: #9353d3;
   --acard-underline-related-question: #666666;
+
+  /* q卡片颜色变量 */
+  --qcard-bg-primary: #F9F9F9;
+  --qcard-bg-selected-border: #666666;
+  --qcard-text-default: #27272a;
+  --qcard-icon-default: #27272a;
+  --qcard-text-primary: #27272a;
 
   --drawer-close-btn: #f31260;
   --drawer-copy-btn: #9353d3;
   --drawer-copy-hover-btn: #ae7ede;
   --drawer-text-copy-btn: #F9F9F9;
 
-  
 }

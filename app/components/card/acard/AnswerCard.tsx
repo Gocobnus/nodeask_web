@@ -80,9 +80,12 @@ export default function AnswerCard({
         console.log("Related questions copied!");
       });
     } else {
-      if (onCopy) {
-        onCopy();
-      }
+      navigator.clipboard.writeText(content || "").then(() => {
+        console.log("Answer copied!");
+        if (onCopy) {
+          onCopy();
+        }
+      });
     }
   };
 

@@ -12,6 +12,12 @@ export interface QANode {
 
 export interface QCardProps {
   question: string;
+  avatar?: string;
+  isSelected?: boolean;
+  isInitiallyCollapsed?: boolean;
+  onClick?: () => void;
+  onDelete?: () => void;
+  onCopy?: () => void;
 }
 
 export interface ACardProps {
