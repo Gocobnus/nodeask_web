@@ -178,7 +178,7 @@
   pointer-events: none;
 }
 
-/* 内容区域 */
+/* 内容区域，这里给一个最小高度=footer的高度 */
 .qcard__content {
   flex: 1;
   padding: 0px 16px 0px 16px;
@@ -188,7 +188,7 @@
   color: var(--qcard-text-primary);
   white-space: pre-wrap;
   box-sizing: border-box;
-  min-height: 0;
+  min-height: var(--footer-height);
 }
 
 /* 底部操作栏 */
