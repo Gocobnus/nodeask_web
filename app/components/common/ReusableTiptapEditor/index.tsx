@@ -58,6 +58,17 @@ export default function ReusableTiptapEditor({
     onUpdate: ({ editor }) => {
       onUpdate(editor.getText()); 
     },
+    onTransaction: ({ transaction }) => {
+      if (transaction.docChanged) {
+        const scroller = containerRef.current?.querySelector('.search-section__scroller');
+        if (scroller) {
+          // After the DOM updates, scroll the container to the bottom to keep the cursor in view.
+          requestAnimationFrame(() => {
+            scroller.scrollTop = scroller.scrollHeight;
+          });
+        }
+      }
+    },
     editable: !disabled,
     immediatelyRender: false,
     editorProps: {
@@ -65,7 +76,18 @@ export default function ReusableTiptapEditor({
         class: 'search-section__editor',
         style: 'outline:none;box-shadow:none;border:none;',
         'data-placeholder': placeholder,
-      }
+      },
+      handlePaste: (view, event, slice) => {
+        // Get pasted text as plain text.
+        const text = event.clipboardData?.getData('text/plain');
+        if (text) {
+          // Insert it at the current selection.
+          const { from, to } = view.state.selection;
+          view.dispatch(view.state.tr.insertText(text, from, to));
+        }
+        // Prevent the default paste behavior.
+        return true;
+      },
     }
   });
 
