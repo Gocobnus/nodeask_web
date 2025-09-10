@@ -232,10 +232,10 @@ export default function Navigation({
   // 根据当前路径确定选中的主导航项
   const getSelectedKey = () => {
     if (pathname === "/") {
-      return isQATreeManuallySelected ? "qatree-list" : "home";
+      return "home";
     }
     if (pathname.startsWith("/discover")) {
-      return isQATreeManuallySelected ? "qatree-list" : "discover";
+      return "discover";
     }
     if (pathname.startsWith("/qatree/")) {
       // 当在子图谱页面时，主图谱不应该被选中
@@ -257,11 +257,9 @@ export default function Navigation({
       setIsCompact(false);
       setTimeout(() => {
         setIsQATreeExpanded(true);
-        setIsQATreeManuallySelected(true);
       }, 100); // 等待侧边栏动画结束后再展开
     } else {
       setIsQATreeExpanded(!isQATreeExpanded);
-      setIsQATreeManuallySelected(true);
     }
   };
 
@@ -298,7 +296,7 @@ export default function Navigation({
       <SidebarButton
         icon="/icons/sidebar/treelist.svg"
         title="我的图谱"
-        isSelected={selectedKey === "qatree-list" && !pathname.startsWith("/qatree/")}
+        isSelected={false}
         isCompact={isCompact}
         onClick={handleQATreeToggle}
         type="navigation-item"
