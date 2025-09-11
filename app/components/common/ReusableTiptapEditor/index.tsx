@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { SendIcon } from "../../icons";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension } from '@tiptap/core';
-import { Slice, Fragment } from '@tiptap/pm/model'; // 导入 Slice 和 Fragment
+import { Slice, Fragment } from '@tiptap/pm/model';
+import { TextSelection } from '@tiptap/pm/state'; // 确保导入 TextSelection
+
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import "./editor.css";
@@ -57,7 +59,6 @@ export default function ReusableTiptapEditor({
     ],
     content: content,
     onUpdate: ({ editor }) => {
-      // 确保使用 getHTML() 以保留格式
       onUpdate(editor.getHTML());
     },
     onTransaction: ({ editor, transaction }) => {
@@ -74,20 +75,15 @@ export default function ReusableTiptapEditor({
         style: 'outline:none;box-shadow:none;border:none;',
         'data-placeholder': placeholder,
       },
-      // 使用全新的 handlePaste 函数
       handlePaste: (view, event, slice) => {
-        // 从剪贴板获取纯文本内容
         const text = event.clipboardData?.getData('text/plain');
 
-        // 如果没有文本内容，或者编辑器 schema 中没有段落节点，则退回默认粘贴行为
         if (!text || !view.state.schema.nodes.paragraph) {
           return false;
         }
 
-        // 将文本按行分割
         const lines = text.split(/\r\n|\r|\n/);
 
-        // 为每一行文本创建一个新的段落节点
         const fragment = Fragment.fromArray(
           lines.map(line => {
             const node = view.state.schema.nodes.paragraph.create(
@@ -97,25 +93,31 @@ export default function ReusableTiptapEditor({
             return node;
           })
         );
-
-        // 创建一个包含这些新段落的 Slice
         const newSlice = new Slice(fragment, 0, 0);
 
-        // 创建一个事务，用新的 Slice 替换当前选中的内容
         const { from, to } = view.state.selection;
-        const tr = view.state.tr.replaceRange(from, to, newSlice);
+        let tr = view.state.tr.replaceRange(from, to, newSlice);
 
-        // 应用这个事务
+        // --- 核心修复：显式设置光标位置 ---
+        // 1. 计算粘贴后内容的结束位置
+        const endPosition = from + newSlice.size;
+        
+        // 2. 确保计算出的位置不会超出文档范围，防止 "Position out of range" 错误
+        const resolvedPos = Math.min(endPosition, tr.doc.content.size);
+
+        // 3. 创建一个折叠的选区（即光标）并设置到该安全位置
+        tr = tr.setSelection(TextSelection.create(tr.doc, resolvedPos));
+        // --- 修复结束 ---
+        
+        // 应用这个包含了内容替换和光标移动的事务
         view.dispatch(tr);
 
-        // 返回 true，表示我们已经处理了粘贴事件，阻止默认行为
         return true;
       },
     }
   });
 
   useEffect(() => {
-    // 检查内容是否是 HTML 格式
     const isHTML = /<[a-z][\s\S]*>/i.test(content);
     const editorContent = isHTML ? editor?.getHTML() : editor?.getText();
 
