@@ -6,6 +6,7 @@ import { AnswerCard } from "../../../components/card/acard";
 import { QuestionCard } from "../../../components/card/qcard";
 import ReusableTiptapEditor from "../../../components/common/ReusableTiptapEditor";
 import { use, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface QATreePageProps {
   params: Promise<{
@@ -140,8 +141,15 @@ export default function QATreePage({ params }: QATreePageProps) {
         </div>
       ))}
 
-      {editingCard && (
-        <div className="fixed bottom-0 left-0 right-0 bg-transparent flex justify-center pointer-events-none">
+      <AnimatePresence>
+        {editingCard && (
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
             <div className="w-full max-w-[766px] pointer-events-auto mb-4" onClick={(e) => e.stopPropagation()}>
                 <ReusableTiptapEditor
                     content={editingCard.text}
@@ -153,8 +161,9 @@ export default function QATreePage({ params }: QATreePageProps) {
                     variant="bottomBar"
                 />
             </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
