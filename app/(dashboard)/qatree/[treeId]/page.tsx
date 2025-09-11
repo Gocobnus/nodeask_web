@@ -60,6 +60,8 @@ export default function QATreePage({ params }: QATreePageProps) {
     setSelectedCardId(card.id);
     if (card.type === 'question') {
       setEditingCard({ id: card.id, text: card.question });
+    }else {
+      setEditingCard(null);
     }
   };
 
@@ -127,8 +129,7 @@ export default function QATreePage({ params }: QATreePageProps) {
               isSelected={selectedCardId === card.id}
               onClick={(e) => {
                 if (e) e.stopPropagation();
-                setSelectedCardId(card.id);
-                setEditingCard(null);
+                handleCardClick(card);
               }}
               onCopy={() => console.log('Answer copied')}
               onCopyError={(err) => console.error('Answer copy failed:', err)}
