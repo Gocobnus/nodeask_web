@@ -56,19 +56,14 @@ export default function ReusableTiptapEditor({
     ],
     content: content,
     onUpdate: ({ editor }) => {
-      onUpdate(editor.getText()); 
+      onUpdate(editor.getText());
     },
-    onTransaction: ({ transaction }) => {
+    onTransaction: ({ editor, transaction }) => {
       if (transaction.docChanged) {
-        const scroller = containerRef.current?.querySelector('.search-section__scroller');
-        if (scroller) {
-          // After the DOM updates, scroll the container to the bottom to keep the cursor in view.
-          requestAnimationFrame(() => {
-            scroller.scrollTop = scroller.scrollHeight;
-          });
-        }
+        editor.chain().focus().scrollIntoView().run();
       }
     },
+    
     editable: !disabled,
     immediatelyRender: false,
     editorProps: {

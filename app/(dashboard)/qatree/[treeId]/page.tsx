@@ -141,8 +141,8 @@ export default function QATreePage({ params }: QATreePageProps) {
       ))}
 
       {editingCard && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-transparent flex justify-center pointer-events-none">
-            <div className="w-full max-w-3xl pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed bottom-0 left-0 right-0 bg-transparent flex justify-center pointer-events-none">
+            <div className="w-full max-w-[766px] pointer-events-auto mb-4" onClick={(e) => e.stopPropagation()}>
                 <ReusableTiptapEditor
                     content={editingCard.text}
                     onUpdate={handleUpdate}
