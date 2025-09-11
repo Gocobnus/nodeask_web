@@ -47,6 +47,7 @@ export default function QATreePage({ params }: QATreePageProps) {
   const [editingCard, setEditingCard] = useState<{ id: string; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setIsMounted(true);
@@ -60,8 +61,10 @@ export default function QATreePage({ params }: QATreePageProps) {
   const handleCardClick = (card: CardData) => {
     setSelectedCardId(card.id);
     if (card.type === 'question') {
-      setEditingCard({ id: card.id, text: card.question });
-    }else {
+      // 如果存在草稿，则使用草稿内容；否则，使用卡片原始内容
+      const initialText = drafts[card.id] !== undefined ? drafts[card.id] : card.question;
+      setEditingCard({ id: card.id, text: initialText });
+    } else {
       setEditingCard(null);
     }
   };
@@ -69,22 +72,32 @@ export default function QATreePage({ params }: QATreePageProps) {
   const handleUpdate = (newText: string) => {
     if (!editingCard) return;
 
+    // 更新实时显示的编辑状态
     setEditingCard({ ...editingCard, text: newText });
 
-    setCards(currentCards => 
-      currentCards.map(c => 
-        (c.id === editingCard.id && c.type === 'question') ? { ...c, question: newText } : c
-      )
-    );
+    // 只有当文本不为空时，才将其保存为草稿
+    if (newText.trim() !== '') {
+      setDrafts(prevDrafts => ({
+        ...prevDrafts,
+        [editingCard.id]: newText,
+      }));
+    }
   };
 
   const handleSubmit = (submittedText: string) => {
-    setIsSubmitting(true);
-    console.log(`追问 (Follow-up question): ${submittedText}`);
-    setTimeout(() => {
-        setEditingCard(null);
-        setIsSubmitting(false);
-    }, 1000);
+    if (!editingCard) return;
+
+    console.log(`追问 (Follow-up question for card ${editingCard.id}): ${submittedText}`);
+
+    // 提交后清除草稿
+    setDrafts(prevDrafts => {
+      const newDrafts = { ...prevDrafts };
+      delete newDrafts[editingCard.id];
+      return newDrafts;
+    });
+
+    // 清空编辑器文本。按钮会因为内容为空而自动禁用。
+    setEditingCard(prev => prev ? { ...prev, text: '' } : null);
   };
 
   const handleExpand = () => {

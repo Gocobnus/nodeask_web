@@ -162,13 +162,9 @@ export default function ReusableTiptapEditor({
               disabled={!content.trim() || isSubmitting || disabled}
               type="button"
             >
-              {isSubmitting ? (
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <SendIcon
-                  className="text-current"
-                />
-              )}
+              <SendIcon
+                className="text-current"
+              />
             </button>
           </div>
         </div>
