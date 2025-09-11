@@ -41,6 +41,7 @@ export default function SearchSection({
       
       {/* 输入区域 */}
       <ReusableTiptapEditor 
+        key="homepage-search-section"
         placeholder={placeholder} 
         disabled={disabled}
         content={content}

@@ -165,13 +165,14 @@ export default function QATreePage({ params }: QATreePageProps) {
           >
             <div className="w-full max-w-[766px] pointer-events-auto mb-4" onClick={(e) => e.stopPropagation()}>
                 <ReusableTiptapEditor
-                    content={editingCard.text}
-                    onUpdate={handleUpdate}
-                    onSubmit={handleSubmit}
-                    placeholder="输入内容以优化或追问..."
-                    isSubmitting={isSubmitting}
-                    disabled={isSubmitting}
-                    variant="bottomBar"
+                  key="qatree-search-section"
+                  content={editingCard.text}
+                  onUpdate={handleUpdate}
+                  onSubmit={handleSubmit}
+                  placeholder="输入内容以优化或追问..."
+                  isSubmitting={isSubmitting}
+                  disabled={isSubmitting}
+                  variant="bottomBar"
                 />
             </div>
           </motion.div>
