@@ -33,7 +33,7 @@ const drawerVariants = {
 } as const;
 
 
-export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, onClose, children, className }) => {
+export const CustomDrawer: React.FC<CustomDrawerProps> = ({ isOpen, children, className }) => {
   const [width, setWidth] = useState(440);
   const isResizing = useRef(false);
 
