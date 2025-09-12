@@ -61,7 +61,7 @@ export default function AnswerCard({
   const [scrollPosition, setScrollPosition] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const {isOpen, onOpen, onOpenChange} = useDisclosure();
+  const {isOpen, onOpenChange} = useDisclosure();
 
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.add('btn-active');
@@ -168,11 +168,13 @@ export default function AnswerCard({
     
   };
   
+
   useEffect(() => {
     if (!isCollapsed && contentRef.current && scrollPosition > 0) {
       contentRef.current.scrollTop = scrollPosition;
     }
-  }, [isCollapsed]);
+  }, [isCollapsed, scrollPosition]); // 修复：添加 scrollPosition
+
 
   useEffect(() => {
     if (contentRef.current) {

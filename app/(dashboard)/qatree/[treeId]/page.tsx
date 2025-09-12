@@ -45,7 +45,7 @@ export default function QATreePage({ params }: QATreePageProps) {
   ]);
 
   const [editingCard, setEditingCard] = useState<{ id: string; text: string } | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, _setIsSubmitting] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 

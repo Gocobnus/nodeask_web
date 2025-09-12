@@ -2,9 +2,7 @@
 "use client";
 
 import React from "react";
-import { Button } from "@heroui/react";
 import { ExpandCollapseIcon } from "../icons";
-import { sidebarConfig } from "./sidebar-config";
 
 const BrandIcon = ({ className }: { className?: string }) => {
   return (

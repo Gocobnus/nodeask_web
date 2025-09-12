@@ -218,7 +218,7 @@ export default function Navigation({
   const [internalIsQATreeManuallySelected, setInternalIsQATreeManuallySelected] = useState(false);
   
   // 使用外部状态或内部状态
-  const isQATreeManuallySelected = externalIsQATreeManuallySelected ?? internalIsQATreeManuallySelected;
+  const _isQATreeManuallySelected = externalIsQATreeManuallySelected ?? internalIsQATreeManuallySelected;
   const setIsQATreeManuallySelected = externalSetIsQATreeManuallySelected ?? setInternalIsQATreeManuallySelected;
 
   // 获取当前图谱ID（从路径中提取）

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import Image from 'next/image';
 import { motion } from "framer-motion";
 import { QCardProps } from "../../../types/qacard";
 import { PullIcon, CardDeleteIcon, CopyIcon } from "../../icons";
@@ -20,7 +21,7 @@ export default function QuestionCard({
   onCopyError,
 }: QCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
-  const [isCopied, setIsCopied] = useState(false);
+  const [_isCopied, _setIsCopied] = useState(false);
 
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.add('btn-active');
@@ -103,7 +104,7 @@ export default function QuestionCard({
 
         <div className="qcard__header">
             <div className="qcard__header-left">
-              {avatar && <img src={avatar} alt="avatar" className="qcard__avatar" />}
+              {avatar && <Image src={avatar} alt="avatar" className="qcard__avatar" width={24} height={24} />}
               <div className="qcard__header-title">{question}</div>
             </div>
           <div className="qcard__header-actions">
