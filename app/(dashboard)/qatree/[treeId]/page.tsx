@@ -61,7 +61,6 @@ export default function QATreePage({ params }: QATreePageProps) {
   const handleCardClick = (card: CardData) => {
     setSelectedCardId(card.id);
     if (card.type === 'question') {
-      // 如果存在草稿，则使用草稿内容；否则，使用卡片原始内容
       const initialText = drafts[card.id] !== undefined ? drafts[card.id] : card.question;
       setEditingCard({ id: card.id, text: initialText });
     } else {
@@ -69,44 +68,43 @@ export default function QATreePage({ params }: QATreePageProps) {
     }
   };
 
+
   const handleUpdate = (newText: string) => {
     if (!editingCard) return;
-
-    // 更新实时显示的编辑状态
+  
+    // 更新实时显示的编辑状态 (这部分不变)
     setEditingCard({ ...editingCard, text: newText });
-
-    // 只有当文本不为空时，才将其保存为草稿
+  
+    // ---- 新的草稿处理逻辑 ----
     if (newText.trim() !== '') {
+      // 如果有文本，就更新或创建草稿
       setDrafts(prevDrafts => ({
         ...prevDrafts,
         [editingCard.id]: newText,
       }));
+    } else {
+      // 如果文本被清空，就从草稿中删除这一项
+      setDrafts(prevDrafts => {
+        const newDrafts = { ...prevDrafts };
+        delete newDrafts[editingCard.id];
+        return newDrafts;
+      });
     }
   };
 
   const handleSubmit = (submittedText: string) => {
     if (!editingCard) return;
-
     console.log(`追问 (Follow-up question for card ${editingCard.id}): ${submittedText}`);
-
-    // 提交后清除草稿
     setDrafts(prevDrafts => {
       const newDrafts = { ...prevDrafts };
       delete newDrafts[editingCard.id];
       return newDrafts;
     });
-
-    // 清空编辑器文本。按钮会因为内容为空而自动禁用。
     setEditingCard(prev => prev ? { ...prev, text: '' } : null);
   };
 
-  const handleExpand = () => {
-    console.log("Expand/Drawer button clicked");
-  };
-
-  const handleFollowUp = () => {
-    console.log("Follow-up button clicked");
-  };
+  const handleExpand = () => { console.log("Expand/Drawer button clicked"); };
+  const handleFollowUp = () => { console.log("Follow-up button clicked"); };
 
   if (!isMounted) {
     return null;
@@ -114,23 +112,26 @@ export default function QATreePage({ params }: QATreePageProps) {
 
   return (
     <div 
-      className="relative w-full h-screen p-6"
-      onClick={() => {
+      className="relative w-full h-screen"
+      // 1. 将全局事件改为 onMouseDown
+      onMouseDown={() => {
         setSelectedCardId(null);
         setEditingCard(null);
       }}
     >
       {cards.map((card) => (
-        <div key={card.id} style={{ position: 'absolute', top: card.y, left: card.x }}>
+        <div 
+          key={card.id} 
+          style={{ position: 'absolute', top: card.y, left: card.x }}
+          // 2. 在卡片上阻止 onMouseDown 事件冒泡
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           {card.type === 'question' ? (
             <QuestionCard 
               question={card.question}
               avatar={card.avatar}
               isSelected={selectedCardId === card.id}
-              onClick={(e) => {
-                if (e) e.stopPropagation();
-                handleCardClick(card);
-              }}
+              onClick={() => handleCardClick(card)}
               onCopy={() => console.log('Question copied')}
               onCopyError={(err) => console.error('Question copy failed:', err)}
               onDelete={() => console.log('删除问题卡片')}
@@ -141,14 +142,12 @@ export default function QATreePage({ params }: QATreePageProps) {
               content={card.content}
               isCompleted={true}
               isSelected={selectedCardId === card.id}
-              onClick={(e) => {
-                if (e) e.stopPropagation();
-                handleCardClick(card);
-              }}
+              onClick={() => handleCardClick(card)}
               onCopy={() => console.log('Answer copied')}
               onCopyError={(err) => console.error('Answer copy failed:', err)}
               onExpand={handleExpand}
               onFollowUp={handleFollowUp}
+              onDelete={() => console.log('删除回答卡片')} 
             />
           )}
         </div>
@@ -157,13 +156,18 @@ export default function QATreePage({ params }: QATreePageProps) {
       <AnimatePresence>
         {editingCard && (
           <motion.div
-            className="absolute bottom-0 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
+            // 4. 将 fixed 改回 absolute
+            className="absolute bottom-12 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
-            <div className="w-full max-w-[766px] pointer-events-auto mb-4" onClick={(e) => e.stopPropagation()}>
+            <div 
+              className="pointer-events-auto" 
+              // 3. 在输入框上阻止 onMouseDown 事件冒泡
+              onMouseDown={(e) => e.stopPropagation()}
+            >
                 <ReusableTiptapEditor
                   key="qatree-search-section"
                   content={editingCard.text}

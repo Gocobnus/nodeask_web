@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useRef } from "react";
+// 1. 确保从 react 导入 useEffect 和 useRef
+import React, { useCallback, useRef, useEffect } from "react";
 import { SendIcon } from "../../icons";
 import PromptInput from './PromptInputComponent';
 import "./editor.css";
@@ -25,6 +26,8 @@ export default function ReusableTiptapEditor({
   variant = 'homepage',
 }: ReusableTiptapEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // 2. 创建一个 ref 来引用 textarea 元素
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = useCallback(() => {
     if (!content.trim() || isSubmitting || disabled) return;
@@ -43,6 +46,18 @@ export default function ReusableTiptapEditor({
       handleSubmit();
     }
   }, [content, handleSubmit]);
+  
+  // 3. 使用 useEffect 来手动控制焦点和光标位置
+  useEffect(() => {
+    if (textareaRef.current) {
+      // 获取当前文本长度
+      const textLength = textareaRef.current.value.length;
+      // 手动设置焦点
+      textareaRef.current.focus();
+      // 将光标的起始和结束位置都设置到文本末尾
+      textareaRef.current.setSelectionRange(textLength, textLength);
+    }
+  }, []); // [] 依赖项确保这个 effect 只在组件挂载时运行一次
 
   const containerClass = variant === 'bottomBar'
     ? "bottom-editor__container"
@@ -57,7 +72,8 @@ export default function ReusableTiptapEditor({
     >
       <div className="search-section__inner-container">
         <PromptInput
-          autoFocus
+          // 4. 移除 autoFocus，并将 ref 传递给子组件
+          ref={textareaRef}
           variant="flat"
           className="search-section__input"
           maxRows={maxRows}

@@ -144,7 +144,7 @@
 /* ===== 特殊变体样式 (Bottom Editor) ===== */
 
 .bottom-editor__container {
-  width: 600px;
+  width: 640px;
   height: auto;
   background-color: var(--homepage-bg-primary);
   border: 1px solid var(--homepage-border-default);
