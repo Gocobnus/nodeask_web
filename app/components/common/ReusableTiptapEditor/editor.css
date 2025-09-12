@@ -1,37 +1,23 @@
 :root {
-  /* 间距变量 */
-  --spacing-lg: 28px;
-  --spacing-md: 16px;
+  /* 变量定义 */
   --spacing-sm: 8px;
-    /* 尺寸变量 */
   --input-container-width: 766px;
-  --inner-container-width: 764px;
-  
-  /* 输入框相关变量，减少硬编码 */
   --input-line-height: 24px;
-  --input-padding-top: 12px;
-  --input-padding-bottom: 12px;
-  --input-max-lines: 13;
-  --input-content-max-h: calc(var(--input-line-height) * var(--input-max-lines));
-  
-  --bottom-input-max-lines: 10;
-  --bottom-input-content-max-h: calc(var(--input-line-height) * var(--bottom-input-max-lines));
 }
 
-/* ===== 搜索区域样式 ===== */
+/* ===== 主体布局与容器 ===== */
 
-/* 输入区域容器 */
+/* 外部容器 */
 .search-section__input-container {
   width: var(--input-container-width);
   height: auto;
   background-color: var(--homepage-bg-primary);
   border: 1px solid var(--homepage-border-default);
   border-radius: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: text;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-/* 内层容器 */
+/* 内部容器 */
 .search-section__inner-container {
   width: 100%;
   height: auto;
@@ -41,74 +27,57 @@
   box-sizing: border-box;
 }
 
-/* 输入框样式（兼容 textarea 与 Tiptap 的 EditorContent） */
+/* ===== 输入区域 ===== */
+
+/* 输入框区域基础样式 */
 .search-section__input {
   width: 100%;
-  min-height: 56px;
-  max-height: calc(var(--input-content-max-h) + var(--input-padding-top) + var(--input-padding-bottom));
   border: none;
   outline: none;
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--text-default);
   background-color: transparent;
   font-family: inherit;
-  padding: var(--input-padding-top) 0 var(--input-padding-bottom) 12px; /* 需要保留的上下 padding */
-  overflow: hidden; /* 自身不滚动，交给内层滚动容器 */
-  overflow-x: hidden;
   box-sizing: border-box;
-  display: block;
-  scrollbar-gutter: stable;
-  position: relative;
 }
 
-/* 让编辑器根节点填满滚动容器，不占用 padding */
-.search-section__scroller { height: auto; max-height: var(--input-content-max-h); overflow-y: auto; padding-right: 8px; }
-/* 调整滚动条颜色 */
-.search-section__scroller { scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent; }
-.search-section__scroller::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent); }
-.search-section__input .search-section__editor { padding: 0; margin: 0; min-height: 24px; }
-
-/* 段落默认 margin 清零，避免顶端看似“突破 padding” */
-.search-section__input .search-section__editor p { margin: 0; }
-
-/* ProseMirror 特定默认样式修正 */
-.search-section__input .search-section__editor p { margin: 0; }
-
-/* Tiptap Placeholder 显示（类加在第一个空段落 p 上）*/
-.search-section__editor p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  color: var(--text-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
-  white-space: nowrap;
+/* 针对 @heroui/react Textarea 内部元素的样式 */
+.search-section__input [data-slot="input"] {
+  font-size: 16px !important;
+  line-height: var(--input-line-height) !important;
+  padding: 0px !important;
+  color: var(--text-default) !important;
+}
+.search-section__input [data-slot="input-wrapper"][data-focus-visible="true"] {
+  box-shadow: none !important;
 }
 
-/* SSR 初始化前的占位容器，让占位立即可见，与编辑器样式一致 */
-.search-section__placeholder::before {
-  content: attr(data-placeholder);
+.search-section__input [data-slot="input-wrapper"] {
+  margin-bottom: var(--spacing-sm);
+  padding: 8px 18px 8px 12px !important;
+}
+
+
+/* 原生 textarea 占位符 */
+.search-section__input::placeholder {
   color: var(--text-placeholder);
 }
 
-/* 输入框占位符样式 */
-.search-section__input::placeholder { color: var(--text-placeholder); }
+/* ===== 底部操作区域 ===== */
 
-/* 底部区域 */
 .search-section__bottom-area {
-  height: 36px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-right: 4px;
+  cursor: default;
 }
 
-/* 功能组件 */
+/* 左侧功能区 (预留) */
 .search-section__function-component {
   flex: 1;
-  /* 暂时留空，为未来功能预留 */
 }
 
-/* 提交组件 */
+/* 右侧提交组件容器 */
 .search-section__submit-component {
   width: 36px;
   height: 36px;
@@ -117,7 +86,8 @@
   justify-content: center;
 }
 
-/* 提交按钮样式 */
+/* ===== 提交按钮 ===== */
+
 .search-section__submit-button {
   width: 36px;
   height: 36px;
@@ -133,51 +103,37 @@
   font-size: 18px;
 }
 
-
-
-/* 提交按钮激活状态 */
 .search-section__submit-button:active {
   transform: scale(0.95);
 }
 
-/* 提交按钮禁用状态 */
 .search-section__submit-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: scale(1);
 }
 
-/* 响应式设计 */
+/* ===== 响应式设计 ===== */
+
 @media (max-width: 768px) {
-  
   .search-section__input-container {
     width: 90%;
     max-width: 400px;
   }
-  
-  .search-section__inner-container {
-    width: 100%;
-  }
-  
-  /* 移除固定上限，改由主样式控制为 13 行 */
 }
 
 @media (max-width: 480px) {
-  
   .search-section__input-container {
     width: 95%;
   }
-  
   .search-section__input {
     font-size: 14px;
     line-height: 20px;
   }
-  
   .search-section__input::placeholder {
     font-size: 14px;
     line-height: 20px;
   }
-  
   .search-section__submit-button {
     width: 32px;
     height: 32px;
@@ -185,32 +141,18 @@
   }
 }
 
-/* ===== Bottom Editor Variant Styles ===== */
+/* ===== 特殊变体样式 (Bottom Editor) ===== */
 
 .bottom-editor__container {
-  width: 600px; /* Override fixed width */
+  width: 600px;
   height: auto;
   background-color: var(--homepage-bg-primary);
   border: 1px solid var(--homepage-border-default);
   border-radius: 24px;
   box-shadow: 4px 2px 16px var(--shadow-default);
-  cursor: text;
   margin: 0 auto;
-
 }
 
-/* 为 bottom-editor 中的 inner-container 设置自适应宽度 */
 .bottom-editor__container .search-section__inner-container {
   width: 100%;
 }
-
-
-.bottom-editor__container .search-section__input {
-  max-height: calc(var(--bottom-input-content-max-h) + var(--input-padding-top) + var(--input-padding-bottom)) !important;
-}
-
-
-
-.bottom-editor__container .search-section__input .search-section__scroller { height: auto; max-height: var(--bottom-input-content-max-h); overflow-y: auto; padding-right: 8px; }
-
-
