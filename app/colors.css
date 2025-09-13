@@ -35,7 +35,10 @@
   --scrollbar-thumb: #a1a1aa;  
 
   /* 阴影颜色 */
-  --shadow-default: rgba(0, 0, 0, 0.25);
+  --shadow-default: rgba(0, 0, 0, 0.2);
+  --qcard-shadow-default: rgba(0, 0, 0, 0.2);
+  --acard-shadow-default: rgba(0, 0, 0, 0.2);
+
   
   --homepage-bg-primary: #FFFFFF;
   --homepage-border-default: #e5e7eb;
@@ -55,7 +58,7 @@
 
   /* q卡片颜色变量 */
   --qcard-bg-primary: #F9F9F9;
-  --qcard-bg-selected-border: #666666;
+  --qcard-bg-selected-border: #a1a1aa;
   --qcard-text-default: #27272a;
   --qcard-icon-default: #27272a;
   --qcard-text-primary: #27272a;
