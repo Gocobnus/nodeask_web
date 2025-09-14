@@ -20,6 +20,7 @@
   border: none;
   position: relative;
   transition: box-shadow 0.2s ease-in-out, transform 0.3s ease-in-out;
+  will-change: transform;
 }
 
 .acard__background-card:not(.acard__background-card--selected):hover {
@@ -99,6 +100,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-right: 16px;
+  transform: translateZ(0);
 }
 
 .acard__header-actions {

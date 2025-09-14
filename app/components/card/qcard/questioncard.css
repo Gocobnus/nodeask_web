@@ -13,6 +13,7 @@
   border: none;
   position: relative;
   transition: box-shadow 0.2s ease-in-out, transform 0.3s ease-in-out;
+  will-change: transform;
 }
 
 .qcard__background-card:not(.qcard__background-card--selected):hover {
@@ -105,6 +106,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transform: translateZ(0);
 }
 
 .qcard__header-actions {
