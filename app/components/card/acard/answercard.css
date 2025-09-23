@@ -21,6 +21,7 @@
   position: relative;
   transition: box-shadow 0.2s ease-in-out, transform 0.3s ease-in-out;
   will-change: transform;
+  transform-origin: top
 }
 
 .acard__background-card:not(.acard__background-card--selected):hover {
