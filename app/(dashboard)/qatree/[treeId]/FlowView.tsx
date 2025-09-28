@@ -9,6 +9,7 @@ import 'reactflow/dist/style.css';
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
 import ACardNode from '../../../components/flow-nodes/ACardNode';
+import { Skeleton } from '@heroui/react';
 
 const nodeTypes = {
   qcard: QCardNode,
@@ -20,26 +21,41 @@ interface FlowViewProps {
   initialQuestion: string;
 }
 
-import { Skeleton } from '@heroui/react';
-
 function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
-  const { setCenter } = useReactFlow();
+  const { fitView } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [isFollowing, setIsFollowing] = useState(true);
-  const [isLoading, setIsLoading] = useState(true); // Page-level loading state
+  const [isLoading, setIsLoading] = useState(true);
   const pendingEdgesRef = useRef<Edge[]>([]);
 
+  // 节点操作的回调函数
   const onMoveStart = useCallback(() => {
-    setIsFollowing(false);
+    // onMoveStart logic if any
   }, []);
 
-  const calculateNodePosition = (nodeIndex: number) => {
-    return { x: 0, y: nodeIndex * 450 };
-  };
+  const handleNodeSelect = useCallback((nodeId: string) => {
+    setNodes((nds) =>
+      nds.map((node) => ({ ...node, selected: node.id === nodeId }))
+    );
+  }, [setNodes]);
 
+  const handleNodeLocate = useCallback((nodeId: string) => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        selected: node.id === nodeId,
+      }))
+    );
+    setTimeout(() => {
+      fitView({ nodes: [{ id: nodeId }], duration: 500, padding: 0.2 });
+    }, 0);
+  }, [setNodes, fitView]);
+
+  const calculateNodePosition = (nodeIndex: number) => ({ x: 0, y: nodeIndex * 450 });
+
+  // 边处理的 Effect
   useEffect(() => {
     if (pendingEdgesRef.current.length > 0) {
       setEdges((eds) => [...eds, ...pendingEdgesRef.current]);
@@ -47,49 +63,44 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
     }
   }, [nodes, setEdges]);
 
-  useEffect(() => {
-    const treeExists = trees.some(tree => tree.id === treeId);
-    if (!treeExists) {
-      router.push('/');
-      return;
+  // ✨ 1. 将消息处理逻辑稳定地包裹在 useCallback 中
+  const handleMessage = useCallback((event: string, data: string) => {
+    // 确保骨架屏只关闭一次
+    setIsLoading(current => current ? false : current);
+
+    const payload = JSON.parse(data);
+
+    if (event === 'title') {
+      updateTreeTitle(treeId, payload.title);
     }
 
-    setNodes([]);
-    setEdges([]);
+    if (event === 'text' || event === 'ask_back') {
+      const cardActions = (id: string) => ({
+        onDelete: () => console.log(`Delete card ${id}`),
+        onCopy: () => console.log(`Copy card ${id}`),
+        onExpand: () => console.log(`Expand card ${id}`),
+        onClick: () => handleNodeSelect(id),
+        onLocate: () => handleNodeLocate(id),
+      });
 
-    const handleMessage = (event: string, data: string) => {
-      if (isLoading) {
-        setIsLoading(false); // Turn off skeleton on first message
-      }
+      setNodes(currentNodes => {
+        if (event === 'text') {
+          const { id, pos, content, finish } = payload.node_data;
+          const isGenerating = !finish;
+          const existingNode = currentNodes.find(n => n.id === id);
 
-      const payload = JSON.parse(data);
-
-      if (event === 'title') {
-        updateTreeTitle(treeId, payload.title);
-      }
-
-      if (event === 'text') {
-        const { node_data } = payload;
-        const { id, pos, content, finish } = node_data;
-
-        setNodes(currentNodes => {
-          const existingNodeIndex = currentNodes.findIndex(n => n.id === id);
-
-          if (existingNodeIndex === -1) {
-            const nodeType = pos === 0 ? 'qcard' : 'acard';
+          if (!existingNode) {
             const newNode = {
-              id: id,
-              type: nodeType,
+              id,
+              type: pos === 0 ? 'qcard' : 'acard',
               position: calculateNodePosition(pos),
               data: {
-                pos: pos,
+                pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',
                 title: pos > 0 ? `Answer #${pos}` : '',
-                content: content,
-                isGenerating: !finish,
+                ...(!isGenerating && cardActions(id)),
               },
             };
-
             if (pos > 0) {
               const prevNode = currentNodes.find(n => n.data.pos === pos - 1);
               if (prevNode) {
@@ -98,50 +109,57 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
             }
             return [...currentNodes, newNode];
           } else {
-            return currentNodes.map(n => {
-              if (n.id === id) {
-                return {
-                  ...n,
-                  data: {
-                    ...n.data,
-                    content: n.data.content + content,
-                    isGenerating: !finish,
-                  },
-                };
-              }
-              return n;
-            });
+            return currentNodes.map(n =>
+              n.id === id ? {
+                ...n, data: { ...n.data, content: n.data.content + content, isGenerating, ...(!isGenerating && cardActions(id)) }
+              } : n
+            );
           }
-        });
-      }
+        }
 
-      if (event === 'ask_back') {
-        const { node_id, ask_back } = payload;
-        setNodes(currentNodes => 
-          currentNodes.map(n => {
-            if (n.id === node_id) {
-              return {
-                ...n,
-                data: {
-                  ...n.data,
-                  relatedQuestions: ask_back,
-                },
-              };
-            }
-            return n;
-          })
-        );
-      }
-    };
+        if (event === 'ask_back') {
+          const { node_id, ask_back } = payload;
+          return currentNodes.map(n =>
+            n.id === node_id ? {
+              ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id) }
+            } : n
+          );
+        }
+        
+        return currentNodes;
+      });
+    }
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, handleNodeSelect, handleNodeLocate]);
 
-    startMockSSE({
-      onMessage: handleMessage,
-      onClose: () => {
-        console.log("Mock SSE stream closed.");
-      },
+  // ✨ 2. 使用 Ref 来确保 SSE 回调总能访问到最新的 handleMessage 函数
+  const handleMessageRef = useRef(handleMessage);
+  useEffect(() => {
+    handleMessageRef.current = handleMessage;
+  }, [handleMessage]);
+
+  // ✨ 3. 主 Effect，只负责建立和清理 SSE 连接，依赖项只有 treeId
+  useEffect(() => {
+    // 在 Effect 内部直接访问 trees state 来进行一次性检查
+    const treeExists = trees.some(tree => tree.id === treeId);
+    if (!treeExists) {
+      router.push('/');
+      return;
+    }
+
+    setIsLoading(true);
+    setNodes([]);
+    setEdges([]);
+
+    const sse = startMockSSE({
+      onMessage: (event, data) => handleMessageRef.current(event, data),
+      onClose: () => console.log("Mock SSE stream closed."),
     });
 
-  }, [treeId]);
+    // 清理函数（如果 startMockSSE 返回一个清理方法）
+    // return () => {
+    //   sse.close();
+    // };
+  }, [treeId, router, setNodes, setEdges]); // 关键：移除了 trees 依赖，切断循环
 
   if (isLoading) {
     return (

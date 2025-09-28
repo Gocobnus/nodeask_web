@@ -29,6 +29,7 @@ const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
         onClick={data.onClick}
         onDelete={data.onDelete}
         onFollowUp={data.onFollowUp}
+        onLocate={data.onLocate}
         relatedQuestions={data.relatedQuestions}
       />
       <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
