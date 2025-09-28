@@ -1,89 +1,89 @@
-// package sse_client
+package sse_client
 
-// import "time"
+import "time"
 
-// // 定义通道消息类型
-// type StreamMessage struct {
-// 	Done      bool
-// 	IsLast    bool // 标记是否为最后一条消息
-// 	IsNewNode bool // 标记是否为新节点
-// 	Content   string
-// 	Error     error
-// }
+// 定义通道消息类型
+type StreamMessage struct {
+	Done      bool
+	IsLast    bool // 标记是否为最后一条消息
+	IsNewNode bool // 标记是否为新节点
+	Content   string
+	Error     error
+}
 
-// // 定义通用接口
-// type SSEResponse interface {
-// 	GetEventType() string
-// 	GetCommonFields() CommonFields
-// }
+// 定义通用接口
+type SSEResponse interface {
+	GetEventType() string
+	GetCommonFields() CommonFields
+}
 
-// type CommonFields struct {
-// 	LogID     string    `json:"log_id"`
-// 	TreeID    string    `json:"tree_id"`
-// 	QAID      string    `json:"qa_id"`
-// 	PkgIndex  int       `json:"pkg_index"`
-// 	CreatedAt time.Time `json:"created_at"`
-// 	Done      bool      `json:"done"`
-// }
+type CommonFields struct {
+	LogID     string    `json:"log_id"`
+	TreeID    string    `json:"tree_id"`
+	QAID      string    `json:"qa_id"`
+	PkgIndex  int       `json:"pkg_index"`
+	CreatedAt time.Time `json:"created_at"`
+	Done      bool      `json:"done"`
+}
 
-// // 具体实现
-// type TextResponse struct {
-// 	CommonFields
-// 	NodeData *NodeData `json:"node_data"`
-// }
+// 具体实现
+type TextResponse struct {
+	CommonFields
+	NodeData *NodeData `json:"node_data"`
+}
 
-// func (t *TextResponse) GetEventType() string          { return TextEvent }
-// func (t *TextResponse) GetCommonFields() CommonFields { return t.CommonFields }
+func (t *TextResponse) GetEventType() string          { return TextEvent }
+func (t *TextResponse) GetCommonFields() CommonFields { return t.CommonFields }
 
-// type ErrorResponse struct {
-// 	CommonFields
-// 	Error *Error `json:"error"`
-// }
+type ErrorResponse struct {
+	CommonFields
+	Error *Error `json:"error"`
+}
 
-// func (e *ErrorResponse) GetEventType() string          { return ErrorEvent }
-// func (e *ErrorResponse) GetCommonFields() CommonFields { return e.CommonFields }
+func (e *ErrorResponse) GetEventType() string          { return ErrorEvent }
+func (e *ErrorResponse) GetCommonFields() CommonFields { return e.CommonFields }
 
-// type AskBackResponse struct {
-// 	CommonFields
-// 	AskBack []string `json:"ask_back"`
-// 	NodeID  string   `json:"node_id"`
-// }
+type AskBackResponse struct {
+	CommonFields
+	AskBack []string `json:"ask_back"`
+	NodeID  string   `json:"node_id"`
+}
 
-// func (a *AskBackResponse) GetEventType() string          { return AskBackEvent }
-// func (a *AskBackResponse) GetCommonFields() CommonFields { return a.CommonFields }
+func (a *AskBackResponse) GetEventType() string          { return AskBackEvent }
+func (a *AskBackResponse) GetCommonFields() CommonFields { return a.CommonFields }
 
-// type TitleResponse struct {
-// 	CommonFields
-// 	Title string `json:"title"`
-// }
+type TitleResponse struct {
+	CommonFields
+	Title string `json:"title"`
+}
 
-// func (t *TitleResponse) GetEventType() string          { return TitleEvent }
-// func (t *TitleResponse) GetCommonFields() CommonFields { return t.CommonFields }
+func (t *TitleResponse) GetEventType() string          { return TitleEvent }
+func (t *TitleResponse) GetCommonFields() CommonFields { return t.CommonFields }
 
-// type CloseResponse struct {
-// 	CommonFields
-// 	Reason string `json:"reason"`
-// }
+type CloseResponse struct {
+	CommonFields
+	Reason string `json:"reason"`
+}
 
-// func (c *CloseResponse) GetEventType() string          { return DoneEvent }
-// func (c *CloseResponse) GetCommonFields() CommonFields { return c.CommonFields }
+func (c *CloseResponse) GetEventType() string          { return DoneEvent }
+func (c *CloseResponse) GetCommonFields() CommonFields { return c.CommonFields }
 
-// type Error struct {
-// 	Code    int    `json:"code"`
-// 	Message string `json:"message"`
-// }
+type Error struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
 
-// type NodeData struct {
-// 	ID      string `json:"id"`
-// 	Pos     int    `json:"pos"`
-// 	Content string `json:"content"`
-// 	Finish  bool   `json:"finish"` // 当前节点是否结束
-// }
+type NodeData struct {
+	ID      string `json:"id"`
+	Pos     int    `json:"pos"`
+	Content string `json:"content"`
+	Finish  bool   `json:"finish"` // 当前节点是否结束
+}
 
-// const (
-// 	TextEvent    = "text"
-// 	ErrorEvent   = "error"
-// 	AskBackEvent = "ask_back"
-// 	TitleEvent   = "title"
-// 	DoneEvent    = "done"
-// )
+const (
+	TextEvent    = "text"
+	ErrorEvent   = "error"
+	AskBackEvent = "ask_back"
+	TitleEvent   = "title"
+	DoneEvent    = "done"
+)

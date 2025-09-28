@@ -3,6 +3,7 @@
 // 1. 确保从 react 导入 useEffect 和 useRef
 import React, { useCallback, useRef, useEffect } from "react";
 import { SendIcon } from "../../icons";
+import { Spinner } from "@heroui/react";
 import PromptInput from './PromptInputComponent';
 import "./editor.css";
 
@@ -92,16 +93,20 @@ export default function ReusableTiptapEditor({
             {/* Placeholder */}
           </div>
           <div className="search-section__submit-component">
-            <button
-              className="search-section__submit-button"
-              onClick={handleSubmit}
-              disabled={!content.trim() || isSubmitting || disabled}
-              type="button"
-            >
-              <SendIcon
-                className="text-current"
-              />
-            </button>
+            {isSubmitting ? (
+              <Spinner size="md" />
+            ) : (
+              <button
+                className="search-section__submit-button"
+                onClick={handleSubmit}
+                disabled={!content.trim() || disabled}
+                type="button"
+              >
+                <SendIcon
+                  className="text-current"
+                />
+              </button>
+            )}
           </div>
         </div>
       </div>

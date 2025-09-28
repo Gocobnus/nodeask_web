@@ -3,13 +3,14 @@
 
 import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { QATree } from "../../types/qatree";
 import { 
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem
 } from "@heroui/react";
-import { mockQATrees } from "../../lib/mock-data";
+import { useQATrees } from "../../context/QATreeContext";
 import { createActionHandler } from "../../lib/selection-utils";
 import SidebarButton from "./SidebarButton";
 import {
@@ -81,7 +82,7 @@ function QATreeItem({
   onClick,
   isCompact
 }: {
-  tree: typeof mockQATrees[0];
+  tree: QATree;
   isSelected: boolean;
   onClick: () => void;
   isCompact?: boolean;
@@ -146,12 +147,12 @@ function QATreeItem({
 }
 
 // 简化的折叠组件，保持相同的动画效果
-function CollapsibleSection({ 
-  isExpanded, 
+function CollapsibleSection({
+  isExpanded,
   children,
   isCompact
-}: { 
-  isExpanded: boolean; 
+}: {
+  isExpanded: boolean;
   children: React.ReactNode;
   isCompact?: boolean;
 }) {
@@ -205,12 +206,13 @@ interface NavigationProps {
   setIsQATreeManuallySelected?: (v: boolean) => void;
 }
 
-export default function Navigation({ 
-  isCompact = false, 
+export default function Navigation({
+  isCompact = false,
   setIsCompact,
   isQATreeManuallySelected: externalIsQATreeManuallySelected,
   setIsQATreeManuallySelected: externalSetIsQATreeManuallySelected
 }: NavigationProps) {
+  const { trees } = useQATrees();
   const router = useRouter();
   const pathname = usePathname();
   
@@ -258,7 +260,8 @@ export default function Navigation({
       setTimeout(() => {
         setIsQATreeExpanded(true);
       }, 100); // 等待侧边栏动画结束后再展开
-    } else {
+    }
+    else {
       setIsQATreeExpanded(!isQATreeExpanded);
     }
   };
@@ -315,7 +318,7 @@ export default function Navigation({
       <CollapsibleSection isExpanded={isQATreeExpanded} isCompact={isCompact}>
         <div className="pt-2.5"> {/* 添加10px的上边距 */}
           <div className="space-y-0"> {/* 子图谱之间没有间距 */}
-            {mockQATrees.map((tree) => (
+            {trees.map((tree) => (
               <QATreeItem
                 key={tree.id}
                 tree={tree}
@@ -329,4 +332,4 @@ export default function Navigation({
       </CollapsibleSection>
     </div>
   );
-} 
+}

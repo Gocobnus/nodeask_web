@@ -4,12 +4,30 @@ import React from "react";
 import SearchSection from "./SearchSection";
 import "./homepage.css";
 
+import { useRouter } from 'next/navigation';
+import { QATree } from '../../types/qatree';
+import { useQATrees } from '../../context/QATreeContext';
+
 export default function HomePage() {
-  // 处理提交
-  const handleSubmit = async (value: string) => {
-    console.log('提交内容:', value);
-    // TODO: 实现实际的提交逻辑
-    // 这里可以调用API或触发其他操作
+  const router = useRouter();
+  const { addTree } = useQATrees();
+
+  const handleSubmit = (value: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newTree: QATree = {
+          id: `mock_${Date.now()}`,
+          name: value.substring(0, 20) + (value.length > 20 ? '...' : ''),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        addTree(newTree);
+
+        router.push(`/qatree/${newTree.id}?q=${encodeURIComponent(value)}`);
+        resolve();
+      }, 1000); // 1-second delay
+    });
   };
 
   return (

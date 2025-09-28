@@ -25,11 +25,10 @@ export default function SearchSection({
     setIsSubmitting(true);
     try {
       await onSubmit(submittedContent);
-      setContent(""); // Clear input after successful submission
+      // On successful submission, navigation will occur, so no state reset is needed.
     } catch (error) {
-      // Optionally handle submission errors here, e.g., show a toast
+      // Only reset submitting state if an error occurs and the user stays on the page.
       console.error("Submission failed:", error);
-    } finally {
       setIsSubmitting(false);
     }
   };

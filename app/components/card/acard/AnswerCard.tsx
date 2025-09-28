@@ -5,6 +5,7 @@ import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
 interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
+  relatedQuestions?: string[];
 }
 
 import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
@@ -13,13 +14,7 @@ import { CustomTooltip } from "../../ui/CustomTooltip";
 import { CustomDrawer } from './CustomDrawer';
 import "./answercard.css";
 
-const relatedQuestions = [
-  { key: "q1", text: "如何更好地进行时间管理？" },
-  { key: "q2", text: "有哪些值得推荐的深度学习入门书籍？" },
-  { key: "q3", text: "如何克服公开演讲的恐惧？" },
-  { key: "q4", text: "未来十年，最有前景的编程语言是什么？" },
-  { key: "q5", text: "如何设计一个高效的个人知识管理系统？" },
-];
+
 
 const drawerVariants = {
   hidden: {
@@ -54,7 +49,8 @@ export default function AnswerCard({
   onClick,
   onDelete,
   onFollowUp,
-  onLocate
+  onLocate,
+  relatedQuestions = []
 }: CustomACardProps) {
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -62,6 +58,8 @@ export default function AnswerCard({
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const {isOpen, onOpenChange} = useDisclosure();
+
+  const listBoxItems = relatedQuestions.map((q, index) => ({ id: index.toString(), text: q }));
 
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.add('btn-active');
@@ -76,7 +74,7 @@ export default function AnswerCard({
       e.stopPropagation();
     }
     if (activeTab === 'related') {
-      const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
+      const questionsText = relatedQuestions.map(q => `- ${q}`).join('\n');
       navigator.clipboard.writeText(questionsText)
         .then(() => {
           if (onCopy) {
@@ -113,7 +111,7 @@ export default function AnswerCard({
   
   const handleDrawerCopy = () => {
     const answerText = content || "";
-    const questionsText = relatedQuestions.map(q => `- ${q.text}`).join('\n');
+    const questionsText = relatedQuestions.map(q => `- ${q}`).join('\n');
     const combinedText = `回答:\n${answerText}\n\n相关问题:\n${questionsText}`;
     
     navigator.clipboard.writeText(combinedText)
@@ -318,6 +316,7 @@ export default function AnswerCard({
                   <Listbox
                     aria-label="相关问题"
                     selectionMode="none"
+                    items={listBoxItems}
                     onAction={(key) => console.log(`Chose related question: ${key}`)}
                     itemClasses={{
                       base: "acard__related-question-item",
@@ -327,9 +326,9 @@ export default function AnswerCard({
                       list: "gap-0",
                     }}
                   >
-                    {relatedQuestions.map(q => (
-                      <ListboxItem key={q.key}>{q.text}</ListboxItem>
-                    ))}
+                    {(item) => (
+                      <ListboxItem key={item.id} textValue={item.text}>{item.text}</ListboxItem>
+                    )}
                   </Listbox>
                 </div>
               )}
@@ -427,6 +426,7 @@ export default function AnswerCard({
           <Listbox
               aria-label="相关问题"
               selectionMode="none"
+              items={listBoxItems}
               onAction={(key) => console.log(`Chose related question: ${key}`)}
               itemClasses={{
                 base: "acard__related-question-item",
@@ -436,9 +436,9 @@ export default function AnswerCard({
                 list: "gap-0",
               }}
             >
-              {relatedQuestions.map(q => (
-                <ListboxItem key={q.key}>{q.text}</ListboxItem>
-              ))}
+              {(item) => (
+                <ListboxItem key={item.id} textValue={item.text}>{item.text}</ListboxItem>
+              )}
             </Listbox>
         </div>
         <div className="acard__drawer-footer">
