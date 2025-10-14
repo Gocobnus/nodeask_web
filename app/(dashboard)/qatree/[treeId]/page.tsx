@@ -2,17 +2,14 @@
 import FlowView from './FlowView';
 
 interface QATreePageProps {
-  params: {
-    treeId: string;
-  };
-  searchParams: {
-    q?: string;
-  };
+  params: Promise<{ treeId: string; }>;
+  searchParams: Promise<{ q?: string; }>;
 }
 
-export default function QATreePage({ params, searchParams }: QATreePageProps) {
-  const { treeId } = params;
-  const initialQuestion = searchParams.q || '';
+export default async function QATreePage({ params, searchParams }: QATreePageProps) {
+  const { treeId } = await params;
+  const search = await searchParams;
+  const initialQuestion = search.q || '';
 
   return <FlowView treeId={treeId} initialQuestion={initialQuestion} />;
 }

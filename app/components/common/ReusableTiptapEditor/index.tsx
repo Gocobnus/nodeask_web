@@ -94,7 +94,7 @@ export default function ReusableTiptapEditor({
           </div>
           <div className="search-section__submit-component">
             {isSubmitting ? (
-              <Spinner size="md" color="secondary"/>
+              <Spinner size="md" color="secondary"variant="gradient"/>
             ) : (
               <button
                 className="search-section__submit-button"
