@@ -5,14 +5,16 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 // 路径可能需要根据您的项目结构调整
 import { ACardProps } from "../../../types/qacard";
+import { TooltipProps } from "@heroui/react";
+
 interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
   relatedQuestions?: string[];
-  zoom?: number; // 添加 zoom 属性，从 ACardNode 传入 (如果需要根据缩放调整)
+  tooltipSize?: TooltipProps['size'];
 }
 
 // 导入 HeroUI 组件和自定义组件
-import { Button, Listbox, ListboxItem, useDisclosure,TooltipProps } from "@heroui/react";
+import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
 // 路径可能需要根据您的项目结构调整
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
 // 路径可能需要根据您的项目结构调整
@@ -33,11 +35,10 @@ export default function AnswerCard({
   onCopy,
   onCopyError,
   onClick,
-  onDelete,
   onFollowUp,
   onLocate,
   relatedQuestions = [],
-  zoom = 1 // 解构 zoom, 提供默认值 1 (如果需要根据缩放调整)
+  tooltipSize = 'sm'
 }: CustomACardProps) {
   // 基础状态
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
@@ -65,20 +66,7 @@ export default function AnswerCard({
 
   // State 用于存储从 CSS 读取的 margin 值
   const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16);
-  const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
- 
-    if (currentZoom < 0.8) {
-      return 'sm'; // 或者 'xs' (如果 HeroUI 支持)
-    }
-    if (currentZoom >= 0.8 && currentZoom < 1.2) {
-      return 'md';
-    }
-    if (currentZoom >= 1.2) {
-      return 'lg';
-    }
-    return 'sm'; // 默认值
-  };
-  const dynamicTooltipSize = getTooltipSize(zoom);
+  
   useLayoutEffect(() => {
     // 测量 activeTab 并更新下划线样式
     // 我们使用 requestAnimationFrame 来确保测量发生在下一次绘制前
@@ -299,35 +287,12 @@ export default function AnswerCard({
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">
-        {onDelete && (
-          <CustomTooltip
-            placement="left"
-            content="删除"
-            size={dynamicTooltipSize}
-          >
-           <button
-              className="acard__delete-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              onMouseDown={handleButtonPress}
-              onMouseUp={handleButtonRelease}
-              onMouseLeave={handleButtonRelease}
-              type="button"
-              aria-label="删除"
-            >
-              <CardDeleteIcon width={24} height={24} />
-            </button>
-          </CustomTooltip>
-        )}
-
         <div className="acard__header" ref={headerRef}>
             <CustomTooltip
               content={title} // Tooltip 显示完整标题
               placement="top" // 或者你希望的位置
               isDisabled={isTitleTooltipDisabled} // 根据状态控制是否禁用
-              size={dynamicTooltipSize}
+              size={tooltipSize}
             >
               <div className="acard__title" ref={titleRef}> 
                 {title}
@@ -339,7 +304,7 @@ export default function AnswerCard({
                 <CustomTooltip
                   content="暂停回答"
                   placement="bottom"
-                  size={dynamicTooltipSize}
+                  size={tooltipSize}
                 >
                   <button
                     className="acard__icon-btn acard__header-btn"
@@ -359,7 +324,7 @@ export default function AnswerCard({
               <CustomTooltip
                 content={isCollapsed ? "展开" : "收起"}
                 placement="bottom"
-                size={dynamicTooltipSize}
+                size={tooltipSize}
               >
                 <button
                   className="acard__icon-btn acard__header-btn"
@@ -378,7 +343,7 @@ export default function AnswerCard({
 
         {/* 卡片内容区域 */}
         <motion.div
-          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`} 
+          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
           animate={{
             opacity: isCollapsed ? 0 : 1 // 控制透明度动画
           }}
@@ -454,7 +419,7 @@ export default function AnswerCard({
                   <CustomTooltip
                     content={isOpen ? "收起" : "展开"}
                     placement="bottom"
-                    size={dynamicTooltipSize}
+                    size={tooltipSize}
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"
@@ -501,7 +466,7 @@ export default function AnswerCard({
                   <CustomTooltip
                     content={activeTab === 'answer' ? "复制回答" : "复制问题列表"}
                     placement="bottom"
-                    size={dynamicTooltipSize}
+                    size={tooltipSize}
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"

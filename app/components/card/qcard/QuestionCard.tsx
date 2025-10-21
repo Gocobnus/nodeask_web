@@ -9,8 +9,9 @@ import { PullIcon, CardDeleteIcon, CopyIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./questioncard.css";
 import { TooltipProps } from "@heroui/react";
+
 interface CustomQCardProps extends QCardProps {
-  zoom?: number; // 添加 zoom 属性，从 QCardNode 传入 (如果需要根据缩放调整)
+  tooltipSize?: TooltipProps['size'];
 }
 
 export default function QuestionCard({
@@ -19,10 +20,9 @@ export default function QuestionCard({
   isSelected = false,
   isInitiallyCollapsed = false,
   onClick,
-  onDelete,
   onCopy,
   onCopyError,
-  zoom = 1
+  tooltipSize = 'sm'
 }: CustomQCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [_isCopied, _setIsCopied] = useState(false);
@@ -82,21 +82,6 @@ export default function QuestionCard({
     }
   };
 
-    const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
- 
-    if (currentZoom < 0.8) {
-      return 'sm'; // 或者 'xs' (如果 HeroUI 支持)
-    }
-    if (currentZoom >= 0.8 && currentZoom < 1.2) {
-      return 'md';
-    }
-    if (currentZoom >= 1.2) {
-      return 'lg';
-    }
-    return 'sm'; // 默认值
-  };
-  const dynamicTooltipSize = getTooltipSize(zoom);
-
   // 3. 使用 useLayoutEffect 测量并设置高度
   useLayoutEffect(() => {
     if (cardRef.current && headerRef.current && contentWrapperRef.current) {
@@ -119,30 +104,6 @@ export default function QuestionCard({
       onClick={handleCardClick}
     >
       <div className="qcard__background-card-wrapper">
-        {onDelete && (
-          <CustomTooltip 
-            placement="left"
-            content="删除" 
-            size={dynamicTooltipSize}
-          >
-            <button
-              className="qcard__delete-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onDelete) onDelete();
-              }}
-              onMouseDown={handleButtonPress}
-              onMouseUp={handleButtonRelease}
-              onMouseLeave={handleButtonRelease}
-              type="button"
-              aria-label="删除"
-            >
-              <CardDeleteIcon width={24} height={24} />
-            </button>
-
-          </CustomTooltip>
-        )}
-
         {/* 5. 绑定 headerRef */}
         <div className="qcard__header" ref={headerRef}>
             <div className="qcard__header-left">
@@ -153,7 +114,7 @@ export default function QuestionCard({
               <CustomTooltip 
                 content={isCollapsed ? "展开" : "收起"} 
                 placement="bottom"
-                size={dynamicTooltipSize}
+                size={tooltipSize}
               >
                 <button
                   className="qcard__icon-btn qcard__header-btn"
@@ -190,7 +151,7 @@ export default function QuestionCard({
                 <CustomTooltip 
                   content={"复制"}
                   placement="bottom"
-                  size={dynamicTooltipSize}
+                  size={tooltipSize}
                 >
                   <motion.button
                     className="qcard__icon-btn qcard__footer-btn"

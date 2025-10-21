@@ -1,42 +1,68 @@
 'use client';
 
-import React from 'react';
-import { Handle, Position, useViewport } from 'reactflow';
-import { AnswerCard } from '../card/acard';
+        import React from 'react';
+        import { Handle, Position, useViewport } from 'reactflow';
+        import { AnswerCard } from '../card/acard';
+        import { motion } from 'framer-motion';
+        import { CustomTooltip } from '../ui/CustomTooltip';
+        import { CardDeleteIcon } from '../icons';
+        import { TooltipProps } from '@heroui/react';
 
-import { motion } from 'framer-motion';
+        const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
+          const { zoom } = useViewport();
 
-const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
-  const { zoom } = useViewport();
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      style={{ width: 360 }}
-    >
-      <Handle type="target" position={Position.Top} className="!bg-transparent" />
-      <AnswerCard 
-        title={data.title}
-        content={data.content}
-        isGenerating={data.isGenerating}
-        isCompleted={!data.isGenerating}
-        isSelected={selected}
-        onPause={data.onPause}
-        onCollapse={data.onCollapse}
-        onExpand={data.onExpand}
-        onCopy={data.onCopy}
-        onCopyError={data.onCopyError}
-        onClick={data.onClick}
-        onDelete={data.onDelete}
-        onFollowUp={data.onFollowUp}
-        onLocate={data.onLocate}
-        relatedQuestions={data.relatedQuestions}
-        zoom={zoom}
-      />
-      <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
-    </motion.div>
-  );
-};
+          const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
+            if (currentZoom < 0.8) return 'sm';
+            if (currentZoom >= 0.8 && currentZoom < 1.2) return 'md';
+            return 'lg';
+          };
+          const dynamicTooltipSize = getTooltipSize(zoom);
 
-export default React.memo(ACardNode);
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              style={{ width: 360, position: 'relative' }}
+            >
+              {data.onDelete && selected && (
+                <CustomTooltip
+                  placement="left"
+                  content="删除"
+                  size={dynamicTooltipSize}
+                >
+                  <button
+                    className="acard__delete-btn"
+                    onClick={(e) => { e.stopPropagation(); data.onDelete(); }}
+                    style={{ opacity: 1, transform: 'scale(1)', pointerEvents: 'auto', visibility: 'visible' }}
+                    type="button"
+                    aria-label="删除"
+                  >
+                    <CardDeleteIcon width={24} height={24} />
+                  </button>
+                </CustomTooltip>
+              )}
+              <Handle type="target" position={Position.Top} className="!bg-transparent" />
+              <AnswerCard
+                title={data.title}
+                content={data.content}
+                isGenerating={data.isGenerating}
+                isCompleted={!data.isGenerating}
+                isSelected={selected}
+                onPause={data.onPause}
+                onCollapse={data.onCollapse}
+                onExpand={data.onExpand}
+                onCopy={data.onCopy}
+                onCopyError={data.onCopyError}
+                onClick={data.onClick}
+                onFollowUp={data.onFollowUp}
+                onLocate={data.onLocate}
+                relatedQuestions={data.relatedQuestions}
+                tooltipSize={dynamicTooltipSize}
+              />
+              <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
+            </motion.div>
+          );
+        };
+
+        export default React.memo(ACardNode);
