@@ -157,7 +157,7 @@ export default function QuestionCard({
         </div>
 
         <motion.div 
-          className={`qcard__body ${isCollapsed ? 'qcard__body--collapsed' : ''} nodrag`}
+          className={`qcard__body ${isCollapsed ? 'qcard__body--collapsed' : ''}`}
           animate={{
             opacity: isCollapsed ? 0 : 1
           }}
@@ -168,7 +168,7 @@ export default function QuestionCard({
         >
           {/* 6. 绑定 contentWrapperRef */}
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
-            <div className="qcard__content">
+            <div className="qcard__content nodrag" onPointerDown={(e) => e.stopPropagation()}>
               {question}
             </div>
             <div className="qcard__footer">

@@ -91,7 +91,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
 
           if (!existingNode) {
             const newNode = {
-              draggable: false,
+              draggable: true,
               id,
               type: pos === 0 ? 'qcard' : 'acard',
               position: calculateNodePosition(pos),
@@ -113,7 +113,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
             return currentNodes.map(n =>
               n.id === id ? {
                 ...n, 
-                draggable: false,
+                draggable: true,
                 data: { ...n.data, content: n.data.content + content, isGenerating, ...(!isGenerating && cardActions(id)) }
               } : n
             );
@@ -183,6 +183,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         onMoveStart={onMoveStart}
         zoomOnDoubleClick={false}
         fitView
+        zoomOnScroll={false}
+        panOnScroll={true}
       />
     </div>
   );

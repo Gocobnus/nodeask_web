@@ -235,11 +235,10 @@
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
   
-  /* --- 样式修复：保持 min-height 规则 --- */
   min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
 
-  /* --- 拖拽修复：允许文本选择 --- */
   user-select: text;
+  cursor: text;
 }
 
 .acard__content::-webkit-scrollbar-thumb {
@@ -368,6 +367,7 @@
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   color: var(--acard-text-related-question);
   cursor: pointer;
+  user-select: text;
 }
 
 .acard__related-question-item:first-child {

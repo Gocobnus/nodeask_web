@@ -378,7 +378,7 @@ export default function AnswerCard({
 
         {/* 卡片内容区域 */}
         <motion.div
-          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''} nodrag`} // 添加 nodrag
+          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`} 
           animate={{
             opacity: isCollapsed ? 0 : 1 // 控制透明度动画
           }}
@@ -413,13 +413,14 @@ export default function AnswerCard({
 
             {/* 内容或相关问题 */}
             <div
-              className="acard__content"
+              className="acard__content nodrag"
               ref={contentRef} // 用于滚动条和高度同步
               style={{
                 // 当"相关问题"Tab激活时，使用 state 中的高度来保持一致
                 height: activeTab === 'answer' ? 'auto' : (answerContentHeight ? `${answerContentHeight}px` : 'auto'),
                 flex: activeTab === 'answer' ? '1' : 'none' // 只有"回答"Tab允许 flex 增长
               }}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               {activeTab === 'answer' ? (
                 content || "这里是回答内容的占位文本..."
