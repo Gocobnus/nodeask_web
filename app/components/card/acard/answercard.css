@@ -192,6 +192,7 @@
   gap: 24px;
   padding: 0 20px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .acard__tab {
@@ -214,9 +215,7 @@
 
 .acard__tab-underline {
   position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
+  bottom: 0px;
   height: 2px;
   background-color: var(--acard-bg-primary);
 }

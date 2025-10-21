@@ -54,9 +54,11 @@ export default function AnswerCard({
   const headerRef = useRef<HTMLDivElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  // --- 👇 添加 titleRef ---
   const titleRef = useRef<HTMLDivElement>(null);
-  // --- 结束 ---
+  const answerTabRef = useRef<HTMLDivElement>(null);
+  const relatedTabRef = useRef<HTMLDivElement>(null);
+
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
   // Drawer 状态
   const {isOpen, onOpenChange} = useDisclosure();
@@ -77,6 +79,31 @@ export default function AnswerCard({
     return 'sm'; // 默认值
   };
   const dynamicTooltipSize = getTooltipSize(zoom);
+  useLayoutEffect(() => {
+    // 测量 activeTab 并更新下划线样式
+    // 我们使用 requestAnimationFrame 来确保测量发生在下一次绘制前
+    const measureAndUpdate = () => {
+      if (activeTab === 'answer' && answerTabRef.current) {
+        setUnderlineStyle({
+          left: answerTabRef.current.offsetLeft,
+          width: answerTabRef.current.offsetWidth,
+        });
+      } else if (activeTab === 'related' && relatedTabRef.current) {
+        setUnderlineStyle({
+          left: relatedTabRef.current.offsetLeft,
+          width: relatedTabRef.current.offsetWidth,
+        });
+      }
+    };
+
+    // 立即执行一次
+    measureAndUpdate();
+    
+    // (可选) 如果窗口大小变化，也重新测量
+    window.addEventListener('resize', measureAndUpdate);
+    return () => window.removeEventListener('resize', measureAndUpdate);
+
+  }, [activeTab]); // 依赖项是 activeTab
 
   // Effect: 读取 CSS 变量
   useEffect(() => {
@@ -362,25 +389,27 @@ export default function AnswerCard({
         >
           {/* 内容包装器，用于高度计算 */}
           <div className="acard__answer-content-wrapper" ref={contentWrapperRef}>
-            {/* Tabs */}
-            <LayoutGroup>
-              <div className="acard__tabs">
+            <div className="acard__tabs">
                 <div
+                  ref={answerTabRef} // <-- 添加 Ref
                   className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
                   onClick={() => setActiveTab('answer')}
                 >
                   回答
-                  {activeTab === 'answer' && <motion.div className="acard__tab-underline" layoutId="underline" transition={{ type: 'tween', duration: 0.2 }} />}
                 </div>
                 <div
+                  ref={relatedTabRef} // <-- 添加 Ref
                   className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
                   onClick={() => setActiveTab('related')}
                 >
                   相关问题
-                  {activeTab === 'related' && <motion.div className="acard__tab-underline" layoutId="underline" transition={{ type: 'tween', duration: 0.2 }} />}
                 </div>
+                <motion.div 
+                  className="acard__tab-underline"
+                  animate={underlineStyle} // <-- 使用 animate 驱动 left 和 width
+                  transition={{ type: 'tween', duration: 0.2 }}
+                />
               </div>
-            </LayoutGroup>
 
             {/* 内容或相关问题 */}
             <div
