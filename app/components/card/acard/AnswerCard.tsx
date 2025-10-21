@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from "react";
+// 导入 useLayoutEffect 和 useRef, useEffect
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { ACardProps } from "../../../types/qacard";
 interface CustomACardProps extends ACardProps {
@@ -12,28 +13,8 @@ import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import { CustomDrawer } from './CustomDrawer';
-import "./answercard.css";
+import "./answercard.css"; // 确保 CSS 文件已导入
 
-
-
-const drawerVariants = {
-  hidden: {
-    y: "100%",
-    transition: {
-      type: "tween",
-      duration: 0.3,
-      ease: [0.4, 0, 0.6, 1]
-    }
-  },
-  visible: {
-    y: "0%",
-    transition: {
-      type: "tween",
-      duration: 0.3,
-      ease: [0.4, 0, 0.2, 1]
-    }
-  },
-} as const;
 
 export default function AnswerCard({
   title,
@@ -56,8 +37,34 @@ export default function AnswerCard({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  
+  const cardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null); 
+
   const {isOpen, onOpenChange} = useDisclosure();
+
+  // --- 👇 读取 CSS 变量 ---
+  // 1. 创建 state 来存储读取到的 CSS 变量值，给一个默认值以防读取失败
+  const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16); 
+
+  // 2. 使用 useEffect 在组件挂载后读取 CSS 变量
+  useEffect(() => {
+    if (cardRef.current) {
+      // 获取 card 元素的计算样式
+      const styles = getComputedStyle(cardRef.current);
+      // 读取 CSS 变量 '--acard-inner-margin-bottom' 的值
+      const marginBottomValue = styles.getPropertyValue('--acard-inner-margin-bottom').trim();
+      // 解析值（例如 '16px' -> 16）
+      const parsedValue = parseInt(marginBottomValue, 10);
+      // 如果解析成功且不是 NaN，则更新 state
+      if (!isNaN(parsedValue)) {
+        setAnswerBottomMargin(parsedValue);
+      }
+    }
+  }, []); // 空依赖数组确保只在挂载时运行一次
+  // --- 读取结束 ---
 
   const listBoxItems = relatedQuestions.map((q, index) => ({ id: index.toString(), text: q }));
 
@@ -140,7 +147,6 @@ export default function AnswerCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // 卡片自身的点击事件需要阻止冒泡，以防止触发上层“画板”的取消选中逻辑
     e.stopPropagation();
     if (!isSelected && onClick) {
       onClick();
@@ -154,11 +160,7 @@ export default function AnswerCard({
       setScrollPosition(contentRef.current.scrollTop);
     }
     
-    if (isCollapsed) {
-      setIsCollapsed(false);
-    } else {
-      setIsCollapsed(true);
-    }
+    setIsCollapsed(prev => !prev);
     
     if (onCollapse) {
       onCollapse();
@@ -166,12 +168,27 @@ export default function AnswerCard({
     
   };
   
+  useLayoutEffect(() => {
+    if (cardRef.current && headerRef.current && contentWrapperRef.current) {
+      const headerHeight = headerRef.current.offsetHeight;
+      
+      if (isCollapsed) {
+        cardRef.current.style.maxHeight = `${headerHeight}px`;
+      } else {
+        const contentHeight = contentWrapperRef.current.scrollHeight;
+        // --- 👇 使用 state 中的值 ---
+        cardRef.current.style.maxHeight = `${headerHeight + contentHeight + answerBottomMargin}px`;
+        // --- 使用结束 ---
+      }
+    }
+  // --- 👇 添加 answerBottomMargin 依赖 ---
+  }, [isCollapsed, content, activeTab, answerBottomMargin]); 
 
   useEffect(() => {
     if (!isCollapsed && contentRef.current && scrollPosition > 0) {
       contentRef.current.scrollTop = scrollPosition;
     }
-  }, [isCollapsed, scrollPosition]); // 修复：添加 scrollPosition
+  }, [isCollapsed, scrollPosition]);
 
 
   useEffect(() => {
@@ -198,11 +215,8 @@ export default function AnswerCard({
 
   return (
     <motion.div 
-      className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''} ${isCollapsed ? 'acard__background-card--collapsed' : ''}`}
-      animate={{
-        height: isCollapsed ? 48 : 'auto'
-      }}
-      variants={drawerVariants}
+      ref={cardRef}
+      className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''}`}
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">
@@ -211,7 +225,7 @@ export default function AnswerCard({
             placement="left"
             content="删除" 
           >
-            <button
+           <button
               className="acard__delete-btn"
               onClick={(e) => {
                 e.stopPropagation();
@@ -228,7 +242,7 @@ export default function AnswerCard({
           </CustomTooltip>
         )}
 
-        <div className="acard__header">
+        <div className="acard__header" ref={headerRef}>
             <div className="acard__title">
               {title}
             </div>
@@ -272,7 +286,7 @@ export default function AnswerCard({
         </div>
 
         <motion.div 
-          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
+          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''} nodrag`}
           animate={{
             opacity: isCollapsed ? 0 : 1
           }}
@@ -281,7 +295,7 @@ export default function AnswerCard({
             ease: [0.25, 0.46, 0.45, 0.94] 
           }}
         >
-          <div className="acard__answer-content-wrapper">
+          <div className="acard__answer-content-wrapper" ref={contentWrapperRef}>
             <LayoutGroup>
               <div className="acard__tabs">
                 <div 
@@ -343,7 +357,6 @@ export default function AnswerCard({
                       className="acard__icon-btn acard__footer-btn"
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        // Only trigger selection when opening the drawer
                         if (!isOpen && onClick) {
                           onClick(e);
                         }
@@ -442,7 +455,6 @@ export default function AnswerCard({
             </Listbox>
         </div>
         <div className="acard__drawer-footer">
-          {/* --- ✨ 核心修改在这里: 移除错误的 stopPropagation --- */}
           <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
             Close
           </Button>

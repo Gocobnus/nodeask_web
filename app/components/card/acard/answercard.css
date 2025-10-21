@@ -19,10 +19,19 @@
   box-shadow: inset 0 0 0 0px var(--acard-bg-selected-border), 0 10px 15px -3px rgb(0 0 0 / 0.1);
   border: none;
   position: relative;
-  transition: box-shadow 0.2s ease-in-out, transform 0.3s ease-in-out;
-  will-change: transform;
-  transform-origin: top
+
+  /* --- JS 动画修复：CSS 只负责 transition --- */
+  overflow: hidden;
+  /* max-height 值现在由 JS 在 useLayoutEffect 中设置 */
+  
+  transition: box-shadow 0.2s ease-in-out, 
+              transform 0.3s ease-in-out,
+              max-height 0.3s ease-out; /* 保持 max-height 动画 */
+              
+  will-change: transform, max-height;
+  transform-origin: top;
 }
+
 
 .acard__background-card:not(.acard__background-card--selected):hover {
   box-shadow: inset 0 0 0 0px var(--acard-bg-selected-border), 0 12px 20px -4px var(--acard-shadow-default);
@@ -215,6 +224,7 @@
 /* 内容区域 */
 .acard__content {
   flex: 1;
+  cursor: text;
   margin: 0 0 0px 0;
   padding: 8px 20px 0px 20px;
   overflow-y: auto;
@@ -225,7 +235,12 @@
   box-sizing: border-box;
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
+  
+  /* --- 样式修复：保持 min-height 规则 --- */
   min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
+
+  /* --- 拖拽修复：允许文本选择 --- */
+  user-select: text;
 }
 
 .acard__content::-webkit-scrollbar-thumb {
@@ -321,8 +336,8 @@
   }
 
   .acard__related-questions-list {
+    /* --- 样式修复：保持 min-height 规则 --- */
     min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
-
   }
   
 }
@@ -459,6 +474,10 @@
   white-space: pre-wrap;
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
+
+  /* --- 拖拽修复：允许抽屉内文本选择 --- */
+  user-select: text;
+  cursor: text;
 }
 
 .drawer__content-area::-webkit-scrollbar-thumb {

@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState } from "react";
+// 1. 导入 useLayoutEffect 和 useRef
+import React, { useState, useLayoutEffect, useRef } from "react";
 import Image from 'next/image';
 import { motion } from "framer-motion";
 import { QCardProps } from "../../../types/qacard";
 import { PullIcon, CardDeleteIcon, CopyIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./questioncard.css";
-
-
 
 export default function QuestionCard({
   question,
@@ -23,6 +22,13 @@ export default function QuestionCard({
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [_isCopied, _setIsCopied] = useState(false);
 
+  // 2. 创建三个 Ref
+  const cardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
+
+  // ... (handleButtonPress, handleButtonRelease, handleCopy, handleCardClick 保持不变) ...
+  
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.add('btn-active');
   };
@@ -54,7 +60,7 @@ export default function QuestionCard({
       onClick();
     }
   };
-  
+
   const handleCollapseToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsCollapsed(prev => !prev);
@@ -71,12 +77,25 @@ export default function QuestionCard({
     }
   };
 
+  // 3. 使用 useLayoutEffect 测量并设置高度
+  useLayoutEffect(() => {
+    if (cardRef.current && headerRef.current && contentWrapperRef.current) {
+      const headerHeight = headerRef.current.offsetHeight;
+      
+      if (isCollapsed) {
+        cardRef.current.style.maxHeight = `${headerHeight}px`;
+      } else {
+        const contentHeight = contentWrapperRef.current.scrollHeight;
+        cardRef.current.style.maxHeight = `${headerHeight + contentHeight}px`;
+      }
+    }
+  }, [isCollapsed, question]); // 依赖项：收起状态和问题文本
+
   return (
     <motion.div 
-      className={`qcard__background-card ${isSelected ? 'qcard__background-card--selected' : ''} ${isCollapsed ? 'qcard__background-card--collapsed' : ''}`}
-      animate={{
-        height: isCollapsed ? 48 : 'auto'
-      }}
+      // 4. 绑定 cardRef
+      ref={cardRef}
+      className={`qcard__background-card ${isSelected ? 'qcard__background-card--selected' : ''}`}
       onClick={handleCardClick}
     >
       <div className="qcard__background-card-wrapper">
@@ -85,24 +104,12 @@ export default function QuestionCard({
             placement="left"
             content="删除" 
           >
-            <button
-              className="qcard__delete-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onDelete) onDelete();
-              }}
-              onMouseDown={handleButtonPress}
-              onMouseUp={handleButtonRelease}
-              onMouseLeave={handleButtonRelease}
-              type="button"
-              aria-label="删除"
-            >
-              <CardDeleteIcon width={24} height={24} />
-            </button>
+            {/* ... delete button ... */}
           </CustomTooltip>
         )}
 
-        <div className="qcard__header">
+        {/* 5. 绑定 headerRef */}
+        <div className="qcard__header" ref={headerRef}>
             <div className="qcard__header-left">
               {avatar && <Image src={avatar} alt="avatar" className="qcard__avatar" width={24} height={24} />}
               <div className="qcard__header-title">{question}</div>
@@ -128,7 +135,7 @@ export default function QuestionCard({
         </div>
 
         <motion.div 
-          className={`qcard__body ${isCollapsed ? 'qcard__body--collapsed' : ''}`}
+          className={`qcard__body ${isCollapsed ? 'qcard__body--collapsed' : ''} nodrag`}
           animate={{
             opacity: isCollapsed ? 0 : 1
           }}
@@ -137,7 +144,8 @@ export default function QuestionCard({
             ease: [0.25, 0.46, 0.45, 0.94] 
           }}
         >
-          <div className="qcard__body-content-wrapper">
+          {/* 6. 绑定 contentWrapperRef */}
+          <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
             <div className="qcard__content">
               {question}
             </div>
