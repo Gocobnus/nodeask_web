@@ -1,16 +1,21 @@
 'use client';
 
-// 导入 useLayoutEffect 和 useRef, useEffect
+// 导入需要的 React Hooks 和类型
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, LayoutGroup } from "framer-motion";
+// 路径可能需要根据您的项目结构调整
 import { ACardProps } from "../../../types/qacard";
 interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
   relatedQuestions?: string[];
+  zoom?: number; // 添加 zoom 属性，从 ACardNode 传入 (如果需要根据缩放调整)
 }
 
-import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
+// 导入 HeroUI 组件和自定义组件
+import { Button, Listbox, ListboxItem, useDisclosure,TooltipProps } from "@heroui/react";
+// 路径可能需要根据您的项目结构调整
 import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
+// 路径可能需要根据您的项目结构调整
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import { CustomDrawer } from './CustomDrawer';
 import "./answercard.css"; // 确保 CSS 文件已导入
@@ -31,43 +36,64 @@ export default function AnswerCard({
   onDelete,
   onFollowUp,
   onLocate,
-  relatedQuestions = []
+  relatedQuestions = [],
+  zoom = 1 // 解构 zoom, 提供默认值 1 (如果需要根据缩放调整)
 }: CustomACardProps) {
+  // 基础状态
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
-  
+
+  // --- 👇 添加 Tooltip 相关状态 ---
+  const [isTitleTooltipDisabled, setIsTitleTooltipDisabled] = useState(true);
+  // --- 结束 ---
+
+  // Refs
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null); 
+  const contentRef = useRef<HTMLDivElement>(null);
+  // --- 👇 添加 titleRef ---
+  const titleRef = useRef<HTMLDivElement>(null);
+  // --- 结束 ---
 
+  // Drawer 状态
   const {isOpen, onOpenChange} = useDisclosure();
 
-  // --- 👇 读取 CSS 变量 ---
-  // 1. 创建 state 来存储读取到的 CSS 变量值，给一个默认值以防读取失败
-  const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16); 
+  // State 用于存储从 CSS 读取的 margin 值
+  const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16);
+  const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
+ 
+    if (currentZoom < 0.8) {
+      return 'sm'; // 或者 'xs' (如果 HeroUI 支持)
+    }
+    if (currentZoom >= 0.8 && currentZoom < 1.2) {
+      return 'md';
+    }
+    if (currentZoom >= 1.2) {
+      return 'lg';
+    }
+    return 'sm'; // 默认值
+  };
+  const dynamicTooltipSize = getTooltipSize(zoom);
 
-  // 2. 使用 useEffect 在组件挂载后读取 CSS 变量
+  // Effect: 读取 CSS 变量
   useEffect(() => {
     if (cardRef.current) {
-      // 获取 card 元素的计算样式
       const styles = getComputedStyle(cardRef.current);
-      // 读取 CSS 变量 '--acard-inner-margin-bottom' 的值
-      const marginBottomValue = styles.getPropertyValue('--acard-inner-margin-bottom').trim();
-      // 解析值（例如 '16px' -> 16）
+      const marginBottomValue = styles.getPropertyValue('--acard-inner-margin-bottom').trim(); //
       const parsedValue = parseInt(marginBottomValue, 10);
-      // 如果解析成功且不是 NaN，则更新 state
       if (!isNaN(parsedValue)) {
         setAnswerBottomMargin(parsedValue);
       }
     }
-  }, []); // 空依赖数组确保只在挂载时运行一次
-  // --- 读取结束 ---
+  }, []);
 
+  // 相关问题列表数据
   const listBoxItems = relatedQuestions.map((q, index) => ({ id: index.toString(), text: q }));
 
+  // --- 事件处理函数 ---
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.add('btn-active');
   };
@@ -75,7 +101,7 @@ export default function AnswerCard({
   const handleButtonRelease = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.classList.remove('btn-active');
   };
-  
+
   const handleCopy = (e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -109,13 +135,13 @@ export default function AnswerCard({
   };
 
   const handleLocateClick = () => {
-    if (onLocate) {
-      onLocate();
-    } else if (onClick) {
-      onClick();
-    }
+     if (onLocate) {
+       onLocate();
+     } else if (onClick) {
+       onClick();
+     }
   };
-  
+
   const handleDrawerCopy = () => {
     const answerText = content || "";
     const questionsText = relatedQuestions.map(q => `- ${q}`).join('\n');
@@ -134,7 +160,6 @@ export default function AnswerCard({
       });
   };
 
-
   const iconVariants = {
     open: {
       opacity: 1,
@@ -152,78 +177,106 @@ export default function AnswerCard({
       onClick();
     }
   };
-  
+
   const handleCollapseToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!isCollapsed && contentRef.current) {
       setScrollPosition(contentRef.current.scrollTop);
     }
-    
+
     setIsCollapsed(prev => !prev);
-    
+
     if (onCollapse) {
       onCollapse();
     }
-    
+
   };
-  
+
+  // --- Effects ---
+
+  // Effect: 计算并设置卡片的 max-height 以实现动画
   useLayoutEffect(() => {
+
     if (cardRef.current && headerRef.current && contentWrapperRef.current) {
       const headerHeight = headerRef.current.offsetHeight;
-      
+
       if (isCollapsed) {
         cardRef.current.style.maxHeight = `${headerHeight}px`;
       } else {
         const contentHeight = contentWrapperRef.current.scrollHeight;
-        // --- 👇 使用 state 中的值 ---
         cardRef.current.style.maxHeight = `${headerHeight + contentHeight + answerBottomMargin}px`;
-        // --- 使用结束 ---
       }
     }
-  // --- 👇 添加 answerBottomMargin 依赖 ---
-  }, [isCollapsed, content, activeTab, answerBottomMargin]); 
+  }, [isCollapsed, content, activeTab, answerBottomMargin]);
 
+  // Effect: 恢复滚动条位置
   useEffect(() => {
+
     if (!isCollapsed && contentRef.current && scrollPosition > 0) {
       contentRef.current.scrollTop = scrollPosition;
     }
   }, [isCollapsed, scrollPosition]);
 
-
+  // Effect: 同步"相关问题"Tab的高度与"回答"Tab内容的高度
   useEffect(() => {
     if (contentRef.current) {
       const updateHeight = () => {
         if (activeTab === 'answer') {
-          const contentHeight = contentRef.current?.offsetHeight || 0;
-          setAnswerContentHeight(contentHeight);
+          const currentContentHeight = contentRef.current?.offsetHeight || 0;
+          setAnswerContentHeight(currentContentHeight);
         }
       };
-      
+
       updateHeight();
-      
+
       const resizeObserver = new ResizeObserver(updateHeight);
-      if (contentRef.current) {
-        resizeObserver.observe(contentRef.current);
-      }
-      
+      resizeObserver.observe(contentRef.current);
+
       return () => {
         resizeObserver.disconnect();
       };
     }
   }, [activeTab, content, isCollapsed]);
 
+  useLayoutEffect(() => {
+    const checkTruncation = () => {
+      const element = titleRef.current;
+      if (element) {
+        // 如果滚动宽度大于可见宽度，则启用 tooltip (isDisabled = false)
+        const isTruncated = element.scrollWidth > element.offsetWidth;
+        setIsTitleTooltipDisabled(!isTruncated); 
+      }
+    };
+
+    checkTruncation(); // 初始检查
+
+    // 可选：添加 ResizeObserver 监听容器宽度变化，以便动态更新 tooltip 状态
+    const resizeObserver = new ResizeObserver(checkTruncation);
+    if (titleRef.current) {
+      resizeObserver.observe(titleRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect(); // 清理 observer
+    };
+  // 依赖项：当 title 文本变化时重新检查
+  }, [title]);
+  // --- Effect 结束 ---
+
+  // --- Render ---
   return (
-    <motion.div 
+    <motion.div
       ref={cardRef}
       className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''}`}
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">
         {onDelete && (
-          <CustomTooltip 
+          <CustomTooltip
             placement="left"
-            content="删除" 
+            content="删除"
+            size={dynamicTooltipSize}
           >
            <button
               className="acard__delete-btn"
@@ -243,14 +296,23 @@ export default function AnswerCard({
         )}
 
         <div className="acard__header" ref={headerRef}>
-            <div className="acard__title">
-              {title}
-            </div>
+            <CustomTooltip
+              content={title} // Tooltip 显示完整标题
+              placement="top" // 或者你希望的位置
+              isDisabled={isTitleTooltipDisabled} // 根据状态控制是否禁用
+              size={dynamicTooltipSize}
+            >
+              <div className="acard__title" ref={titleRef}> 
+                {title}
+              </div>
+            </CustomTooltip>
           <div className="acard__header-actions">
+              {/* 暂停按钮 */}
               {isGenerating && (
-                <CustomTooltip 
-                  content="暂停回答" 
+                <CustomTooltip
+                  content="暂停回答"
                   placement="bottom"
+                  size={dynamicTooltipSize}
                 >
                   <button
                     className="acard__icon-btn acard__header-btn"
@@ -265,10 +327,12 @@ export default function AnswerCard({
                   </button>
                 </CustomTooltip>
               )}
-              
-              <CustomTooltip 
-                content={isCollapsed ? "展开" : "收起"} 
+
+              {/* 收起/展开按钮 */}
+              <CustomTooltip
+                content={isCollapsed ? "展开" : "收起"}
                 placement="bottom"
+                size={dynamicTooltipSize}
               >
                 <button
                   className="acard__icon-btn acard__header-btn"
@@ -285,27 +349,30 @@ export default function AnswerCard({
           </div>
         </div>
 
-        <motion.div 
-          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''} nodrag`}
+        {/* 卡片内容区域 */}
+        <motion.div
+          className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''} nodrag`} // 添加 nodrag
           animate={{
-            opacity: isCollapsed ? 0 : 1
+            opacity: isCollapsed ? 0 : 1 // 控制透明度动画
           }}
           transition={{
-            duration: 0.3, 
-            ease: [0.25, 0.46, 0.45, 0.94] 
+            duration: 0.3,
+            ease: [0.25, 0.46, 0.45, 0.94]
           }}
         >
+          {/* 内容包装器，用于高度计算 */}
           <div className="acard__answer-content-wrapper" ref={contentWrapperRef}>
+            {/* Tabs */}
             <LayoutGroup>
               <div className="acard__tabs">
-                <div 
+                <div
                   className={`acard__tab ${activeTab === 'answer' ? 'acard__tab--active' : ''}`}
                   onClick={() => setActiveTab('answer')}
                 >
                   回答
                   {activeTab === 'answer' && <motion.div className="acard__tab-underline" layoutId="underline" transition={{ type: 'tween', duration: 0.2 }} />}
                 </div>
-                <div 
+                <div
                   className={`acard__tab ${activeTab === 'related' ? 'acard__tab--active' : ''}`}
                   onClick={() => setActiveTab('related')}
                 >
@@ -315,16 +382,18 @@ export default function AnswerCard({
               </div>
             </LayoutGroup>
 
-            <div 
-              className="acard__content" 
-              ref={contentRef}
+            {/* 内容或相关问题 */}
+            <div
+              className="acard__content"
+              ref={contentRef} // 用于滚动条和高度同步
               style={{
+                // 当"相关问题"Tab激活时，使用 state 中的高度来保持一致
                 height: activeTab === 'answer' ? 'auto' : (answerContentHeight ? `${answerContentHeight}px` : 'auto'),
-                flex: activeTab === 'answer' ? '1' : 'none'
+                flex: activeTab === 'answer' ? '1' : 'none' // 只有"回答"Tab允许 flex 增长
               }}
             >
               {activeTab === 'answer' ? (
-                content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"
+                content || "这里是回答内容的占位文本..."
               ) : (
                 <div className="acard__related-questions-list">
                   <Listbox
@@ -347,20 +416,24 @@ export default function AnswerCard({
                 </div>
               )}
             </div>
+
+            {/* 底部操作栏 */}
             <div className="acard__footer">
+                {/* 展开/收起 Drawer 按钮 */}
                 {isCompleted && onExpand ? (
-                  <CustomTooltip 
-                    content={isOpen ? "收起" : "展开"} 
+                  <CustomTooltip
+                    content={isOpen ? "收起" : "展开"}
                     placement="bottom"
+                    size={dynamicTooltipSize}
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!isOpen && onClick) {
                           onClick(e);
                         }
-                        onOpenChange(); 
+                        onOpenChange();
                       }}
                       onMouseDown={handleButtonPress as any}
                       onMouseUp={handleButtonRelease as any}
@@ -373,8 +446,9 @@ export default function AnswerCard({
                       {isOpen ? <ContractIcon width={20} height={20} /> : <ExplodeIcon width={20} height={20} />}
                     </motion.button>
                   </CustomTooltip>
-                ) : <div />}
+                ) : <div /> /* 占位符保持布局 */}
 
+                {/* 追问按钮 */}
                 {isCompleted && onFollowUp && (
                   <div className="acard__follow-up-wrapper">
                     <Button
@@ -392,10 +466,12 @@ export default function AnswerCard({
                   </div>
                 )}
 
+                {/* 复制按钮 */}
                 {isCompleted && onCopy ? (
-                  <CustomTooltip 
+                  <CustomTooltip
                     content={activeTab === 'answer' ? "复制回答" : "复制问题列表"}
                     placement="bottom"
+                    size={dynamicTooltipSize}
                   >
                     <motion.button
                       className="acard__icon-btn acard__footer-btn"
@@ -411,12 +487,13 @@ export default function AnswerCard({
                       <CopyIcon width={20} height={20} />
                     </motion.button>
                   </CustomTooltip>
-                ) : <div />}
+                ) : <div /> /* 占位符 */}
             </div>
           </div>
         </motion.div>
       </div>
-      
+
+      {/* 抽屉组件 */}
       <CustomDrawer isOpen={isOpen} onClose={onOpenChange} className="acard__drawer">
         <div className="drawer__header">
           <CustomTooltip content="定位卡片" placement="bottom">
@@ -432,7 +509,7 @@ export default function AnswerCard({
         </div>
         <div className="drawer-section-title drawer__fixed-title">回答</div>
         <div className="drawer__content-area drawer__content-area--with-fixed-title">
-          {content || "这里是回答内容的占位文本。实际使用时这里会渲染markdown内容，支持流式更新显示。当前显示的是静态占位内容，用于展示卡片的基本样式和布局效果.支持多行文本显示，可以包含各种格式的内容。"}
+          {content || "这里是回答内容的占位文本..."}
         </div>
         <div className="drawer__related-questions">
           <div className="drawer-section-title">相关问题</div>

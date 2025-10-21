@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useViewport } from 'reactflow';
 import { AnswerCard } from '../card/acard';
 
 import { motion } from 'framer-motion';
 
 const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
+  const { zoom } = useViewport();
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -31,6 +32,7 @@ const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
         onFollowUp={data.onFollowUp}
         onLocate={data.onLocate}
         relatedQuestions={data.relatedQuestions}
+        zoom={zoom}
       />
       <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
     </motion.div>

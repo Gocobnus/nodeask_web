@@ -98,7 +98,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
               data: {
                 pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',
-                title: pos > 0 ? `Answer #${pos}` : '',
+                title: pos > 0 ? `Answer 1232132132131231232131232131231231232112` : '',
                 ...(!isGenerating && cardActions(id)),
               },
             };
