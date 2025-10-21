@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useViewport } from 'reactflow';
 import { QuestionCard } from '../card/qcard';
 
 // React Flow a a prop called `data` to the node component.
@@ -10,6 +10,7 @@ import { QuestionCard } from '../card/qcard';
 import { motion } from 'framer-motion';
 
 const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
+  const { zoom } = useViewport();
   return (
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
@@ -26,6 +27,7 @@ const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
         onDelete={data.onDelete}
         onCopy={data.onCopy}
         onCopyError={data.onCopyError}
+        zoom={zoom}
       />
       <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
     </motion.div>
