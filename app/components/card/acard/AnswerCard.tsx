@@ -536,7 +536,7 @@ export default function AnswerCard({
             </button>
           </CustomTooltip>
         </div>
-        <div className="drawer-section-title drawer__fixed-title">回答</div>
+        <div className="drawer-section-title drawer__fixed-title">{title}</div>
         <div className="drawer__content-area drawer__content-area--with-fixed-title">
           {content || "这里是回答内容的占位文本..."}
         </div>
