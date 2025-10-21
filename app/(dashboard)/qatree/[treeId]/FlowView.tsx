@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Edge } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
+import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -99,6 +100,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
                 pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',
                 title: pos > 0 ? `Answer 1232132132131231232131232131231231232112` : '',
+                avatar: pos === 0 ? mockUser.avatar : undefined,
                 ...(!isGenerating && cardActions(id)),
               },
             };
@@ -181,7 +183,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onMoveStart={onMoveStart}
-        zoomOnDoubleClick={false}
+        zoomOnDoubleClick={true}
         fitView
         zoomOnScroll={false}
         panOnScroll={true}

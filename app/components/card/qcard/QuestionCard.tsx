@@ -125,7 +125,21 @@ export default function QuestionCard({
             content="删除" 
             size={dynamicTooltipSize}
           >
-            {/* ... delete button ... */}
+            <button
+              className="qcard__delete-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onDelete) onDelete();
+              }}
+              onMouseDown={handleButtonPress}
+              onMouseUp={handleButtonRelease}
+              onMouseLeave={handleButtonRelease}
+              type="button"
+              aria-label="删除"
+            >
+              <CardDeleteIcon width={24} height={24} />
+            </button>
+
           </CustomTooltip>
         )}
 
