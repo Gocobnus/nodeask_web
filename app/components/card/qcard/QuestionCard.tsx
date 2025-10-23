@@ -144,7 +144,7 @@ export default function QuestionCard({
         >
           {/* 6. 绑定 contentWrapperRef */}
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
-            <div className="qcard__content nodrag" onPointerDown={(e) => e.stopPropagation()}>
+            <div className="qcard__content nodrag nowheel" onPointerDown={(e) => e.stopPropagation()}>
               {question}
             </div>
             <div className="qcard__footer">

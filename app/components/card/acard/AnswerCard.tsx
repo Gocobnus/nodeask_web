@@ -377,7 +377,7 @@ export default function AnswerCard({
 
             {/* 内容或相关问题 */}
             <div
-              className="acard__content nodrag"
+              className="acard__content nodrag nowheel"
               ref={contentRef} // 用于滚动条和高度同步
               style={{
                 // 当"相关问题"Tab激活时，使用 state 中的高度来保持一致
