@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Edge } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Edge, Node } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
+import { getLayoutedElements } from '../../../utils/layout-utils';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -31,13 +32,31 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const pendingEdgesRef = useRef<Edge[]>([]);
 
   const [editingText, setEditingText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const selectedQCardNode = nodes.find(node => node.selected && node.type === 'qcard');
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.type === 'acard') {
+          const newIsOpen = node.id === openDrawerId;
+          if (node.data.isOpen === newIsOpen) return node;
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isOpen: newIsOpen,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [openDrawerId, setNodes]);
 
   useEffect(() => {
     setNodes((nds) =>
@@ -119,19 +138,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
     }, 0);
   }, [setNodes, fitView]);
 
-  const calculateNodePosition = (nodeIndex: number) => ({ x: 0, y: nodeIndex * 450 });
-
-  // 边处理的 Effect
-  useEffect(() => {
-    if (pendingEdgesRef.current.length > 0) {
-      setEdges((eds) => [...eds, ...pendingEdgesRef.current]);
-      pendingEdgesRef.current = [];
-    }
-  }, [nodes, setEdges]);
-
-  // ✨ 1. 将消息处理逻辑稳定地包裹在 useCallback 中
   const handleMessage = useCallback((event: string, data: string) => {
-    // 确保骨架屏只关闭一次
     setIsLoading(current => current ? false : current);
 
     const payload = JSON.parse(data);
@@ -148,68 +155,72 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         onLocate: () => handleNodeLocate(id),
       });
 
-      setNodes(currentNodes => {
-        if (event === 'text') {
-          const { id, pos, content, finish } = payload.node_data;
-          const isGenerating = !finish;
-          const existingNode = currentNodes.find(n => n.id === id);
+      if (event === 'text') {
+        const { id, pos, content, finish, parentId } = payload.node_data;
+        const isGenerating = !finish;
 
+        setNodes(currentNodes => {
+          const existingNode = currentNodes.find(n => n.id === id);
           if (!existingNode) {
-            const newNode = {
-              draggable: true,
+            const newNode: Node = {
               id,
               type: pos === 0 ? 'qcard' : 'acard',
-              position: calculateNodePosition(pos),
+              position: { x: 0, y: 0 }, // Initial position, will be updated by layout
               data: {
                 pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',
-                title: pos > 0 ? `Answer 1232132132131231232131232131231231232112` : '',
+                title: pos > 0 ? `Answer ${id}` : '',
                 avatar: pos === 0 ? mockUser.avatar : undefined,
                 onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
                 ...(!isGenerating && cardActions(id)),
               },
             };
-            if (pos > 0) {
-              const prevNode = currentNodes.find(n => n.data.pos === pos - 1);
-              if (prevNode) {
-                pendingEdgesRef.current.push({ id: `${prevNode.id}-${id}`, source: prevNode.id, target: id });
-              }
-            }
             return [...currentNodes, newNode];
           } else {
             return currentNodes.map(n =>
               n.id === id ? {
-                ...n, 
-                draggable: true,
-                data: { ...n.data, content: n.data.content + content, isGenerating, onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id), ...(!isGenerating && cardActions(id)) }
+                ...n,
+                data: { 
+                  ...n.data, 
+                  content: n.data.content + content, 
+                  isGenerating, 
+                  onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
+                  ...(!isGenerating && cardActions(id)) 
+                }
               } : n
             );
           }
-        }
+        });
 
-        if (event === 'ask_back') {
-          const { node_id, ask_back } = payload;
-          return currentNodes.map(n =>
-            n.id === node_id ? {
-              ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id) }
-            } : n
-          );
+        if (parentId) {
+            setEdges(currentEdges => {
+                const edgeId = `${parentId}-${id}`;
+                const existingEdge = currentEdges.find(e => e.id === edgeId);
+                if (!existingEdge) {
+                    return [...currentEdges, { id: edgeId, source: parentId, target: id }];
+                }
+                return currentEdges;
+            });
         }
-        
-        return currentNodes;
-      });
+      }
+
+      if (event === 'ask_back') {
+        const { node_id, ask_back } = payload;
+        setNodes(currentNodes => currentNodes.map(n =>
+          n.id === node_id ? {
+            ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id) }
+          } : n
+        ));
+      }
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, handleNodeSelect, handleNodeLocate, setOpenDrawerId]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, setOpenDrawerId]);
 
-  // ✨ 2. 使用 Ref 来确保 SSE 回调总能访问到最新的 handleMessage 函数
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
     handleMessageRef.current = handleMessage;
   }, [handleMessage]);
 
-  // ✨ 3. 主 Effect，只负责建立和清理 SSE 连接，依赖项只有 treeId
   useEffect(() => {
-    // 在 Effect 内部直接访问 trees state 来进行一次性检查
     const treeExists = trees.some(tree => tree.id === treeId);
     if (!treeExists) {
       router.push('/');
@@ -225,11 +236,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
       onClose: () => console.log("Mock SSE stream closed."),
     });
 
-    // 清理函数（如果 startMockSSE 返回一个清理方法）
-    // return () => {
-    //   sse.close();
-    // };
-  }, [treeId, router, setNodes, setEdges]); // 关键：移除了 trees 依赖，切断循环
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeId, router, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (nodes.length > 1 && edges.length > 0) {
+      const onLayout = async () => {
+        const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+        window.requestAnimationFrame(() => {
+            fitView({duration: 500});
+        });
+      };
+      onLayout();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, edges.length]);
 
   if (isLoading) {
     return (
