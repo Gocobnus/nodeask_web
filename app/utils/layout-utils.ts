@@ -14,13 +14,27 @@ export const getLayoutedElements = async (nodes: Node[], edges: Edge[]): Promise
   const graph = {
     id: 'root',
     layoutOptions: elkOptions,
-    children: nodes.map(node => ({
-      ...node,
-      // elkjs needs width and height for layout
-      width: node.width || 360, 
-      height: node.height || 150, 
+    children: nodes.map(node => {
+      let height;
+      if (node.type === 'acard') {
+        height = node.height || 350; // ACard的最小高度约为344px
+      } else if (node.type === 'qcard') {
+        height = node.height || 150;
+      } else {
+        height = node.height || 150;
+      }
+
+      return {
+        ...node,
+        width: node.width || 360,
+        height: height,
+      };
+    }),
+    edges: edges.map(edge => ({
+      id: edge.id,
+      sources: [edge.source],
+      targets: [edge.target],
     })),
-    edges: edges,
   };
 
   try {

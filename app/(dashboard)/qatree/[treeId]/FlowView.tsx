@@ -59,25 +59,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
   }, [openDrawerId, setNodes]);
 
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.type === 'acard') {
-          const newIsOpen = node.id === openDrawerId;
-          if (node.data.isOpen === newIsOpen) return node;
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              isOpen: newIsOpen,
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [openDrawerId, setNodes]);
-
-  useEffect(() => {
     if (selectedQCardNode) {
       const initialText = drafts[selectedQCardNode.id] !== undefined
         ? drafts[selectedQCardNode.id]
