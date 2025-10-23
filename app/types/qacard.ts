@@ -27,6 +27,7 @@ export interface ACardProps {
   isGenerating?: boolean;
   isCompleted?: boolean;
   isSelected?: boolean;
+  isOpen?: boolean;
   onPause?: () => void;
   onCollapse?: () => void;
   onExpand?: () => void;

@@ -37,6 +37,26 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const selectedQCardNode = nodes.find(node => node.selected && node.type === 'qcard');
+  const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.type === 'acard') {
+          const newIsOpen = node.id === openDrawerId;
+          if (node.data.isOpen === newIsOpen) return node;
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isOpen: newIsOpen,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [openDrawerId, setNodes]);
 
   useEffect(() => {
     if (selectedQCardNode) {
@@ -124,7 +144,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
       const cardActions = (id: string) => ({
         onDelete: () => console.log(`Delete card ${id}`),
         onCopy: () => console.log(`Copy card ${id}`),
-        onExpand: () => console.log(`Expand card ${id}`),
         onClick: () => handleNodeSelect(id),
         onLocate: () => handleNodeLocate(id),
       });
@@ -146,6 +165,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
                 question: pos === 0 ? initialQuestion : '',
                 title: pos > 0 ? `Answer 1232132132131231232131232131231231232112` : '',
                 avatar: pos === 0 ? mockUser.avatar : undefined,
+                onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
                 ...(!isGenerating && cardActions(id)),
               },
             };
@@ -161,7 +181,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
               n.id === id ? {
                 ...n, 
                 draggable: true,
-                data: { ...n.data, content: n.data.content + content, isGenerating, ...(!isGenerating && cardActions(id)) }
+                data: { ...n.data, content: n.data.content + content, isGenerating, onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id), ...(!isGenerating && cardActions(id)) }
               } : n
             );
           }
@@ -179,7 +199,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         return currentNodes;
       });
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, handleNodeSelect, handleNodeLocate]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, handleNodeSelect, handleNodeLocate, setOpenDrawerId]);
 
   // ✨ 2. 使用 Ref 来确保 SSE 回调总能访问到最新的 handleMessage 函数
   const handleMessageRef = useRef(handleMessage);

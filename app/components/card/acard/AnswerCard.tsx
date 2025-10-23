@@ -29,6 +29,7 @@ export default function AnswerCard({
   isGenerating = false,
   isCompleted = false,
   isSelected = false,
+  isOpen = false,
   onPause,
   onCollapse,
   onExpand,
@@ -60,9 +61,6 @@ export default function AnswerCard({
   const relatedTabRef = useRef<HTMLDivElement>(null);
 
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
-
-  // Drawer 状态
-  const {isOpen, onOpenChange} = useDisclosure();
 
   // State 用于存储从 CSS 读取的 margin 值
   const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16);
@@ -429,7 +427,7 @@ export default function AnswerCard({
                         if (!isOpen && onClick) {
                           onClick(e);
                         }
-                        onOpenChange();
+                        onExpand && onExpand();
                       }}
                       onMouseDown={handleButtonPress as any}
                       onMouseUp={handleButtonRelease as any}
@@ -492,7 +490,7 @@ export default function AnswerCard({
       </div>
 
       {/* 抽屉组件 */}
-      <CustomDrawer isOpen={isOpen} onClose={onOpenChange} className="acard__drawer">
+      <CustomDrawer isOpen={isOpen} onClose={() => onExpand && onExpand()} className="acard__drawer">
         <div className="drawer__header">
           <CustomTooltip content="定位卡片" placement="bottom">
             <button className="acard__icon-btn drawer__location-btn" onClick={handleLocateClick}>
@@ -500,7 +498,7 @@ export default function AnswerCard({
             </button>
           </CustomTooltip>
           <CustomTooltip content="关闭" placement="bottom">
-            <button className="acard__icon-btn drawer__close-btn" onClick={onOpenChange}>
+            <button className="acard__icon-btn drawer__close-btn" onClick={() => onExpand && onExpand()}>
               <CloseIcon />
             </button>
           </CustomTooltip>
@@ -530,7 +528,7 @@ export default function AnswerCard({
             </Listbox>
         </div>
         <div className="acard__drawer-footer">
-          <Button variant="light" onPress={onOpenChange} className="drawer-btn-close">
+          <Button variant="light" onPress={() => onExpand && onExpand()} className="drawer-btn-close">
             Close
           </Button>
           <Button onPress={handleDrawerCopy} className="drawer-btn-copy">

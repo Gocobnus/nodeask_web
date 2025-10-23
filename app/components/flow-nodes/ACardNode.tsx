@@ -49,6 +49,7 @@
                 isGenerating={data.isGenerating}
                 isCompleted={!data.isGenerating}
                 isSelected={selected}
+                isOpen={data.isOpen}
                 onPause={data.onPause}
                 onCollapse={data.onCollapse}
                 onExpand={data.onExpand}
