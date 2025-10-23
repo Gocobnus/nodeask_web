@@ -122,6 +122,7 @@ export default function QuestionCard({
                   onMouseDown={handleButtonPress}
                   onMouseUp={handleButtonRelease}
                   onMouseLeave={handleButtonRelease}
+                  onPointerDown={(e) => e.stopPropagation()}
                   type="button"
                   aria-label={isCollapsed ? "展开" : "收起"}
                 >
@@ -159,6 +160,7 @@ export default function QuestionCard({
                     onMouseDown={handleButtonPress as any}
                     onMouseUp={handleButtonRelease as any}
                     onMouseLeave={handleButtonRelease as any}
+                    onPointerDown={(e) => e.stopPropagation()}
                     type="button"
                     aria-label="复制"
                     variants={iconVariants}

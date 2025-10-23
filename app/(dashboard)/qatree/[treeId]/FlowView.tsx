@@ -233,6 +233,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         zoomOnScroll={false}
         panOnScroll={true}
         onPaneClick={() => setNodes(nds => nds.map(n => ({ ...n, selected: false })))}
+        selectNodesOnDrag={false}
       />
       <AnimatePresence>
         {selectedQCardNode && (

@@ -312,6 +312,7 @@ export default function AnswerCard({
                     onMouseDown={handleButtonPress}
                     onMouseUp={handleButtonRelease}
                     onMouseLeave={handleButtonRelease}
+                    onPointerDown={(e) => e.stopPropagation()}
                     type="button"
                     aria-label="暂停回答"
                   >
@@ -433,6 +434,7 @@ export default function AnswerCard({
                       onMouseDown={handleButtonPress as any}
                       onMouseUp={handleButtonRelease as any}
                       onMouseLeave={handleButtonRelease as any}
+                      onPointerDown={(e) => e.stopPropagation()}
                       type="button"
                       aria-label={isOpen ? "收起" : "展开"}
                       variants={iconVariants}
@@ -455,6 +457,7 @@ export default function AnswerCard({
                         e.stopPropagation();
                         onFollowUp();
                       }}
+                      onPointerDown={(e) => e.stopPropagation()}
                     >
                       追问卡片知识
                     </Button>
