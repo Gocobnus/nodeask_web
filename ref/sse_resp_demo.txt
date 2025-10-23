@@ -2,14 +2,6 @@ package sse_client
 
 import "time"
 
-// 定义通道消息类型
-type StreamMessage struct {
-	Done      bool
-	IsLast    bool // 标记是否为最后一条消息
-	IsNewNode bool // 标记是否为新节点
-	Content   string
-	Error     error
-}
 
 // 定义通用接口
 type SSEResponse interface {
