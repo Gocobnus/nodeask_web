@@ -46,6 +46,7 @@ export default function AnswerCard({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
+  const [isContentScrollable, setIsContentScrollable] = useState(false);
 
   // --- 👇 添加 Tooltip 相关状态 ---
   const [isTitleTooltipDisabled, setIsTitleTooltipDisabled] = useState(true);
@@ -253,6 +254,13 @@ export default function AnswerCard({
   }, [activeTab, content, isCollapsed]);
 
   useLayoutEffect(() => {
+    if (contentRef.current) {
+      const isScrollable = contentRef.current.scrollHeight > contentRef.current.clientHeight;
+      setIsContentScrollable(isScrollable);
+    }
+  }, [content, activeTab, isCollapsed]);
+
+  useLayoutEffect(() => {
     const checkTruncation = () => {
       const element = titleRef.current;
       if (element) {
@@ -377,14 +385,14 @@ export default function AnswerCard({
 
             {/* 内容或相关问题 */}
             <div
-              className="acard__content nodrag nowheel"
+              className={`acard__content nodrag ${isContentScrollable && activeTab === 'answer' ? 'nowheel' : ''}`}
               ref={contentRef} // 用于滚动条和高度同步
+              onPointerDown={(e) => e.stopPropagation()}
               style={{
                 // 当"相关问题"Tab激活时，使用 state 中的高度来保持一致
                 height: activeTab === 'answer' ? 'auto' : (answerContentHeight ? `${answerContentHeight}px` : 'auto'),
                 flex: activeTab === 'answer' ? '1' : 'none' // 只有"回答"Tab允许 flex 增长
               }}
-              onPointerDown={(e) => e.stopPropagation()}
             >
               {activeTab === 'answer' ? (
                 content || "这里是回答内容的占位文本..."

@@ -26,11 +26,13 @@ export default function QuestionCard({
 }: CustomQCardProps) {
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [_isCopied, _setIsCopied] = useState(false);
+  const [isContentScrollable, setIsContentScrollable] = useState(false);
 
   // 2. 创建三个 Ref
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // ... (handleButtonPress, handleButtonRelease, handleCopy, handleCardClick 保持不变) ...
   
@@ -81,6 +83,13 @@ export default function QuestionCard({
       transition: { duration: 0.01 }
     }
   };
+
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      const isScrollable = contentRef.current.scrollHeight > contentRef.current.clientHeight;
+      setIsContentScrollable(isScrollable);
+    }
+  }, [question, isCollapsed]);
 
   // 3. 使用 useLayoutEffect 测量并设置高度
   useLayoutEffect(() => {
@@ -144,7 +153,11 @@ export default function QuestionCard({
         >
           {/* 6. 绑定 contentWrapperRef */}
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
-            <div className="qcard__content nodrag nowheel" onPointerDown={(e) => e.stopPropagation()}>
+            <div 
+              ref={contentRef}
+              className={`qcard__content nodrag ${isContentScrollable ? 'nowheel' : ''}`}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               {question}
             </div>
             <div className="qcard__footer">
