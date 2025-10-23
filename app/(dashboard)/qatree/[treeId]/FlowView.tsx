@@ -6,6 +6,8 @@ import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlo
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
+import { motion, AnimatePresence } from 'framer-motion';
+import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -30,6 +32,49 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
   const pendingEdgesRef = useRef<Edge[]>([]);
+
+  const [editingText, setEditingText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const selectedQCardNode = nodes.find(node => node.selected && node.type === 'qcard');
+
+  useEffect(() => {
+    if (selectedQCardNode) {
+      const initialText = drafts[selectedQCardNode.id] !== undefined
+        ? drafts[selectedQCardNode.id]
+        : (selectedQCardNode.data.question || '');
+      setEditingText(initialText);
+    }
+  }, [selectedQCardNode]);
+
+  const handleUpdate = (newText: string) => {
+    setEditingText(newText);
+    if (selectedQCardNode) {
+      if (newText.trim() !== '') {
+        setDrafts(prevDrafts => ({ ...prevDrafts, [selectedQCardNode.id]: newText }));
+      } else {
+        setDrafts(prevDrafts => {
+          const newDrafts = { ...prevDrafts };
+          delete newDrafts[selectedQCardNode.id];
+          return newDrafts;
+        });
+      }
+    }
+  };
+
+  const handleSubmit = (submittedText: string) => {
+    if (!selectedQCardNode) return;
+    console.log(`追问 (Follow-up question for card ${selectedQCardNode.id}): ${submittedText}`);
+
+    setDrafts(prevDrafts => {
+      const newDrafts = { ...prevDrafts };
+      delete newDrafts[selectedQCardNode.id];
+      return newDrafts;
+    });
+
+    // Deselect node after submit
+    setNodes((nds) => nds.map(n => ({ ...n, selected: false })));
+  };
 
   // 节点操作的回调函数
   const onMoveStart = useCallback(() => {
@@ -187,7 +232,37 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
         fitView
         zoomOnScroll={false}
         panOnScroll={true}
+        onPaneClick={() => setNodes(nds => nds.map(n => ({ ...n, selected: false })))}
       />
+      <AnimatePresence>
+        {selectedQCardNode && (
+          <motion.div
+            className="absolute bottom-12 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <div
+              className="pointer-events-auto"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <ReusableTiptapEditor
+                key="qatree-search-section"
+                content={editingText}
+                onUpdate={handleUpdate}
+                onSubmit={handleSubmit}
+                placeholder="输入内容以优化或追问..."
+                isSubmitting={isSubmitting}
+                disabled={isSubmitting}
+                variant="bottomBar"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
