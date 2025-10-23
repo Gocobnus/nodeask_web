@@ -10,11 +10,16 @@ import { useQATrees } from '../../context/QATreeContext';
 
 export default function HomePage() {
   const router = useRouter();
-  const { addTree } = useQATrees();
+  const { addTree, setInitialQuery } = useQATrees();
 
   const handleSubmit = (value: string): Promise<void> => {
+    // Step 1: Set the initial query for the next page to render.
+    setInitialQuery(value);
+
+    // Step 2: Mock the API call to create the tree.
     return new Promise((resolve) => {
       setTimeout(() => {
+        // Create a mock tree object.
         const newTree: QATree = {
           id: `mock_${Date.now()}`,
           name: value.substring(0, 20) + (value.length > 20 ? '...' : ''),
@@ -22,11 +27,15 @@ export default function HomePage() {
           updatedAt: new Date(),
         };
 
+        // Add the new tree to the sidebar/client state.
         addTree(newTree);
 
-        router.push(`/qatree/${newTree.id}?q=${encodeURIComponent(value)}`);
+        // Navigate to the clean URL. The destination page will use
+        // the `initialQuery` from the context to render the first node.
+        router.push(`/qatree/${newTree.id}`);
+        
         resolve();
-      }, 1000); // 1-second delay
+      }, 500); // 0.5-second delay to simulate network
     });
   };
 

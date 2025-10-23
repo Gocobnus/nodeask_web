@@ -22,10 +22,13 @@ const nodeTypes = {
 
 interface FlowViewProps {
   treeId: string;
+}
+
+interface FlowCanvasProps extends FlowViewProps {
   initialQuestion: string;
 }
 
-function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
+function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { fitView } = useReactFlow();
@@ -293,9 +296,43 @@ function FlowCanvas({ treeId, initialQuestion }: FlowViewProps) {
 }
 
 export default function FlowView(props: FlowViewProps) {
+  const { initialQuery, setInitialQuery, trees } = useQATrees();
+  const [questionForFlow, setQuestionForFlow] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadInitialData = () => {
+      if (initialQuery) {
+        // Flow 1: Initial creation from homepage
+        setQuestionForFlow(initialQuery);
+        setInitialQuery(null);
+        setIsLoading(false);
+      } else {
+        // Flow 2: Refresh or direct navigation (MOCKED)
+        setTimeout(() => {
+          const currentTree = trees.find(t => t.id === props.treeId);
+          const mockInitialQuestion = currentTree ? currentTree.name : `(Mock) Question for ${props.treeId}`;
+          setQuestionForFlow(mockInitialQuestion);
+          setIsLoading(false);
+        }, 500);
+      }
+    };
+    loadInitialData();
+  }, [props.treeId, initialQuery, setInitialQuery, trees]);
+
+  if (isLoading) {
+    // This loading state is for resolving the initial question.
+    // FlowCanvas has its own loading state for the SSE stream.
+    return (
+      <div className="w-full h-full p-4">
+        <Skeleton className="w-full h-full rounded-lg" />
+      </div>
+    );
+  }
+
   return (
     <ReactFlowProvider>
-      <FlowCanvas {...props} />
+      <FlowCanvas treeId={props.treeId} initialQuestion={questionForFlow || ''} />
     </ReactFlowProvider>
   );
 }
