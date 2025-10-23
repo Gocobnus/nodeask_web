@@ -203,6 +203,7 @@
   line-height: 1.6;
   color: var(--qcard-text-primary);
   white-space: pre-wrap;
+  overflow-wrap: break-word; /* 强制长单词换行 */
   box-sizing: border-box;
   min-height: var(--footer-height);
 

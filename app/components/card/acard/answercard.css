@@ -231,6 +231,7 @@
   line-height: 1.6;
   color: var(--acard-text-primary);
   white-space: pre-wrap;
+  overflow-wrap: break-word; /* 强制长单词换行 */
   box-sizing: border-box;
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
@@ -471,6 +472,7 @@
   line-height: 1.6;
   color: var(--acard-text-primary);
   white-space: pre-wrap;
+  overflow-wrap: break-word; /* 强制长单词换行 */
   scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
 
