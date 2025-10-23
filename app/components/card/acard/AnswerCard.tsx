@@ -50,7 +50,34 @@ export default function AnswerCard({
 
   // --- 👇 添加 Tooltip 相关状态 ---
   const [isTitleTooltipDisabled, setIsTitleTooltipDisabled] = useState(true);
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   // --- 结束 ---
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(false);
+      }
+    };
+    const handleBlur = () => {
+      setIsCtrlPressed(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
 
   // Refs
   const cardRef = useRef<HTMLDivElement>(null);
@@ -385,7 +412,7 @@ export default function AnswerCard({
 
             {/* 内容或相关问题 */}
             <div
-              className={`acard__content nodrag ${isContentScrollable && activeTab === 'answer' ? 'nowheel' : ''}`}
+              className={`acard__content nodrag ${isContentScrollable && activeTab === 'answer' && !isCtrlPressed ? 'nowheel' : ''}`}
               ref={contentRef} // 用于滚动条和高度同步
               onPointerDown={(e) => e.stopPropagation()}
               style={{
