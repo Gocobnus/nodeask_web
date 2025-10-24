@@ -1,7 +1,7 @@
 'use client';
 
 // 1. 导入 useLayoutEffect 和 useRef
-import React, { useState, useLayoutEffect, useRef } from "react";
+import React, { useState, useLayoutEffect, useRef, useEffect } from "react";
 import Image from 'next/image';
 import { motion } from "framer-motion";
 import { QCardProps } from "../../../types/qacard";
@@ -27,6 +27,7 @@ export default function QuestionCard({
   const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
   const [_isCopied, _setIsCopied] = useState(false);
   const [isContentScrollable, setIsContentScrollable] = useState(false);
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
 
   // 2. 创建三个 Ref
   const cardRef = useRef<HTMLDivElement>(null);
@@ -83,6 +84,34 @@ export default function QuestionCard({
       transition: { duration: 0.01 }
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 检查 Ctrl 或 Meta (Cmd) 键
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(true);
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(false);
+      }
+    };
+    const handleBlur = () => {
+      // 窗口失焦时重置状态
+      setIsCtrlPressed(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     if (contentRef.current) {
@@ -155,7 +184,7 @@ export default function QuestionCard({
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
             <div 
               ref={contentRef}
-              className={`qcard__content nodrag ${isContentScrollable ? 'nowheel' : ''}`}
+              className={`qcard__content nodrag ${isContentScrollable && !isCtrlPressed ? 'nowheel' : ''}`}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {question}
