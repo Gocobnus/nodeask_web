@@ -37,6 +37,9 @@
   background-color: transparent;
   font-family: inherit;
   box-sizing: border-box;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
 }
 
 /* 针对 @heroui/react Textarea 内部元素的样式 */

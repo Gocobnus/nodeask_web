@@ -225,8 +225,8 @@
   flex: 1;
   cursor: text;
   margin: 0 0 0px 0;
-  padding: 0px 0px 0px 0px;
-  margin: 8px 20px 0px 20px;
+  padding: 0px 4px 0px 0px;
+  margin: 8px 16px 0px 20px;
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
@@ -234,8 +234,9 @@
   white-space: pre-wrap;
   overflow-wrap: break-word; /* 强制长单词换行 */
   box-sizing: border-box;
-  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
   
   min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
 

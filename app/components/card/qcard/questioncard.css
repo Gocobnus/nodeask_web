@@ -199,9 +199,6 @@
   flex: 1;
   padding: 0;
   margin: 0 16px;
-  scrollbar-gutter: stable;
-
-  /* --- 以下保持不变 --- */
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
@@ -212,7 +209,11 @@
   min-height: var(--footer-height);
   user-select: text;
   cursor: text;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
 }
+
 
 /* 底部操作栏 */
 .qcard__footer {
