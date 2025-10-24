@@ -225,8 +225,8 @@
   flex: 1;
   cursor: text;
   margin: 0 0 0px 0;
-  padding: 0px 8px 0px 0px;
-  margin: 8px 12px 0px 20px;
+  padding: 0px 0px 0px 0px;
+  margin: 8px 20px 0px 20px;
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
@@ -468,8 +468,8 @@
 .drawer__content-area {
   flex: 1; /* Allow this area to grow */
   overflow-y: auto;
-  padding: 0px 8px 0px 0px;
-  margin: 0px 12px 12px 20px;
+  padding: 0px;
+  margin: 0px 20px 12px 20px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--acard-text-primary);

@@ -197,19 +197,8 @@
 /* 内容区域，这里给一个最小高度=footer的高度 */
 .qcard__content {
   flex: 1;
-  /* 1. 移除 padding-right: 
-    原: padding: 0px 8px 0px 0px;
-    新: 
-  */
   padding: 0;
-
-  /* 2. 将 padding-right 的 8px 合并到 margin-right:
-    原: margin: 0px 8px 0px 16px;  (左16, 右8)
-    新: margin: 0 16px;            (左16, 右16, 保持对称)
-  */
   margin: 0 16px;
-
-  /* 3. 保留(或添加) scrollbar-gutter */
   scrollbar-gutter: stable;
 
   /* --- 以下保持不变 --- */
