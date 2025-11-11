@@ -570,6 +570,16 @@
   padding: 0;
   border-radius: 50%;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.acard-node-wrapper:hover .acard-node__ask-btn,
+.acard-node-wrapper.selected .acard-node__ask-btn {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .acard-node__ask-btn:hover {

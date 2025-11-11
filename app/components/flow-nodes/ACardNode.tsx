@@ -20,6 +20,7 @@
 
           return (
             <motion.div
+              className={`acard-node-wrapper ${selected ? 'selected' : ''}`}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
@@ -42,27 +43,25 @@
                   </button>
                 </CustomTooltip>
               )}
-              {selected && (
-                <CustomTooltip
-                  placement="right"
-                  content="追问"
-                  size={dynamicTooltipSize}
+              <CustomTooltip
+                placement="right"
+                content="追问"
+                size={dynamicTooltipSize}
+              >
+                <button
+                  className="acard-node__ask-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (data.onAsk) {
+                      data.onAsk();
+                    }
+                  }}
+                  type="button"
+                  aria-label="追问"
                 >
-                  <button
-                    className="acard-node__ask-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (data.onAsk) {
-                        data.onAsk();
-                      }
-                    }}
-                    type="button"
-                    aria-label="追问"
-                  >
-                    <HorizontalAskIcon width={24} height={24} />
-                  </button>
-                </CustomTooltip>
-              )}
+                  <HorizontalAskIcon width={24} height={24} />
+                </button>
+              </CustomTooltip>
               <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
               <AnswerCard
                 title={data.title}
