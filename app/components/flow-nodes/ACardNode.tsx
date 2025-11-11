@@ -3,7 +3,7 @@
         import React, { useState } from 'react';
         import { Handle, Position, useViewport } from 'reactflow';
         import { AnswerCard } from '../card/acard';
-        import { motion } from 'framer-motion';
+        import { motion, AnimatePresence } from 'framer-motion';
         import { CustomTooltip } from '../ui/CustomTooltip';
         import { CardDeleteIcon, HorizontalAskIcon } from '../icons';
         import { TooltipProps } from '@heroui/react';
@@ -48,27 +48,33 @@
                   </button>
                 </CustomTooltip>
               )}
-              {isVisible && (
-                <CustomTooltip
-                  placement="right"
-                  content="追问"
-                  size={dynamicTooltipSize}
-                >
-                  <button
-                    className="acard-node__ask-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (data.onAsk) {
-                        data.onAsk();
-                      }
-                    }}
-                    type="button"
-                    aria-label="追问"
+              <AnimatePresence>
+                {isVisible && (
+                  <CustomTooltip
+                    placement="right"
+                    content="追问"
+                    size={dynamicTooltipSize}
                   >
-                    <HorizontalAskIcon width={30} height={30}/>
-                  </button>
-                </CustomTooltip>
-              )}
+                    <motion.button
+                      className="acard-node__ask-btn"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (data.onAsk) {
+                          data.onAsk();
+                        }
+                      }}
+                      type="button"
+                      aria-label="追问"
+                    >
+                      <HorizontalAskIcon width={30} height={30}/>
+                    </motion.button>
+                  </CustomTooltip>
+                )}
+              </AnimatePresence>
               <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
               <AnswerCard
                 title={data.title}
