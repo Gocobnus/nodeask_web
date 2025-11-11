@@ -550,3 +550,35 @@
   color: var(--acard-text-default);
   margin-bottom: 12px; /* 标题和下方内容的间距 */
 }
+
+.acard-node__ask-btn {
+  position: absolute;
+  top: 50%;
+  right: -48px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: white;
+  color: var(--icon-default);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+  z-index: 10;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.acard-node__ask-btn:hover {
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  color: var(--icon-hover);
+}
+
+.acard-node__ask-btn:active {
+  transform: translateY(-50%) scale(1);
+  background-color: color-mix(in srgb, var(--icon-default) 15%, transparent);
+}

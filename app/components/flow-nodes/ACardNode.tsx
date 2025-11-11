@@ -5,7 +5,7 @@
         import { AnswerCard } from '../card/acard';
         import { motion } from 'framer-motion';
         import { CustomTooltip } from '../ui/CustomTooltip';
-        import { CardDeleteIcon } from '../icons';
+        import { CardDeleteIcon, HorizontalAskIcon } from '../icons';
         import { TooltipProps } from '@heroui/react';
 
         const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
@@ -39,6 +39,27 @@
                     aria-label="删除"
                   >
                     <CardDeleteIcon width={24} height={24} />
+                  </button>
+                </CustomTooltip>
+              )}
+              {selected && (
+                <CustomTooltip
+                  placement="right"
+                  content="追问"
+                  size={dynamicTooltipSize}
+                >
+                  <button
+                    className="acard-node__ask-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (data.onAsk) {
+                        data.onAsk();
+                      }
+                    }}
+                    type="button"
+                    aria-label="追问"
+                  >
+                    <HorizontalAskIcon width={24} height={24} />
                   </button>
                 </CustomTooltip>
               )}

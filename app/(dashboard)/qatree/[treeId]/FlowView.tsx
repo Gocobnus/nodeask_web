@@ -39,7 +39,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const [editingText, setEditingText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const selectedQCardNode = nodes.find(node => node.selected && node.type === 'qcard');
+  const [followUpNodeId, setFollowUpNodeId] = useState<string | null>(null);
+  const nodeForFollowUp = nodes.find(n => n.id === followUpNodeId);
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,23 +63,25 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [openDrawerId, setNodes]);
 
   useEffect(() => {
-    if (selectedQCardNode) {
-      const initialText = drafts[selectedQCardNode.id] !== undefined
-        ? drafts[selectedQCardNode.id]
-        : (selectedQCardNode.data.question || '');
+    if (nodeForFollowUp) {
+      const initialText = drafts[nodeForFollowUp.id] !== undefined
+        ? drafts[nodeForFollowUp.id]
+        : (nodeForFollowUp.type === 'qcard' ? nodeForFollowUp.data.question || '' : '');
       setEditingText(initialText);
+    } else {
+      setEditingText('');
     }
-  }, [selectedQCardNode]);
+  }, [nodeForFollowUp, drafts]);
 
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
-    if (selectedQCardNode) {
+    if (nodeForFollowUp) {
       if (newText.trim() !== '') {
-        setDrafts(prevDrafts => ({ ...prevDrafts, [selectedQCardNode.id]: newText }));
+        setDrafts(prevDrafts => ({ ...prevDrafts, [nodeForFollowUp.id]: newText }));
       } else {
         setDrafts(prevDrafts => {
           const newDrafts = { ...prevDrafts };
-          delete newDrafts[selectedQCardNode.id];
+          delete newDrafts[nodeForFollowUp.id];
           return newDrafts;
         });
       }
@@ -86,17 +89,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   };
 
   const handleSubmit = (submittedText: string) => {
-    if (!selectedQCardNode) return;
-    console.log(`追问 (Follow-up question for card ${selectedQCardNode.id}): ${submittedText}`);
+    if (!nodeForFollowUp) return;
+    console.log(`追问 (Follow-up question for card ${nodeForFollowUp.id}): ${submittedText}`);
 
     setDrafts(prevDrafts => {
       const newDrafts = { ...prevDrafts };
-      delete newDrafts[selectedQCardNode.id];
+      delete newDrafts[nodeForFollowUp.id];
       return newDrafts;
     });
 
     // Deselect node after submit
     setNodes((nds) => nds.map(n => ({ ...n, selected: false })));
+    setFollowUpNodeId(null);
   };
 
   // 节点操作的回调函数
@@ -108,6 +112,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     setNodes((nds) =>
       nds.map((node) => ({ ...node, selected: node.id === nodeId }))
     );
+    setFollowUpNodeId(null);
+  }, [setNodes]);
+
+  const handleAskFollowUp = useCallback((nodeId: string) => {
+    setNodes((nds) =>
+      nds.map((node) => ({ ...node, selected: node.id === nodeId }))
+    );
+    setFollowUpNodeId(nodeId);
   }, [setNodes]);
 
   const handleNodeLocate = useCallback((nodeId: string) => {
@@ -132,16 +144,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
 
     if (event === 'text' || event === 'ask_back') {
-      const cardActions = (id: string) => ({
+      const cardActions = (id: string, type: 'qcard' | 'acard') => ({
         onDelete: () => console.log(`Delete card ${id}`),
         onCopy: () => console.log(`Copy card ${id}`),
-        onClick: () => handleNodeSelect(id),
+        onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
+        onAsk: () => handleAskFollowUp(id),
         onLocate: () => handleNodeLocate(id),
       });
 
       if (event === 'text') {
         const { id, pos, content, finish, parentId } = payload.node_data;
         const isGenerating = !finish;
+        const type = pos === 0 ? 'qcard' : 'acard';
 
         setNodes(currentNodes => {
           const existingNode = currentNodes.find(n => n.id === id);
@@ -156,7 +170,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 title: pos > 0 ? `Answer ${id}` : '',
                 avatar: pos === 0 ? mockUser.avatar : undefined,
                 onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
-                ...(!isGenerating && cardActions(id)),
+                ...(!isGenerating && cardActions(id, type)),
               },
             };
             return [...currentNodes, newNode];
@@ -169,7 +183,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   content: n.data.content + content, 
                   isGenerating, 
                   onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
-                  ...(!isGenerating && cardActions(id)) 
+                  ...(!isGenerating && cardActions(id, type)) 
                 }
               } : n
             );
@@ -192,7 +206,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const { node_id, ask_back } = payload;
         setNodes(currentNodes => currentNodes.map(n =>
           n.id === node_id ? {
-            ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id) }
+            ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id, 'acard') }
           } : n
         ));
       }
@@ -259,11 +273,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         fitView
         zoomOnScroll={false}
         panOnScroll={true}
-        onPaneClick={() => setNodes(nds => nds.map(n => ({ ...n, selected: false })))}
+        onPaneClick={() => {
+          setNodes(nds => nds.map(n => ({ ...n, selected: false })));
+          setFollowUpNodeId(null);
+        }}
         selectNodesOnDrag={false}
       />
       <AnimatePresence>
-        {selectedQCardNode && (
+        {nodeForFollowUp && (
           <motion.div
             className="absolute bottom-12 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
             initial={{ opacity: 0, y: 50 }}

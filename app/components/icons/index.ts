@@ -23,4 +23,5 @@ export { default as CopyIcon } from "../../../public/icons/card/copy.svg";
 export { default as ExplodeIcon } from "../../../public/icons/card/explode.svg";
 export { default as LocationIcon } from "../../../public/icons/card/location.svg";
 export { default as CloseIcon } from "../../../public/icons/card/close.svg"; 
-export { default as ContractIcon } from "../../../public/icons/card/contract.svg"; 
+export { default as ContractIcon } from "../../../public/icons/card/contract.svg";
+export { default as HorizontalAskIcon } from "../../../public/icons/card/horizontal_ask.svg"; 
