@@ -42,7 +42,7 @@
                   </button>
                 </CustomTooltip>
               )}
-              <Handle type="target" position={Position.Top} className="!bg-transparent" />
+              <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
               <AnswerCard
                 title={data.title}
                 content={data.content}
@@ -56,12 +56,11 @@
                 onCopy={data.onCopy}
                 onCopyError={data.onCopyError}
                 onClick={data.onClick}
-                onFollowUp={data.onFollowUp}
                 onLocate={data.onLocate}
                 relatedQuestions={data.relatedQuestions}
                 tooltipSize={dynamicTooltipSize}
               />
-              <Handle type="source" position={Position.Bottom} className="!bg-transparent" />
+              <Handle type="source" position={Position.Bottom} style={{ background: 'transparent', border: 'none' }} />
             </motion.div>
           );
         };

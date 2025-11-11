@@ -97,7 +97,6 @@ export default function QATreePage({ params }: QATreePageProps) {
   };
 
   const handleExpand = () => { console.log("Expand/Drawer button clicked"); };
-  const handleFollowUp = () => { console.log("Follow-up button clicked"); };
 
   if (!isMounted) {
     return null;
@@ -152,7 +151,6 @@ export default function QATreePage({ params }: QATreePageProps) {
               onCopy={() => console.log('Answer copied')}
               onCopyError={(err) => console.error('Answer copy failed:', err)}
               onExpand={handleExpand}
-              onFollowUp={handleFollowUp}
               onDelete={() => console.log('删除回答卡片')} 
             />
           )}

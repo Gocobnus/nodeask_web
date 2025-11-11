@@ -262,19 +262,6 @@
   justify-content: center;
 }
 
-.acard__follow-up-wrapper {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-  position: relative;
-  top: 6px;
-}
-
-.acard__background-card:hover .acard__answer:not(.acard__answer--collapsed) .acard__follow-up-wrapper {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* 保持卡片高度一致，以回答tab为标准 */
 .acard__answer:not(:has(.acard__footer))::after {
   content: '';
@@ -341,19 +328,6 @@
     min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom) - var(--tabs-height) - var(--footer-height));
   }
   
-}
-
-.custom-follow-up-btn {
-  width: 160px;
-  height: 32px;
-  border-radius: 20px !important;
-  background-color: var(--acard-bg-primary) !important;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  padding: 0 16px 0 20px !important;
-  color: var(--acard-text-default) !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  border: none !important;
 }
 
 /* 相关问题列表样式 */

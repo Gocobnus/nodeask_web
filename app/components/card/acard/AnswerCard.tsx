@@ -36,7 +36,6 @@ export default function AnswerCard({
   onCopy,
   onCopyError,
   onClick,
-  onFollowUp,
   onLocate,
   relatedQuestions = [],
   tooltipSize = 'sm'
@@ -477,25 +476,6 @@ export default function AnswerCard({
                     </motion.button>
                   </CustomTooltip>
                 ) : <div /> /* 占位符保持布局 */}
-
-                {/* 追问按钮 */}
-                {isCompleted && onFollowUp && (
-                  <div className="acard__follow-up-wrapper">
-                    <Button
-                      size="sm"
-                      variant="solid"
-                      className="custom-follow-up-btn"
-                      endContent={<SendIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onFollowUp();
-                      }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      追问卡片知识
-                    </Button>
-                  </div>
-                )}
 
                 {/* 复制按钮 */}
                 {isCompleted && onCopy ? (
