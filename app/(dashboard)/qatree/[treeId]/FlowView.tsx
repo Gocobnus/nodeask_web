@@ -160,10 +160,21 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         setNodes(currentNodes => {
           const existingNode = currentNodes.find(n => n.id === id);
           if (!existingNode) {
+            let initialPosition = { x: 0, y: 0 };
+            if (currentNodes.length > 0) {
+                const lastNode = currentNodes[currentNodes.length - 1];
+                const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 350 : 150); // Use fallback height
+                const GAP = 40; // Vertical gap between nodes
+                initialPosition = {
+                    x: lastNode.position.x, // Keep the same X for a vertical stack
+                    y: lastNode.position.y + lastNodeHeight + GAP
+                };
+            }
+
             const newNode: Node = {
               id,
-              type: pos === 0 ? 'qcard' : 'acard',
-              position: { x: 0, y: 0 }, // Initial position, will be updated by layout
+              type,
+              position: initialPosition,
               data: {
                 pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',

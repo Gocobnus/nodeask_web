@@ -1,6 +1,6 @@
 'use client';
 
-        import React from 'react';
+        import React, { useState } from 'react';
         import { Handle, Position, useViewport } from 'reactflow';
         import { AnswerCard } from '../card/acard';
         import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@
 
         const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
           const { zoom } = useViewport();
+          const [isHovered, setIsHovered] = useState(false);
 
           const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
             if (currentZoom < 0.8) return 'sm';
@@ -18,6 +19,8 @@
           };
           const dynamicTooltipSize = getTooltipSize(zoom);
 
+          const isVisible = selected || isHovered;
+
           return (
             <motion.div
               className={`acard-node-wrapper ${selected ? 'selected' : ''}`}
@@ -25,6 +28,8 @@
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               style={{ width: 360, position: 'relative' }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
               {data.onDelete && selected && (
                 <CustomTooltip
@@ -43,25 +48,27 @@
                   </button>
                 </CustomTooltip>
               )}
-              <CustomTooltip
-                placement="right"
-                content="追问"
-                size={dynamicTooltipSize}
-              >
-                <button
-                  className="acard-node__ask-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (data.onAsk) {
-                      data.onAsk();
-                    }
-                  }}
-                  type="button"
-                  aria-label="追问"
+              {isVisible && (
+                <CustomTooltip
+                  placement="right"
+                  content="追问"
+                  size={dynamicTooltipSize}
                 >
-                  <HorizontalAskIcon width={24} height={24} />
-                </button>
-              </CustomTooltip>
+                  <button
+                    className="acard-node__ask-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (data.onAsk) {
+                        data.onAsk();
+                      }
+                    }}
+                    type="button"
+                    aria-label="追问"
+                  >
+                    <HorizontalAskIcon width={30} height={30}/>
+                  </button>
+                </CustomTooltip>
+              )}
               <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
               <AnswerCard
                 title={data.title}

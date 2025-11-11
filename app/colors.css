@@ -51,6 +51,7 @@
   --acard-text-default: #27272a;
   --acard-icon-default: #27272a;
   --acard-text-primary: #27272a; /* Added missing variable */
+  --acard-icon-add: #ae7ede;
 
   --acard-text-related-question: #52525b;
   --acard-text-related-question-hover: #9353d3;
