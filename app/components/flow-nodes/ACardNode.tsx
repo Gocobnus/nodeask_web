@@ -70,7 +70,7 @@
                       type="button"
                       aria-label="追问"
                     >
-                      <HorizontalAskIcon width={30} height={30}/>
+                      <HorizontalAskIcon width={24} height={24}/>
                     </motion.button>
                   </CustomTooltip>
                 )}

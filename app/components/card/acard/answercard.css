@@ -587,8 +587,8 @@
   top: 50%;
   right: -40px;
   transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border: none;
   color: var(--acard-icon-add) !important;
   background: transparent;
@@ -640,7 +640,7 @@
   top: 50%; /* Vertically center */
   transform: translateY(-50%); /* Adjust for vertical centering */
   width: 16px; /* The gap width */
-  height: 48px; /* Match the button's height */
+  height: 32px; /* Match the button's height */
   /* For debugging, you can add: background: rgba(0, 255, 0, 0.2); */
   pointer-events: auto; /* Ensure it can receive mouse events */
 }
