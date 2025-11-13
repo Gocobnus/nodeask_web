@@ -52,7 +52,7 @@
                 {isVisible && (
                   <CustomTooltip
                     placement="right"
-                    content="追问"
+                    content="追问卡片内容"
                     size={dynamicTooltipSize}
                   >
                     <motion.button
@@ -68,7 +68,7 @@
                         }
                       }}
                       type="button"
-                      aria-label="追问"
+                      aria-label="追问卡片内容"
                     >
                       <HorizontalAskIcon width={24} height={24}/>
                     </motion.button>
