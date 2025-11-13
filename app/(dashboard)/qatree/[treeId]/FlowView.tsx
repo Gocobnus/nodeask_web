@@ -31,7 +31,7 @@ interface FlowCanvasProps extends FlowViewProps {
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
-  const { fitView } = useReactFlow();
+  const { fitView, getZoom } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,9 +130,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }))
     );
     setTimeout(() => {
-      fitView({ nodes: [{ id: nodeId }], duration: 500, padding: 0.2 });
+        const currentZoom = getZoom();
+        fitView({
+            nodes: [{ id: nodeId }],
+            duration: 500,
+            minZoom: currentZoom,
+            maxZoom: currentZoom
+        });
     }, 0);
-  }, [setNodes, fitView]);
+  }, [setNodes, fitView, getZoom]);
 
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);
@@ -273,23 +279,22 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
-        onMoveStart={onMoveStart}
-        zoomOnDoubleClick={true}
-        fitView
-        zoomOnScroll={false}
-        panOnScroll={true}
-        onPaneClick={() => {
-          setNodes(nds => nds.map(n => ({ ...n, selected: false })));
-          setFollowUpNodeId(null);
-        }}
-        selectNodesOnDrag={false}
-      />
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      nodeTypes={nodeTypes}
+      onMoveStart={onMoveStart}
+      zoomOnDoubleClick={true}
+      zoomOnScroll={false}
+      panOnScroll={true}
+      onPaneClick={() => {
+        setNodes(nds => nds.map(n => ({ ...n, selected: false })));
+        setFollowUpNodeId(null);
+      }}
+      selectNodesOnDrag={false}
+    />
       <AnimatePresence>
         {nodeForFollowUp && (
           <motion.div
