@@ -294,6 +294,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         setFollowUpNodeId(null);
       }}
       selectNodesOnDrag={false}
+      minZoom={0.4} 
     />
       <AnimatePresence>
         {nodeForFollowUp && (
