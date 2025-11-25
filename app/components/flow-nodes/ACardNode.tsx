@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Handle, Position, useViewport } from 'reactflow';
+import React, { useState, useEffect } from 'react';
+import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow';
 import { AnswerCard } from '../card/acard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
@@ -9,9 +9,17 @@ import { CardDeleteIcon, HorizontalAskIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
 
 
-const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
+const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        updateNodeInternals(id);
+    }, 100); // 稍微延迟以等待内部布局稳定
+    return () => clearTimeout(timer);
+  }, [id, updateNodeInternals, data]); // 监听 data 变化（例如内容生成时）
 
   const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
     if (currentZoom < 0.8) return 'sm';
@@ -25,12 +33,13 @@ const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
   return (
     <motion.div
       className={`acard-node-wrapper ${selected ? 'selected' : ''}`}
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ width: 360, position: 'relative' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
         <CustomTooltip

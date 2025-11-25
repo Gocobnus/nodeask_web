@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Handle, Position, useViewport } from 'reactflow';
+import React, { useEffect } from 'react';
+import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow';
 import { QuestionCard } from '../card/qcard';
 import { motion } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
@@ -9,8 +9,13 @@ import { CardDeleteIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
 
 
-const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
+const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
   const { zoom } = useViewport();
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+     updateNodeInternals(id);
+  }, [id, updateNodeInternals, data]);
 
   const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
     if (currentZoom < 0.8) return 'sm';
@@ -21,10 +26,11 @@ const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0}}
+      animate={{ opacity: 1}}
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ width: 360, position: 'relative' }}
+      onAnimationComplete={() => updateNodeInternals(id)} 
     >
       {data.onDelete && selected && (
         <CustomTooltip
