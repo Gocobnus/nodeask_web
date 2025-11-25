@@ -26,9 +26,9 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   return (
     <motion.div
-      initial={{ opacity: 0}}
-      animate={{ opacity: 1}}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: 360, position: 'relative' }}
       onAnimationComplete={() => updateNodeInternals(id)} 
     >

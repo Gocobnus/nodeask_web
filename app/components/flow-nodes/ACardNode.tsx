@@ -16,7 +16,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        updateNodeInternals(id);
+      updateNodeInternals(id);
     }, 100); // 稍微延迟以等待内部布局稳定
     return () => clearTimeout(timer);
   }, [id, updateNodeInternals, data]); // 监听 data 变化（例如内容生成时）
@@ -35,7 +35,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       className={`acard-node-wrapper ${selected ? 'selected' : ''}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: 360, position: 'relative' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
