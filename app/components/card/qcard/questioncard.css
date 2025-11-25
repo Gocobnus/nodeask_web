@@ -206,7 +206,7 @@
   white-space: pre-wrap;
   overflow-wrap: break-word; /* 强制长单词换行 */
   box-sizing: border-box;
-  min-height: var(--footer-height);
+
   user-select: text;
   cursor: text;
   scrollbar-gutter: stable;

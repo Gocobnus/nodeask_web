@@ -130,13 +130,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }))
     );
     setTimeout(() => {
-        const currentZoom = getZoom();
-        fitView({
-            nodes: [{ id: nodeId }],
-            duration: 500,
-            minZoom: currentZoom,
-            maxZoom: currentZoom
-        });
+      const currentZoom = getZoom();
+      fitView({
+        nodes: [{ id: nodeId }],
+        duration: 500,
+        minZoom: currentZoom,
+        maxZoom: currentZoom
+      });
     }, 0);
   }, [setNodes, fitView, getZoom]);
 
@@ -167,14 +167,30 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           const existingNode = currentNodes.find(n => n.id === id);
           if (!existingNode) {
             let initialPosition = { x: 0, y: 0 };
-            if (currentNodes.length > 0) {
-                const lastNode = currentNodes[currentNodes.length - 1];
-                const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 350 : 150); // Use fallback height
-                const GAP = 40; // Vertical gap between nodes
-                initialPosition = {
-                    x: lastNode.position.x, // Keep the same X for a vertical stack
-                    y: lastNode.position.y + lastNodeHeight + GAP
-                };
+
+            if (currentNodes.length === 0) {
+              // 第一个节点:居中显示
+              // 动态获取侧边栏宽度
+              const sidebarElement = document.querySelector('.nav');
+              const sidebarWidth = sidebarElement ? sidebarElement.getBoundingClientRect().width : 256;
+              const canvasWidth = window.innerWidth - sidebarWidth;
+              const canvasHeight = window.innerHeight;
+              const nodeWidth = 360;
+              const nodeHeight = 150;
+
+              initialPosition = {
+                x: (canvasWidth / 2) - (nodeWidth / 2),  // 水平居中(考虑侧边栏)
+                y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
+              };
+            } else {
+              // 后续节点:垂直堆叠
+              const lastNode = currentNodes[currentNodes.length - 1];
+              const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 350 : 150);
+              const GAP = 40;
+              initialPosition = {
+                x: lastNode.position.x,
+                y: lastNode.position.y + lastNodeHeight + GAP
+              };
             }
 
             const newNode: Node = {
@@ -195,12 +211,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             return currentNodes.map(n =>
               n.id === id ? {
                 ...n,
-                data: { 
-                  ...n.data, 
-                  content: n.data.content + content, 
-                  isGenerating, 
+                data: {
+                  ...n.data,
+                  content: n.data.content + content,
+                  isGenerating,
                   onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
-                  ...(!isGenerating && cardActions(id, type)) 
+                  ...(!isGenerating && cardActions(id, type))
                 }
               } : n
             );
@@ -208,14 +224,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         });
 
         if (parentId) {
-            setEdges(currentEdges => {
-                const edgeId = `${parentId}-${id}`;
-                const existingEdge = currentEdges.find(e => e.id === edgeId);
-                if (!existingEdge) {
-                    return [...currentEdges, { id: edgeId, source: parentId, target: id }];
+          setEdges(currentEdges => {
+            const edgeId = `${parentId}-${id}`;
+            const existingEdge = currentEdges.find(e => e.id === edgeId);
+            if (!existingEdge) {
+              return [...currentEdges, {
+                id: edgeId,
+                source: parentId,
+                target: id,
+                style: {
+                  strokeDasharray: '5,5',
+                  stroke: '#b1b1b7',
+                  strokeWidth: 2
                 }
-                return currentEdges;
-            });
+              }];
+            }
+            return currentEdges;
+          });
         }
       }
 
@@ -257,16 +282,42 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   useEffect(() => {
     if (nodes.length > 1 && edges.length > 0) {
       const onLayout = async () => {
+        // 1. 记录布局前第一个节点的位置
+        const firstNodeOldPos = nodes[0]?.position;
+
         const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
-        setNodes(layoutedNodes);
+
+        // 2. 获取布局后第一个节点的位置
+        const firstNodeNewPos = layoutedNodes[0]?.position;
+
+        // 3. 计算偏移量并应用到所有节点
+        if (firstNodeOldPos && firstNodeNewPos) {
+          const deltaX = firstNodeOldPos.x - firstNodeNewPos.x;
+          const deltaY = firstNodeOldPos.y - firstNodeNewPos.y;
+
+          const adjustedNodes = layoutedNodes.map(node => ({
+            ...node,
+            position: {
+              x: node.position.x + deltaX,
+              y: node.position.y + deltaY
+            }
+          }));
+
+          setNodes(adjustedNodes);
+        } else {
+          setNodes(layoutedNodes);
+        }
+
         setEdges(layoutedEdges);
-        window.requestAnimationFrame(() => {
-            fitView({duration: 500});
-        });
+
+        // 可选: 只有在节点数量显著增加时才fitView,或者使用更平滑的参数
+        // window.requestAnimationFrame(() => {
+        //   fitView({ duration: 500, padding: 0.2 });
+        // });
       };
       onLayout();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, edges.length]);
 
   if (isLoading) {
@@ -279,23 +330,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      nodeTypes={nodeTypes}
-      onMoveStart={onMoveStart}
-      zoomOnDoubleClick={true}
-      zoomOnScroll={false}
-      panOnScroll={true}
-      onPaneClick={() => {
-        setNodes(nds => nds.map(n => ({ ...n, selected: false })));
-        setFollowUpNodeId(null);
-      }}
-      selectNodesOnDrag={false}
-      minZoom={0.4} 
-    />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        onMoveStart={onMoveStart}
+        zoomOnDoubleClick={true}
+        zoomOnScroll={false}
+        panOnScroll={true}
+        onPaneClick={() => {
+          setNodes(nds => nds.map(n => ({ ...n, selected: false })));
+          setFollowUpNodeId(null);
+        }}
+        selectNodesOnDrag={false}
+        minZoom={0.4}
+      />
       <AnimatePresence>
         {nodeForFollowUp && (
           <motion.div

@@ -71,6 +71,7 @@ export async function startMockSSE(callbacks: MockSSECallbacks) {
           pos: i,
           content: chunks[j] + (isLastChunk ? '' : ' '),
           finish: isLastChunk,
+          parentId: MOCK_NODES[i - 1].id,
         }
       };
       await delay(100);

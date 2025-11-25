@@ -8,6 +8,7 @@ import { CustomTooltip } from '../ui/CustomTooltip';
 import { CardDeleteIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
 
+
 const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
   const { zoom } = useViewport();
 
@@ -42,7 +43,12 @@ const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
           </button>
         </CustomTooltip>
       )}
-      <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="custom-handle-top"
+        style={{ background: 'transparent', border: 'none' }}
+      />
       <QuestionCard
         question={data.question}
         avatar={data.avatar}
@@ -52,7 +58,12 @@ const QCardNode = ({ data, selected }: { data: any, selected: boolean }) => {
         onCopyError={data.onCopyError}
         tooltipSize={dynamicTooltipSize}
       />
-      <Handle type="source" position={Position.Bottom} style={{ background: 'transparent', border: 'none' }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="custom-handle-bottom"
+        style={{ background: 'transparent', border: 'none' }}
+      />
     </motion.div>
   );
 };

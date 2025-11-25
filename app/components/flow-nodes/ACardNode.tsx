@@ -8,6 +8,7 @@ import { CustomTooltip } from '../ui/CustomTooltip';
 import { CardDeleteIcon, HorizontalAskIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
 
+
 const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
@@ -70,12 +71,17 @@ const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
               type="button"
               aria-label="追问卡片内容"
             >
-              <HorizontalAskIcon width={24} height={24}/>
+              <HorizontalAskIcon width={24} height={24} />
             </motion.button>
           </CustomTooltip>
         )}
       </AnimatePresence>
-      <Handle type="target" position={Position.Top} style={{ background: 'transparent', border: 'none' }} />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="custom-handle-top"
+        style={{ background: 'transparent', border: 'none' }}
+      />
       <AnswerCard
         title={data.title}
         content={data.content}
@@ -93,7 +99,12 @@ const ACardNode = ({ data, selected }: { data: any, selected: boolean }) => {
         relatedQuestions={data.relatedQuestions}
         tooltipSize={dynamicTooltipSize}
       />
-      <Handle type="source" position={Position.Bottom} style={{ background: 'transparent', border: 'none' }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="custom-handle-bottom"
+        style={{ background: 'transparent', border: 'none' }}
+      />
     </motion.div>
   );
 };
