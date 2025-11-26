@@ -2,6 +2,17 @@ package sse_client
 
 import "time"
 
+// 定义通道消息类型
+type StreamMessage struct {
+	Done      bool
+	IsLast    bool // 标记是否为最后一条消息
+	IsNewNode bool // 标记是否为新节点
+	NodeID    string
+	NodePos   int
+	NodeTitle string
+	Content   string
+	Error     error
+}
 
 // 定义通用接口
 type SSEResponse interface {
@@ -69,7 +80,8 @@ type NodeData struct {
 	ID      string `json:"id"`
 	Pos     int    `json:"pos"`
 	Content string `json:"content"`
-	Finish  bool   `json:"finish"` // 当前节点是否结束
+	Title   string `json:"title"`
+	IsNewNode  bool   `json:"is_new_node"` // 当前节点是否结束
 }
 
 const (
