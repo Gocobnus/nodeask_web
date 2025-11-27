@@ -184,7 +184,7 @@ export default function QuestionCard({
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
             <div 
               ref={contentRef}
-              className={`qcard__content nodrag ${isContentScrollable && !isCtrlPressed ? 'nowheel' : ''}`}
+              className={`qcard__content nopan nodrag ${isContentScrollable && !isCtrlPressed ? 'nowheel' : ''}`}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {question}

@@ -411,7 +411,7 @@ export default function AnswerCard({
 
             {/* 内容或相关问题 */}
             <div
-              className={`acard__content nodrag ${isContentScrollable && activeTab === 'answer' && !isCtrlPressed ? 'nowheel' : ''}`}
+              className={`acard__content nopan nodrag ${isContentScrollable && activeTab === 'answer' && !isCtrlPressed ? 'nowheel' : ''}`}
               ref={contentRef} // 用于滚动条和高度同步
               onPointerDown={(e) => e.stopPropagation()}
               style={{

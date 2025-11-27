@@ -197,6 +197,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               id,
               type,
               position: initialPosition,
+              draggable: false,
               data: {
                 pos, content, isGenerating,
                 question: pos === 0 ? initialQuestion : '',
