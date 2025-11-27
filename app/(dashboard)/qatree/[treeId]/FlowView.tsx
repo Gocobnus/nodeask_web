@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Edge, Node } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
@@ -42,6 +42,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const [followUpNodeId, setFollowUpNodeId] = useState<string | null>(null);
   const nodeForFollowUp = nodes.find(n => n.id === followUpNodeId);
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
+
+  // 记录上次布局时的节点高度签名,避免死循环
+  const lastLayoutSignatureRef = useRef<string>('');
+
+  // 用于强制触发布局更新的状态
+  const [layoutTrigger, setLayoutTrigger] = useState(0);
 
   useEffect(() => {
     setNodes((nds) =>
@@ -140,6 +146,24 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }, 0);
   }, [setNodes, fitView, getZoom]);
 
+  // 处理节点高度变化
+  const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
+    console.log('🎯 FlowView 收到高度变化通知:', { nodeId, newHeight });
+
+    // 更新节点高度并触发布局重新计算
+    setNodes((currentNodes) => {
+      const updated = currentNodes.map(node =>
+        node.id === nodeId
+          ? { ...node, height: newHeight }
+          : node
+      );
+      return updated;
+    });
+
+    // 强制触发布局更新
+    setLayoutTrigger(prev => prev + 1);
+  }, [setNodes]);
+
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);
 
@@ -156,6 +180,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
         onAsk: () => handleAskFollowUp(id),
         onLocate: () => handleNodeLocate(id),
+        onHeightChange: handleHeightChange,
       });
 
       if (event === 'text') {
@@ -185,8 +210,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             } else {
               // 后续节点:垂直堆叠
               const lastNode = currentNodes[currentNodes.length - 1];
-              const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 350 : 150);
-              const GAP = 40;
+              const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 550 : 250);
+              const GAP = 80; // 与 ELK 的 nodeSpacing 保持一致
               initialPosition = {
                 x: lastNode.position.x,
                 y: lastNode.position.y + lastNodeHeight + GAP
@@ -209,6 +234,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             };
             return [...currentNodes, newNode];
           } else {
+            // 内容更新(ResizeObserver会自动监听高度变化)
+            console.log('📝 内容更新:', id, 'content length:', content.length);
+
             return currentNodes.map(n =>
               n.id === id ? {
                 ...n,
@@ -254,7 +282,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         ));
       }
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, setOpenDrawerId]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, handleHeightChange, setOpenDrawerId]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -282,44 +310,73 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   useEffect(() => {
     if (nodes.length > 1 && edges.length > 0) {
-      const onLayout = async () => {
-        // 1. 记录布局前第一个节点的位置
-        const firstNodeOldPos = nodes[0]?.position;
+      // 检查所有节点是否已被 ReactFlow 测量
+      const allNodesMeasured = nodes.every(node =>
+        node.width !== undefined &&
+        node.height !== undefined
+      );
 
-        const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
+      // 生成当前节点的高度签名
+      const currentSignature = nodes.map(n => `${n.id}:${n.height}`).join(',');
 
-        // 2. 获取布局后第一个节点的位置
-        const firstNodeNewPos = layoutedNodes[0]?.position;
+      // 打印高度变化日志
+      if (currentSignature !== lastLayoutSignatureRef.current) {
+        console.log('📏 高度签名变化:', {
+          old: lastLayoutSignatureRef.current,
+          new: currentSignature,
+          allMeasured: allNodesMeasured
+        });
+      }
 
-        // 3. 计算偏移量并应用到所有节点
-        if (firstNodeOldPos && firstNodeNewPos) {
-          const deltaX = firstNodeOldPos.x - firstNodeNewPos.x;
-          const deltaY = firstNodeOldPos.y - firstNodeNewPos.y;
+      // 只有在节点都测量完成,且高度签名发生变化时才执行布局
+      if (allNodesMeasured && currentSignature !== lastLayoutSignatureRef.current) {
+        lastLayoutSignatureRef.current = currentSignature;
 
-          const adjustedNodes = layoutedNodes.map(node => ({
-            ...node,
-            position: {
-              x: node.position.x + deltaX,
-              y: node.position.y + deltaY
-            }
-          }));
+        const onLayout = async () => {
+          // 调试日志
+          console.log('🔄 触发布局:', {
+            nodeCount: nodes.length,
+            heights: nodes.map(n => ({ id: n.id, height: n.height }))
+          });
 
-          setNodes(adjustedNodes);
-        } else {
-          setNodes(layoutedNodes);
-        }
+          // 1. 记录布局前第一个节点的位置
+          const firstNodeOldPos = nodes[0]?.position;
 
-        setEdges(layoutedEdges);
+          const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
 
-        // 可选: 只有在节点数量显著增加时才fitView,或者使用更平滑的参数
-        // window.requestAnimationFrame(() => {
-        //   fitView({ duration: 500, padding: 0.2 });
-        // });
-      };
-      onLayout();
+          // 2. 获取布局后第一个节点的位置
+          const firstNodeNewPos = layoutedNodes[0]?.position;
+
+          // 3. 计算偏移量并应用到所有节点
+          if (firstNodeOldPos && firstNodeNewPos) {
+            const deltaX = firstNodeOldPos.x - firstNodeNewPos.x;
+            const deltaY = firstNodeOldPos.y - firstNodeNewPos.y;
+
+            const adjustedNodes = layoutedNodes.map(node => ({
+              ...node,
+              position: {
+                x: node.position.x + deltaX,
+                y: node.position.y + deltaY
+              }
+            }));
+
+            setNodes(adjustedNodes);
+          } else {
+            setNodes(layoutedNodes);
+          }
+
+          setEdges(layoutedEdges);
+
+          // 可选: 只有在节点数量显著增加时才fitView,或者使用更平滑的参数
+          // window.requestAnimationFrame(() => {
+          //   fitView({ duration: 500, padding: 0.2 });
+          // });
+        };
+        onLayout();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, edges.length]);
+  }, [nodes, edges.length, layoutTrigger]);
 
   if (isLoading) {
     return (

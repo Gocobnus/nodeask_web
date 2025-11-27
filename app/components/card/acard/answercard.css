@@ -26,9 +26,16 @@
   overflow: hidden;
   /* max-height 值现在由 JS 在 useLayoutEffect 中设置 */
   
-  transition: box-shadow 0.2s ease-in-out, 
+  transition: box-shadow 0.2s ease-in-out,
               transform 0.3s ease-in-out,
               max-height 0.3s ease-out; /* 保持 max-height 动画 */
+}
+
+/* 内容生成中时禁用 max-height 动画，实现同步 */
+.acard__background-card.generating {
+  transition: box-shadow 0.2s ease-in-out,
+              transform 0.3s ease-in-out;
+              /* max-height 动画被禁用 */
               
   will-change: transform, max-height;
   transform-origin: top;

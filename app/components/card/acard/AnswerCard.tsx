@@ -315,7 +315,7 @@ export default function AnswerCard({
   return (
     <motion.div
       ref={cardRef}
-      className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''}`}
+      className={`acard__background-card ${isSelected ? 'acard__background-card--selected' : ''} ${isGenerating ? 'generating' : ''}`}
       onClick={handleCardClick}
     >
       <div className="acard__background-card-wrapper">

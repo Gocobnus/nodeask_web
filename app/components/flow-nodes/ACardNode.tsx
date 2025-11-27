@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow';
 import { AnswerCard } from '../card/acard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,6 +13,52 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
   const updateNodeInternals = useUpdateNodeInternals();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastHeightRef = useRef<number>(0);
+
+  // ResizeObserver 监听高度变化
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // 查找内部的 acard__answer-content-wrapper 元素（内容容器）
+    const contentWrapper = containerRef.current.querySelector('.acard__answer-content-wrapper');
+    // 同时查找外层的 acard__background-card 元素
+    const cardElement = containerRef.current.querySelector('.acard__background-card');
+
+    if (!contentWrapper || !cardElement) {
+      console.warn('⚠️ 未找到卡片元素');
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      // 获取内容容器的高度
+      const contentHeight = (contentWrapper as HTMLElement).offsetHeight;
+      // 获取 header 高度（假设约 60px）和 margin（16px）
+      const headerHeight = 60;
+      const bottomMargin = 16;
+      const estimatedTotalHeight = headerHeight + contentHeight + bottomMargin;
+
+      if (estimatedTotalHeight !== lastHeightRef.current && estimatedTotalHeight > 0) {
+        console.log('🔍 ACard ResizeObserver 检测到高度变化:', {
+          id,
+          oldHeight: lastHeightRef.current,
+          newHeight: estimatedTotalHeight,
+          contentHeight,
+          diff: estimatedTotalHeight - lastHeightRef.current
+        });
+        lastHeightRef.current = estimatedTotalHeight;
+
+        // 通知父组件高度已变化
+        if (data.onHeightChange) {
+          data.onHeightChange(id, estimatedTotalHeight);
+        }
+      }
+    });
+
+    // 监听内容容器的变化
+    resizeObserver.observe(contentWrapper);
+    return () => resizeObserver.disconnect();
+  }, [id, data.onHeightChange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,6 +78,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   return (
     <motion.div
+      ref={containerRef}
       className={`acard-node-wrapper ${selected ? 'selected' : ''}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

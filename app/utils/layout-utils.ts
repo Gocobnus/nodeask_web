@@ -17,9 +17,9 @@ export const getLayoutedElements = async (nodes: Node[], edges: Edge[]): Promise
     children: nodes.map(node => {
       let height;
       if (node.type === 'acard') {
-        height = node.height || 350; // ACard的最小高度约为344px
+        height = node.height || 550; // ACard高度范围344-760px,使用中值
       } else if (node.type === 'qcard') {
-        height = node.height || 150;
+        height = node.height || 250; // QCard高度范围约100-344px,使用中值
       } else {
         height = node.height || 150;
       }

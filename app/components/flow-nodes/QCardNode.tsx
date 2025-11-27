@@ -13,6 +13,11 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const { zoom } = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
 
+  // QCard 不需要 ResizeObserver，因为：
+  // 1. QCard 通常是第一个节点，位置固定
+  // 2. 用户手动收起/展开不应触发全局布局
+  // 3. QCard 内容较短，高度变化不会影响整体布局
+
   useEffect(() => {
      updateNodeInternals(id);
   }, [id, updateNodeInternals, data]);
@@ -30,7 +35,7 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: 360, position: 'relative' }}
-      onAnimationComplete={() => updateNodeInternals(id)} 
+      onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
         <CustomTooltip

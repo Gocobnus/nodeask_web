@@ -19,7 +19,7 @@ const MOCK_NODES = [
   {
     id: 'a2',
     type: 'acard',
-    content: "它的核心理念是",
+    content: "它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是它的核心理念是",
   },
   {
     id: 'a3',
@@ -40,14 +40,21 @@ export async function startMockSSE(callbacks: MockSSECallbacks) {
 
   // 2. Send the first node (QCard) immediately
   const qNode = MOCK_NODES[0];
-  const qChunks = qNode.content.split(' ');
+
+  // 按固定字符数分块(每 5 个字符一块)
+  const qChunkSize = 5;
+  const qChunks = [];
+  for (let k = 0; k < qNode.content.length; k += qChunkSize) {
+    qChunks.push(qNode.content.substring(k, k + qChunkSize));
+  }
+
   for (let i = 0; i < qChunks.length; i++) {
     const isLastChunk = i === qChunks.length - 1;
     const textPayload = {
       node_data: {
         id: qNode.id,
         pos: 0,
-        content: qChunks[i] + (isLastChunk ? '' : ' '),
+        content: qChunks[i],
         finish: isLastChunk,
       }
     };
@@ -61,7 +68,13 @@ export async function startMockSSE(callbacks: MockSSECallbacks) {
   // 4. Stream subsequent answer nodes
   for (let i = 1; i < MOCK_NODES.length; i++) {
     const node = MOCK_NODES[i];
-    const chunks = node.content.split(' ');
+
+    // 按固定字符数分块(每 5 个字符一块)
+    const chunkSize = 5;
+    const chunks = [];
+    for (let k = 0; k < node.content.length; k += chunkSize) {
+      chunks.push(node.content.substring(k, k + chunkSize));
+    }
 
     for (let j = 0; j < chunks.length; j++) {
       const isLastChunk = j === chunks.length - 1;
@@ -69,7 +82,7 @@ export async function startMockSSE(callbacks: MockSSECallbacks) {
         node_data: {
           id: node.id,
           pos: i,
-          content: chunks[j] + (isLastChunk ? '' : ' '),
+          content: chunks[j],
           finish: isLastChunk,
           parentId: MOCK_NODES[i - 1].id,
         }
