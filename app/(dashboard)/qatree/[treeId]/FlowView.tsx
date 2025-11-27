@@ -338,7 +338,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onMoveStart={onMoveStart}
-        zoomOnDoubleClick={true}
+        zoomOnDoubleClick={false}
         zoomOnScroll={false}
         panOnScroll={true}
         onPaneClick={() => {
