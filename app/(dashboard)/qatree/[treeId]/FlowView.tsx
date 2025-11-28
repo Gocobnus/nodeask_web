@@ -33,7 +33,7 @@ interface FlowCanvasProps extends FlowViewProps {
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
-  const { fitView, getZoom } = useReactFlow();
+  const { fitView, getZoom, getNodes } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -375,65 +375,68 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       console.log('🎯 SSE 流结束，在最后一个 A 节点下方创建 F 节点');
 
       setTimeout(() => {
-        setNodes(currentNodes => {
-          // 找到最后一个 A 节点
-          const aNodes = currentNodes.filter(n => n.type === 'acard');
-          if (aNodes.length === 0) return currentNodes;
+        // 使用 getNodes() 获取当前节点状态，避免在 setNodes reducer 中产生副作用
+        const currentNodes = getNodes();
+        
+        // 找到最后一个 A 节点
+        const aNodes = currentNodes.filter(n => n.type === 'acard');
+        if (aNodes.length === 0) return;
 
-          const lastANode = aNodes[aNodes.length - 1];
+        const lastANode = aNodes[aNodes.length - 1];
 
-          // 检查是否已经存在 F 节点
-          const existingFNode = currentNodes.find(n =>
-            n.type === 'followup' &&
-            n.data.parentACardId === lastANode.id
-          );
-          if (existingFNode) return currentNodes;
+        // 检查是否已经存在 F 节点
+        const existingFNode = currentNodes.find(n =>
+          n.type === 'followup' &&
+          n.data.parentACardId === lastANode.id
+        );
+        if (existingFNode) return;
 
-          // 创建新的 F 节点
-          const nextFNodeId = `f-${lastANode.id}-${Date.now()}`;
-          const aNodeHeight = lastANode.height || 550;
-          const GAP = 80;
-          const fNodePosition = {
-            x: lastANode.position.x + (360 - 24) / 2, // 360px 卡片中心对齐 24px followup
-            y: lastANode.position.y + aNodeHeight + GAP
-          };
+        // 创建新的 F 节点
+        const nextFNodeId = `f-${lastANode.id}-${Date.now()}`;
+        const aNodeHeight = lastANode.height || 550;
+        const GAP = 80;
+        const fNodePosition = {
+          x: lastANode.position.x + (360 - 24) / 2, // 360px 卡片中心对齐 24px followup
+          y: lastANode.position.y + aNodeHeight + GAP
+        };
 
-          const newFNode: Node = {
-            id: nextFNodeId,
-            type: 'followup',
-            position: fNodePosition,
-            draggable: false,
-            data: {
-              nodeId: lastANode.id, // 业务 ID 复用最后一个 A 节点的 ID
-              parentACardId: lastANode.id,
-              onClick: () => handleAskFollowUp(nextFNodeId),
-            },
-          };
+        const newFNode: Node = {
+          id: nextFNodeId,
+          type: 'followup',
+          position: fNodePosition,
+          draggable: false,
+          data: {
+            nodeId: lastANode.id, // 业务 ID 复用最后一个 A 节点的 ID
+            parentACardId: lastANode.id,
+            onClick: () => handleAskFollowUp(nextFNodeId),
+          },
+        };
 
-          // 同时创建边
-          setEdges(currentEdges => {
-            const edgeId = `${lastANode.id}-${nextFNodeId}`;
-            const existingEdge = currentEdges.find(e => e.id === edgeId);
-            if (!existingEdge) {
-              return [...currentEdges, {
-                id: edgeId,
-                source: lastANode.id,
-                target: nextFNodeId,
-                style: {
-                  strokeDasharray: '5,5',
-                  stroke: '#b1b1b7',
-                  strokeWidth: 2
-                }
-              }];
-            }
-            return currentEdges;
-          });
+        // 更新节点
+        setNodes(prev => [...prev, newFNode]);
 
-          return [...currentNodes, newFNode];
+        // 更新边
+        setEdges(prevEdges => {
+          const edgeId = `${lastANode.id}-${nextFNodeId}`;
+          const existingEdge = prevEdges.find(e => e.id === edgeId);
+          if (!existingEdge) {
+            return [...prevEdges, {
+              id: edgeId,
+              source: lastANode.id,
+              target: nextFNodeId,
+              style: {
+                strokeDasharray: '5,5',
+                stroke: '#b1b1b7',
+                strokeWidth: 2
+              }
+            }];
+          }
+          return prevEdges;
         });
+
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, handleHeightChange, setOpenDrawerId]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, handleHeightChange, setOpenDrawerId, getNodes, getZoom, fitView]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
