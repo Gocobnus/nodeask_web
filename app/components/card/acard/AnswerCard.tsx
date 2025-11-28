@@ -286,6 +286,14 @@ export default function AnswerCard({
     }
   }, [content, activeTab, isCollapsed]);
 
+  // Effect: 内容生成时自动滚动到底部
+  useEffect(() => {
+    if (isGenerating && contentRef.current && activeTab === 'answer') {
+      // 滚动到底部，让用户看到最新生成的内容
+      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    }
+  }, [content, isGenerating, activeTab]);
+
   useLayoutEffect(() => {
     const checkTruncation = () => {
       const element = titleRef.current;
