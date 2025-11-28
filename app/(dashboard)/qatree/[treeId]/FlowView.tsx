@@ -13,11 +13,13 @@ import { getLayoutedElements } from '../../../utils/layout-utils';
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
 import ACardNode from '../../../components/flow-nodes/ACardNode';
+import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
 import { Skeleton } from '@heroui/react';
 
 const nodeTypes = {
   qcard: QCardNode,
   acard: ACardNode,
+  followup: FollowUpNode,
 };
 
 interface FlowViewProps {
@@ -96,7 +98,25 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   const handleSubmit = (submittedText: string) => {
     if (!nodeForFollowUp) return;
-    console.log(`追问 (Follow-up question for card ${nodeForFollowUp.id}): ${submittedText}`);
+
+    // 判断是垂直追问还是横向追问
+    const isVerticalFollowUp = nodeForFollowUp.type === 'followup';
+    const apiEndpoint = isVerticalFollowUp ? '/api/followup/vertical' : '/api/followup/horizontal';
+
+    console.log(`追问 (${isVerticalFollowUp ? '垂直' : '横向'}) for node ${nodeForFollowUp.id}: ${submittedText}`);
+    console.log(`API endpoint: ${apiEndpoint}`);
+
+    // TODO: 调用真实 API
+    // const response = await fetch(apiEndpoint, {
+    //   method: 'POST',
+    //   body: JSON.stringify({
+    //     tree_id: treeId,
+    //     parent_node_id: nodeForFollowUp.data.nodeId, // 使用业务 ID
+    //     question: submittedText
+    //   })
+    // });
+    // const data = await response.json();
+    // 启动新的 SSE 连接接收 A 节点内容
 
     setDrafts(prevDrafts => {
       const newDrafts = { ...prevDrafts };
@@ -185,8 +205,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       if (event === 'text') {
         const { id, pos, content, finish, parentId } = payload.node_data;
+        const done = payload.done || false; // 从 CommonFields 获取 done 字段
         const isGenerating = !finish;
-        const type = pos === 0 ? 'qcard' : 'acard';
+
+        // 根据 pos 判断节点类型
+        let type: 'qcard' | 'acard' | 'followup';
+        if (pos === -1) {
+          type = 'followup';
+        } else if (pos === 0) {
+          type = 'qcard';
+        } else {
+          type = 'acard';
+        }
 
         setNodes(currentNodes => {
           const existingNode = currentNodes.find(n => n.id === id);
@@ -200,7 +230,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               const sidebarWidth = sidebarElement ? sidebarElement.getBoundingClientRect().width : 256;
               const canvasWidth = window.innerWidth - sidebarWidth;
               const canvasHeight = window.innerHeight;
-              const nodeWidth = 360;
+
+              // 根据节点类型确定宽度
+              const nodeWidth = type === 'followup' ? 24 : 360;
               const nodeHeight = 150;
 
               initialPosition = {
@@ -208,47 +240,101 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
               };
             } else {
-              // 后续节点:垂直堆叠
+              // 后续节点:垂直堆叠，保持与第一个卡片节点（360px）中心对齐
               const lastNode = currentNodes[currentNodes.length - 1];
-              const lastNodeHeight = lastNode.height || (lastNode.type === 'acard' ? 550 : 250);
+              const lastNodeHeight = lastNode.height || (
+                lastNode.type === 'acard' ? 550 :
+                lastNode.type === 'followup' ? 24 : 250
+              );
               const GAP = 80; // 与 ELK 的 nodeSpacing 保持一致
+
+              // 计算 x 位置：如果当前节点和上个节点宽度不同，需要调整以保持中心对齐
+              let xPosition = lastNode.position.x;
+              if (type === 'followup' && lastNode.type !== 'followup') {
+                // 从 360px 卡片到 24px followup：向右偏移
+                xPosition = lastNode.position.x + (360 - 24) / 2;
+              } else if (type !== 'followup' && lastNode.type === 'followup') {
+                // 从 24px followup 到 360px 卡片：向左偏移
+                xPosition = lastNode.position.x - (360 - 24) / 2;
+              }
+
               initialPosition = {
-                x: lastNode.position.x,
+                x: xPosition,
                 y: lastNode.position.y + lastNodeHeight + GAP
               };
             }
 
-            const newNode: Node = {
-              id,
-              type,
-              position: initialPosition,
-              draggable: false,
-              data: {
-                pos, content, isGenerating,
-                question: pos === 0 ? initialQuestion : '',
-                title: pos > 0 ? `Answer ${id}` : '',
-                avatar: pos === 0 ? mockUser.avatar : undefined,
-                onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
-                ...(!isGenerating && cardActions(id, type)),
-              },
-            };
+            // 创建节点
+            let newNode: Node;
+            if (type === 'followup') {
+              newNode = {
+                id,
+                type: 'followup',
+                position: initialPosition,
+                draggable: false,
+                data: {
+                  nodeId: id,
+                  onClick: () => handleAskFollowUp(id),
+                },
+              };
+            } else {
+              // type 是 'qcard' 或 'acard'
+              const cardType = type as 'qcard' | 'acard';
+              // Q1 节点的 content 应该使用 initialQuestion，因为 SSE 不推送 Q 节点内容
+              const initialContent = pos === 0 ? initialQuestion : content;
+
+              newNode = {
+                id,
+                type: cardType,
+                position: initialPosition,
+                draggable: false,
+                data: {
+                  pos,
+                  content: initialContent,
+                  isGenerating,
+                  nodeId: id, // 添加业务 ID
+                  question: pos === 0 ? initialQuestion : '',
+                  title: pos > 0 ? `Answer ${id}` : '',
+                  avatar: pos === 0 ? mockUser.avatar : undefined,
+                  onExpand: cardType === 'acard' ? () => setOpenDrawerId(prevId => prevId === id ? null : id) : undefined,
+                  ...(!isGenerating && cardActions(id, cardType)),
+                },
+              };
+            }
+
             return [...currentNodes, newNode];
           } else {
             // 内容更新(ResizeObserver会自动监听高度变化)
-            console.log('📝 内容更新:', id, 'content length:', content.length);
+            console.log('📝 内容更新:', id, 'content length:', content.length, 'chunk:', content);
 
-            return currentNodes.map(n =>
-              n.id === id ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  content: n.data.content + content,
-                  isGenerating,
-                  onExpand: () => setOpenDrawerId(prevId => prevId === id ? null : id),
-                  ...(!isGenerating && cardActions(id, type))
-                }
-              } : n
-            );
+            return currentNodes.map(n => {
+              if (n.id === id) {
+                // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
+                // A 节点才累加流式内容
+                const currentContent = n.data.content;
+                const updatedContent = n.type === 'qcard' ? currentContent : currentContent + content;
+                console.log('💬 节点内容累加:', {
+                  nodeId: id,
+                  nodeType: n.type,
+                  currentLength: currentContent.length,
+                  chunkLength: content.length,
+                  newLength: updatedContent.length
+                });
+
+                return {
+                  ...n,
+                  data: {
+                    ...n.data,
+                    content: updatedContent,
+                    // QCard 的 question 字段保持不变（已经是 initialQuestion）
+                    isGenerating,
+                    onExpand: n.type === 'acard' ? () => setOpenDrawerId(prevId => prevId === id ? null : id) : n.data.onExpand,
+                    ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
+                  }
+                };
+              }
+              return n;
+            });
           }
         });
 
@@ -271,6 +357,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             return currentEdges;
           });
         }
+
       }
 
       if (event === 'ask_back') {
@@ -282,6 +369,70 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         ));
       }
     }
+
+    // 监听 SSE 完成事件，在最后一个 A 节点下方创建 F 节点
+    if (event === 'done') {
+      console.log('🎯 SSE 流结束，在最后一个 A 节点下方创建 F 节点');
+
+      setTimeout(() => {
+        setNodes(currentNodes => {
+          // 找到最后一个 A 节点
+          const aNodes = currentNodes.filter(n => n.type === 'acard');
+          if (aNodes.length === 0) return currentNodes;
+
+          const lastANode = aNodes[aNodes.length - 1];
+
+          // 检查是否已经存在 F 节点
+          const existingFNode = currentNodes.find(n =>
+            n.type === 'followup' &&
+            n.data.parentACardId === lastANode.id
+          );
+          if (existingFNode) return currentNodes;
+
+          // 创建新的 F 节点
+          const nextFNodeId = `f-${lastANode.id}-${Date.now()}`;
+          const aNodeHeight = lastANode.height || 550;
+          const GAP = 80;
+          const fNodePosition = {
+            x: lastANode.position.x + (360 - 24) / 2, // 360px 卡片中心对齐 24px followup
+            y: lastANode.position.y + aNodeHeight + GAP
+          };
+
+          const newFNode: Node = {
+            id: nextFNodeId,
+            type: 'followup',
+            position: fNodePosition,
+            draggable: false,
+            data: {
+              nodeId: lastANode.id, // 业务 ID 复用最后一个 A 节点的 ID
+              parentACardId: lastANode.id,
+              onClick: () => handleAskFollowUp(nextFNodeId),
+            },
+          };
+
+          // 同时创建边
+          setEdges(currentEdges => {
+            const edgeId = `${lastANode.id}-${nextFNodeId}`;
+            const existingEdge = currentEdges.find(e => e.id === edgeId);
+            if (!existingEdge) {
+              return [...currentEdges, {
+                id: edgeId,
+                source: lastANode.id,
+                target: nextFNodeId,
+                style: {
+                  strokeDasharray: '5,5',
+                  stroke: '#b1b1b7',
+                  strokeWidth: 2
+                }
+              }];
+            }
+            return currentEdges;
+          });
+
+          return [...currentNodes, newFNode];
+        });
+      }, 100);
+    }
   }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, handleHeightChange, setOpenDrawerId]);
 
   const handleMessageRef = useRef(handleMessage);
@@ -290,20 +441,98 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [handleMessage]);
 
   useEffect(() => {
-    const treeExists = trees.some(tree => tree.id === treeId);
-    if (!treeExists) {
+    console.log('🔵 FlowView useEffect 触发，treeId:', treeId);
+    const currentTree = trees.find(tree => tree.id === treeId);
+    if (!currentTree) {
       router.push('/');
       return;
     }
 
     setIsLoading(true);
-    setNodes([]);
-    setEdges([]);
 
-    const sse = startMockSSE({
-      onMessage: (event, data) => handleMessageRef.current(event, data),
+    // 根据 create API 返回的数据创建 F0 和 Q1 节点
+    const initialNodes: Node[] = [];
+    const initialEdges: any[] = [];
+
+    // 获取画布尺寸用于居中
+    const sidebarElement = document.querySelector('.nav');
+    const sidebarWidth = sidebarElement ? sidebarElement.getBoundingClientRect().width : 256;
+    const canvasWidth = window.innerWidth - sidebarWidth;
+    const canvasHeight = window.innerHeight;
+    const centerX = (canvasWidth / 2) - 180; // 180 = 360px 卡片宽度的一半
+    const centerY = canvasHeight / 2;
+    console.log('📐 画布尺寸:', { canvasWidth, canvasHeight, centerX, centerY });
+
+    // 创建 F0 节点
+    if (currentTree.dummyNodeId) {
+      const f0X = centerX + (360 - 24) / 2;
+      const f0Y = centerY - 150;
+      console.log('🔴 创建 F0 节点:', { id: currentTree.dummyNodeId, x: f0X, y: f0Y });
+      const f0Node: Node = {
+        id: currentTree.dummyNodeId,
+        type: 'followup',
+        position: { x: f0X, y: f0Y }, // 24px 中心对齐 360px
+        draggable: false,
+        data: {
+          nodeId: currentTree.dummyNodeId,
+          onClick: () => handleAskFollowUp(currentTree.dummyNodeId!),
+        },
+      };
+      initialNodes.push(f0Node);
+    }
+
+    // 创建 Q1 节点
+    if (currentTree.qNodeId) {
+      console.log('🟢 创建 Q1 节点:', { id: currentTree.qNodeId, x: centerX, y: centerY });
+      const q1Node: Node = {
+        id: currentTree.qNodeId,
+        type: 'qcard',
+        position: { x: centerX, y: centerY },
+        draggable: false,
+        data: {
+          pos: 0,
+          content: initialQuestion,
+          isGenerating: false,
+          nodeId: currentTree.qNodeId,
+          question: initialQuestion,
+          avatar: mockUser.avatar,
+        },
+      };
+      initialNodes.push(q1Node);
+
+      // 创建边 F0 → Q1
+      if (currentTree.dummyNodeId && currentTree.qParentNodeId === currentTree.dummyNodeId) {
+        initialEdges.push({
+          id: `${currentTree.dummyNodeId}-${currentTree.qNodeId}`,
+          source: currentTree.dummyNodeId,
+          target: currentTree.qNodeId,
+          style: {
+            strokeDasharray: '5,5',
+            stroke: '#b1b1b7',
+            strokeWidth: 2
+          }
+        });
+      }
+    }
+
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+
+    // 启动 SSE 接收 A 节点
+    console.log('🟡 启动 SSE 连接');
+    const abortSSE = startMockSSE({
+      onMessage: (event, data) => {
+        console.log('📨 SSE 收到事件:', event, 'data length:', data.length);
+        handleMessageRef.current(event, data);
+      },
       onClose: () => console.log("Mock SSE stream closed."),
     });
+
+    // Cleanup 函数：组件卸载或 treeId 变化时中止 SSE
+    return () => {
+      console.log('🧹 清理 SSE 连接');
+      abortSSE();
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeId, router, setNodes, setEdges]);
@@ -339,18 +568,27 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             heights: nodes.map(n => ({ id: n.id, height: n.height }))
           });
 
-          // 1. 记录布局前第一个节点的位置
-          const firstNodeOldPos = nodes[0]?.position;
+          // 1. 找到第一个 360px 宽的节点（qcard 或 acard）作为参考点
+          const referenceNode = nodes.find(n => n.type === 'qcard' || n.type === 'acard');
+          const referenceOldPos = referenceNode?.position;
 
           const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
 
-          // 2. 获取布局后第一个节点的位置
-          const firstNodeNewPos = layoutedNodes[0]?.position;
+          // 2. 获取布局后参考节点的位置
+          const referenceLayoutedNode = referenceNode ? layoutedNodes.find(n => n.id === referenceNode.id) : undefined;
+          const referenceNewPos = referenceLayoutedNode?.position;
 
-          // 3. 计算偏移量并应用到所有节点
-          if (firstNodeOldPos && firstNodeNewPos) {
-            const deltaX = firstNodeOldPos.x - firstNodeNewPos.x;
-            const deltaY = firstNodeOldPos.y - firstNodeNewPos.y;
+          // 3. 计算偏移量并应用到所有节点（基于参考节点，而不是第一个节点）
+          if (referenceOldPos && referenceNewPos) {
+            const deltaX = referenceOldPos.x - referenceNewPos.x;
+            const deltaY = referenceOldPos.y - referenceNewPos.y;
+
+            console.log('📍 参考节点位置调整:', {
+              referenceNodeId: referenceNode?.id,
+              oldPos: referenceOldPos,
+              newPos: referenceNewPos,
+              delta: { deltaX, deltaY }
+            });
 
             const adjustedNodes = layoutedNodes.map(node => ({
               ...node,

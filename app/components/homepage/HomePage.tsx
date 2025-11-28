@@ -17,12 +17,32 @@ export default function HomePage() {
     setInitialQuery(value);
 
     // Step 2: Mock the API call to create the tree.
+    // TODO: 替换为真实 API 调用
+    // const response = await fetch('/api/qatree/create', {
+    //   method: 'POST',
+    //   body: JSON.stringify({ question: value })
+    // });
+    // const data = await response.json();
+
     return new Promise((resolve) => {
       setTimeout(() => {
-        // Create a mock tree object.
+        // Mock API 响应数据
+        const mockResponse = {
+          tree_id: `tree_${Date.now()}`,
+          qa_id: 'qa1',
+          dummy_node_id: 'f0',
+          q_node_id: 'q1',
+          parent_node_id: 'f0'
+        };
+
+        // Create a tree object with new fields
         const newTree: QATree = {
-          id: `mock_${Date.now()}`,
+          id: mockResponse.tree_id,
           name: value.substring(0, 20) + (value.length > 20 ? '...' : ''),
+          dummyNodeId: mockResponse.dummy_node_id,   // F0 的业务 ID
+          qNodeId: mockResponse.q_node_id,           // Q1 的业务 ID
+          qaId: mockResponse.qa_id,                  // 第一个 QA 对 ID
+          qParentNodeId: mockResponse.parent_node_id, // Q1 的父节点业务 ID
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -33,7 +53,7 @@ export default function HomePage() {
         // Navigate to the clean URL. The destination page will use
         // the `initialQuery` from the context to render the first node.
         router.push(`/qatree/${newTree.id}`);
-        
+
         resolve();
       }, 500); // 0.5-second delay to simulate network
     });

@@ -16,17 +16,24 @@ export const getLayoutedElements = async (nodes: Node[], edges: Edge[]): Promise
     layoutOptions: elkOptions,
     children: nodes.map(node => {
       let height;
+      let width;
       if (node.type === 'acard') {
         height = node.height || 550; // ACard高度范围344-760px,使用中值
+        width = node.width || 360;
       } else if (node.type === 'qcard') {
         height = node.height || 250; // QCard高度范围约100-344px,使用中值
+        width = node.width || 360;
+      } else if (node.type === 'followup') {
+        height = node.height || 24; // FollowUp节点固定大小
+        width = node.width || 24;
       } else {
         height = node.height || 150;
+        width = node.width || 360;
       }
 
       return {
         ...node,
-        width: node.width || 360,
+        width: width,
         height: height,
       };
     }),
