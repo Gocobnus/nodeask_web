@@ -58,7 +58,15 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         type="target"
         position={Position.Top}
         className="custom-handle-top"
-        style={{ background: 'transparent', border: 'none' }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          top: '-8px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
       />
       <QuestionCard
         question={data.question}
@@ -73,7 +81,15 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         type="source"
         position={Position.Bottom}
         className="custom-handle-bottom"
-        style={{ background: 'transparent', border: 'none' }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          bottom: '-8px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
       />
     </motion.div>
   );

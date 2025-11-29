@@ -29,7 +29,15 @@ const FollowUpNode = ({ id, data }: FollowUpNodeProps) => {
       <Handle
         type="target"
         position={Position.Top}
-        style={{ background: 'transparent', border: 'none' }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          top: '-8px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
       />
 
       <button
@@ -49,7 +57,15 @@ const FollowUpNode = ({ id, data }: FollowUpNodeProps) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: 'transparent', border: 'none' }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          bottom: '-8px',
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
       />
     </motion.div>
   );

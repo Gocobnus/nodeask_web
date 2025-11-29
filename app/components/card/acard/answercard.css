@@ -560,17 +560,33 @@
   margin-bottom: 12px; /* 标题和下方内容的间距 */
 }
 
-@keyframes breathe {
+/* 用于绝对定位按钮的呼吸动画 (包含垂直居中偏移) */
+@keyframes breathe-centered {
   0% {
     transform: translateY(-50%) scale(1);
   }
 
   50% {
-    transform: translateY(-50%) scale(1.20); /* back to normal */
+    transform: translateY(-50%) scale(1.20);
   }
 
   100% {
-    transform: translateY(-50%) scale(1); /* back to normal */
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* 用于普通按钮的呼吸动画 (不包含垂直偏移) */
+@keyframes breathe {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.20);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -606,7 +622,7 @@
   transition: all 0.3s ease-in-out;
   z-index: 50;
   padding: 0;
-  animation: breathe 2s infinite ease-in-out;
+  animation: breathe-centered 2s infinite ease-in-out;
 }
 
 .acard-node__ask-btn::after {

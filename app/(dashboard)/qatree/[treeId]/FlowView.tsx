@@ -472,7 +472,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     // 创建 F0 节点
     if (currentTree.dummyNodeId) {
       const f0X = centerX; // F0直接居中,不需要偏移
-      const f0Y = centerY - 150;
+      const f0Y = centerY - 104;
       console.log('🔴 创建 F0 节点:', { id: currentTree.dummyNodeId, x: f0X, y: f0Y });
       const f0Node: Node = {
         id: currentTree.dummyNodeId,
