@@ -8,6 +8,8 @@ const elkOptions = {
   'elk.direction': 'DOWN',
   'elk.spacing.nodeNode': '80',
   'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+  // 优化节点放置策略,帮助ELK更好地计算父节点居中
+  'elk.layered.nodePlacement.strategy': 'NETWORK_SIMPLEX',
 };
 
 export const getLayoutedElements = async (nodes: Node[], edges: Edge[]): Promise<{ nodes: Node[], edges: Edge[] }> => {

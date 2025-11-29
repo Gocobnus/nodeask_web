@@ -51,6 +51,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   // 用于强制触发布局更新的状态
   const [layoutTrigger, setLayoutTrigger] = useState(0);
 
+  // 布局进行中标记,防止重复触发
+  const layoutInProgressRef = useRef(false);
+
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -462,19 +465,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     const sidebarWidth = sidebarElement ? sidebarElement.getBoundingClientRect().width : 256;
     const canvasWidth = window.innerWidth - sidebarWidth;
     const canvasHeight = window.innerHeight;
-    const centerX = (canvasWidth / 2) - 180; // 180 = 360px 卡片宽度的一半
+    const centerX = (canvasWidth / 2) - 12; // 12 = 24px F节点宽度的一半
     const centerY = canvasHeight / 2;
     console.log('📐 画布尺寸:', { canvasWidth, canvasHeight, centerX, centerY });
 
     // 创建 F0 节点
     if (currentTree.dummyNodeId) {
-      const f0X = centerX + (360 - 24) / 2;
+      const f0X = centerX; // F0直接居中,不需要偏移
       const f0Y = centerY - 150;
       console.log('🔴 创建 F0 节点:', { id: currentTree.dummyNodeId, x: f0X, y: f0Y });
       const f0Node: Node = {
         id: currentTree.dummyNodeId,
         type: 'followup',
-        position: { x: f0X, y: f0Y }, // 24px 中心对齐 360px
+        position: { x: f0X, y: f0Y },
         draggable: false,
         data: {
           nodeId: currentTree.dummyNodeId,
@@ -486,11 +489,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     // 创建 Q1 节点
     if (currentTree.qNodeId) {
-      console.log('🟢 创建 Q1 节点:', { id: currentTree.qNodeId, x: centerX, y: centerY });
+      const q1X = centerX - (360 - 24) / 2; // 基于F0中心向左偏移
+      console.log('🟢 创建 Q1 节点:', { id: currentTree.qNodeId, x: q1X, y: centerY });
       const q1Node: Node = {
         id: currentTree.qNodeId,
         type: 'qcard',
-        position: { x: centerX, y: centerY },
+        position: { x: q1X, y: centerY },
         draggable: false,
         data: {
           pos: 0,
@@ -541,6 +545,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [treeId, router, setNodes, setEdges]);
 
   useEffect(() => {
+    // 如果布局正在进行中,跳过
+    if (layoutInProgressRef.current) {
+      console.log('⏸️ 布局正在进行中,跳过本次触发');
+      return;
+    }
+
     if (nodes.length > 1 && edges.length > 0) {
       // 检查所有节点是否已被 ReactFlow 测量
       const allNodesMeasured = nodes.every(node =>
@@ -562,26 +572,66 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       // 只有在节点都测量完成,且高度签名发生变化时才执行布局
       if (allNodesMeasured && currentSignature !== lastLayoutSignatureRef.current) {
+        console.log('✅ 准备执行布局,设置标记为 true');
         lastLayoutSignatureRef.current = currentSignature;
+        layoutInProgressRef.current = true; // 标记布局开始
 
         const onLayout = async () => {
           // 调试日志
-          console.log('🔄 触发布局:', {
+          console.log('🔄 触发布局 (onLayout 函数执行):', {
             nodeCount: nodes.length,
             heights: nodes.map(n => ({ id: n.id, height: n.height }))
           });
 
-          // 1. 找到第一个 360px 宽的节点（qcard 或 acard）作为参考点
-          const referenceNode = nodes.find(n => n.type === 'qcard' || n.type === 'acard');
+          // 1. 找到第一个 F 节点作为参考点(锚点)
+          const referenceNode = nodes.find(n => n.type === 'followup');
           const referenceOldPos = referenceNode?.position;
 
           const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nodes, edges);
 
-          // 2. 获取布局后参考节点的位置
-          const referenceLayoutedNode = referenceNode ? layoutedNodes.find(n => n.id === referenceNode.id) : undefined;
+          // 2. 后处理:调整QA节点的x坐标,与父F节点中心对齐
+          const adjustedNodes = layoutedNodes.map(node => {
+            // 只处理QA节点
+            if (node.type === 'qcard' || node.type === 'acard') {
+              // 找到这个节点的父边
+              const parentEdge = edges.find(e => e.target === node.id);
+              if (parentEdge) {
+                // 找到父节点
+                const parentNode = layoutedNodes.find(n => n.id === parentEdge.source);
+                // 如果父节点是F节点,基于F的中心线对齐当前QA节点
+                if (parentNode && parentNode.type === 'followup') {
+                  const fCenterX = parentNode.position.x + 12; // F节点中心x坐标 (x + width/2)
+                  const alignedX = fCenterX - 180; // QA节点左边缘 = F中心 - 180 (360/2)
+
+                  console.log('🔧 后处理调整节点:', {
+                    nodeId: node.id,
+                    nodeType: node.type,
+                    parentFId: parentNode.id,
+                    fCenterX,
+                    originalX: node.position.x,
+                    alignedX,
+                    deltaX: alignedX - node.position.x
+                  });
+
+                  return {
+                    ...node,
+                    position: {
+                      x: alignedX,
+                      y: node.position.y  // y坐标保持ELK的结果
+                    }
+                  };
+                }
+              }
+            }
+            // F节点和其他节点保持ELK的结果
+            return node;
+          });
+
+          // 3. 获取布局后参考节点的位置(使用调整后的节点)
+          const referenceLayoutedNode = referenceNode ? adjustedNodes.find(n => n.id === referenceNode.id) : undefined;
           const referenceNewPos = referenceLayoutedNode?.position;
 
-          // 3. 计算偏移量并应用到所有节点（基于参考节点，而不是第一个节点）
+          // 4. 计算偏移量并应用到所有节点（基于F0参考节点）
           if (referenceOldPos && referenceNewPos) {
             const deltaX = referenceOldPos.x - referenceNewPos.x;
             const deltaY = referenceOldPos.y - referenceNewPos.y;
@@ -593,7 +643,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               delta: { deltaX, deltaY }
             });
 
-            const adjustedNodes = layoutedNodes.map(node => ({
+            const finalNodes = adjustedNodes.map(node => ({
               ...node,
               position: {
                 x: node.position.x + deltaX,
@@ -601,12 +651,25 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
             }));
 
-            setNodes(adjustedNodes);
+            console.log('📍 最终节点位置:', {
+              referenceNodeId: referenceNode?.id,
+              oldPos: referenceOldPos,
+              newPos: referenceNewPos,
+              delta: { deltaX, deltaY },
+              finalPositions: finalNodes.map(n => ({ id: n.id, type: n.type, x: n.position.x, y: n.position.y }))
+            });
+
+            setNodes(finalNodes);
           } else {
-            setNodes(layoutedNodes);
+            console.log('⚠️ 没有参考节点,直接使用调整后的节点');
+            setNodes(adjustedNodes);
           }
 
           setEdges(layoutedEdges);
+
+          // 布局完成,清除进行中标记
+          console.log('✅ 布局完成,清除标记');
+          layoutInProgressRef.current = false;
 
           // 可选: 只有在节点数量显著增加时才fitView,或者使用更平滑的参数
           // window.requestAnimationFrame(() => {

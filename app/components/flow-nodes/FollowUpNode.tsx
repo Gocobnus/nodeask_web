@@ -33,7 +33,7 @@ const FollowUpNode = ({ id, data }: FollowUpNodeProps) => {
       />
 
       <button
-        className="acard-node__ask-btn"  // 复用横向追问样式
+        className="followup-node__btn"  // 使用独立的垂直追问样式
         onClick={(e) => {
           e.stopPropagation();
           if (data.onClick) {

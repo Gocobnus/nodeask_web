@@ -651,3 +651,42 @@
   /* For debugging, you can add: background: rgba(0, 255, 0, 0.2); */
   pointer-events: auto; /* Ensure it can receive mouse events */
 }
+
+/* FollowUpNode 独立样式 - 用于垂直流程图中的追问节点 */
+.followup-node__btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  color: var(--acard-icon-add) !important;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease-in-out;
+  z-index: 50;
+  padding: 0;
+  animation: breathe 2s infinite ease-in-out;
+  /* 关键：没有 position/right 偏移，完全居中 */
+}
+
+.followup-node__btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid var(--acard-icon-add);
+  animation: ripple 2s infinite ease-in-out;
+}
+
+.followup-node__btn:hover {
+  color: var(--icon-hover) !important;
+}
+
+.followup-node__btn:active {
+  transform: scale(1);
+  background-color: color-mix(in srgb, var(--icon-default) 15%, transparent);
+}
