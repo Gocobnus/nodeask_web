@@ -3,7 +3,7 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { motion } from 'framer-motion';
-import { HorizontalAskIcon } from '../icons';
+import { FollowUpIcon } from '../icons';
 
 interface FollowUpNodeProps {
   id: string;
@@ -51,7 +51,7 @@ const FollowUpNode = ({ id, data }: FollowUpNodeProps) => {
         type="button"
         aria-label="追问"
       >
-        <HorizontalAskIcon width={24} height={24} />
+        <FollowUpIcon width={24} height={24} />
       </button>
 
       <Handle

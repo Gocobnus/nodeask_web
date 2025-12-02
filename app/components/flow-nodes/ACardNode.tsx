@@ -5,7 +5,7 @@ import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow
 import { AnswerCard } from '../card/acard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
-import { CardDeleteIcon, HorizontalAskIcon } from '../icons';
+import { CardDeleteIcon, FollowUpIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
 
 
@@ -127,7 +127,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
               type="button"
               aria-label="追问卡片内容"
             >
-              <HorizontalAskIcon width={24} height={24} />
+              <FollowUpIcon width={24} height={24} />
             </motion.button>
           </CustomTooltip>
         )}
