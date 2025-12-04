@@ -106,7 +106,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         </CustomTooltip>
       )}
       <AnimatePresence>
-        {isVisible && (
+        {isVisible && !data.hideAskButton && (
           <CustomTooltip
             placement="right"
             content="追问卡片内容"

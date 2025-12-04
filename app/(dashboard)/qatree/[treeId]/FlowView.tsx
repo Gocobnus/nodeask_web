@@ -84,6 +84,26 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
   }, [nodeForFollowUp, drafts]);
 
+  // 当输入框展开时,隐藏当前ACard节点的追问按钮
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.type === 'acard') {
+          const shouldHide = node.id === followUpNodeId;
+          if (node.data.hideAskButton === shouldHide) return node;
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              hideAskButton: shouldHide,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [followUpNodeId, setNodes]);
+
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
     if (nodeForFollowUp) {
@@ -187,6 +207,16 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     setLayoutTrigger(prev => prev + 1);
   }, [setNodes]);
 
+  // 卡片操作函数
+  const cardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
+    onDelete: () => console.log(`Delete card ${id}`),
+    onCopy: () => console.log(`Copy card ${id}`),
+    onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
+    onAsk: () => handleAskFollowUp(id),
+    onLocate: () => handleNodeLocate(id),
+    onHeightChange: handleHeightChange,
+  }), [handleAskFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange]);
+
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);
 
@@ -197,15 +227,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
 
     if (event === 'text' || event === 'ask_back') {
-      const cardActions = (id: string, type: 'qcard' | 'acard') => ({
-        onDelete: () => console.log(`Delete card ${id}`),
-        onCopy: () => console.log(`Copy card ${id}`),
-        onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
-        onAsk: () => handleAskFollowUp(id),
-        onLocate: () => handleNodeLocate(id),
-        onHeightChange: handleHeightChange,
-      });
-
       if (event === 'text') {
         const { id, pos, content, finish, parentId } = payload.node_data;
         const done = payload.done || false; // 从 CommonFields 获取 done 字段
@@ -439,7 +460,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, handleNodeSelect, handleNodeLocate, handleHeightChange, setOpenDrawerId, getNodes, getZoom, fitView]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, setOpenDrawerId, getNodes, getZoom, fitView]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -503,6 +524,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           nodeId: currentTree.qNodeId,
           question: initialQuestion,
           avatar: mockUser.avatar,
+          ...cardActions(currentTree.qNodeId, 'qcard'),
         },
       };
       initialNodes.push(q1Node);
