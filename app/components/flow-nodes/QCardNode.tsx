@@ -68,6 +68,20 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           transform: 'translateX(-50%)'
         }}
       />
+      <Handle
+        type="target"
+        id="left"
+        position={Position.Left}
+        className="custom-handle-left"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          top: '24px',
+          left: '-8px'
+        }}
+      />
       <QuestionCard
         question={data.question}
         avatar={data.avatar}

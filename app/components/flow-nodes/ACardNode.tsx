@@ -76,6 +76,30 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   const isVisible = selected || isHovered;
 
+  // 调试日志：追问按钮显示条件
+  const shouldShowAskButton = isVisible && !data.hideAskButton;
+
+  // 当节点失去 selected 状态时，强制清除 isHovered
+  const prevSelectedRef = useRef(selected);
+  useEffect(() => {
+    if (!selected && prevSelectedRef.current) {
+      // 刚刚从 selected=true 变成 selected=false
+      console.log(`🧹 ${id} 失去 selected，强制清除 isHovered`);
+      setIsHovered(false);
+    }
+    prevSelectedRef.current = selected;
+  }, [selected, id]);
+
+  useEffect(() => {
+    console.log(`🎯 ACard ${id} 按钮状态:`, {
+      selected,
+      isHovered,
+      isVisible,
+      hideAskButton: data.hideAskButton,
+      shouldShow: shouldShowAskButton
+    });
+  }, [id, selected, isHovered, isVisible, data.hideAskButton, shouldShowAskButton]);
+
   return (
     <motion.div
       ref={containerRef}
@@ -84,8 +108,14 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: 360, position: 'relative' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        console.log(`🐭 ${id} onMouseEnter`);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        console.log(`🐭 ${id} onMouseLeave`);
+        setIsHovered(false);
+      }}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
@@ -175,6 +205,20 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           bottom: '-8px',
           left: '50%',
           transform: 'translateX(-50%)'
+        }}
+      />
+      <Handle
+        type="source"
+        id="right"
+        position={Position.Right}
+        className="custom-handle-right"
+        style={{
+          background: 'transparent',
+          border: 'none',
+          width: '1px',
+          height: '1px',
+          top: '24px',
+          right: '-8px'
         }}
       />
     </motion.div>
