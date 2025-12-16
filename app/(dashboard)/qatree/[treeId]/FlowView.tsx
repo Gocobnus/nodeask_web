@@ -386,7 +386,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     if (event === 'text' || event === 'ask_back') {
       if (event === 'text') {
-        const { id, pos, content, finish, parentId } = payload.node_data;
+        const { id, pos, content, finish, parentNodeId } = payload.node_data;
         const done = payload.done || false; // 从 CommonFields 获取 done 字段
         const isGenerating = !finish;
 
@@ -422,13 +422,20 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
               };
             } else {
-              // 后续节点:基于 parentId 查找父节点，从 ref 中查找以获取最新状态
-              const parentNode = nodesRef.current.find(n => n.id === parentId);
+              // 后续节点:基于 parentNodeId 查找父节点，从 ref 中查找以获取最新状态
+              const parentNode = nodesRef.current.find(n => n.id === parentNodeId);
 
               if (!parentNode) {
-                console.error('未找到父节点:', parentId, '当前节点列表:', nodesRef.current.map(n => n.id));
+                console.error('未找到父节点:', parentNodeId, '当前节点列表:', nodesRef.current.map(n => n.id));
                 return currentNodes;
               }
+
+              console.log('📍 新节点位置计算 - 节点ID:', id, '父节点:', {
+                id: parentNode.id,
+                type: parentNode.type,
+                position: parentNode.position,
+                nodeId: parentNode.data?.nodeId
+              });
 
               const parentHeight = parentNode.height || (
                 parentNode.type === 'acard' ? 550 :
@@ -462,6 +469,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 draggable: false,
                 data: {
                   nodeId: id,
+                  parentNodeId: parentNodeId, // 父节点的业务 ID
                   onClick: () => handleAskFollowUp(id),
                 },
               };
@@ -481,6 +489,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   content: initialContent,
                   isGenerating,
                   nodeId: id, // 添加业务 ID
+                  parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
@@ -520,14 +529,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           }
         });
 
-        if (parentId) {
+        if (parentNodeId) {
           setEdges(currentEdges => {
-            const edgeId = `${parentId}-${id}`;
+            const edgeId = `${parentNodeId}-${id}`;
             const existingEdge = currentEdges.find(e => e.id === edgeId);
             if (!existingEdge) {
               const newEdges = [...currentEdges, {
                 id: edgeId,
-                source: parentId,
+                source: parentNodeId,
                 target: id,
                 style: {
                   strokeDasharray: '5,5',
@@ -667,6 +676,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         draggable: false,
         data: {
           nodeId: currentTree.dummyNodeId,
+          parentNodeId: undefined, // F0 是根节点，没有父节点
           onClick: () => handleAskFollowUp(currentTree.dummyNodeId!),
         },
       };
@@ -686,6 +696,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           content: initialQuestion,
           isGenerating: false,
           nodeId: currentTree.qNodeId,
+          parentNodeId: currentTree.qParentNodeId, // Q1 的父节点是 F0（业务 ID）
+          parentReactFlowId: currentTree.dummyNodeId, // Q1 的父节点是 F0（React Flow ID）
           question: initialQuestion,
           avatar: mockUser.avatar,
           ...cardActions(currentTree.qNodeId, 'qcard'),
@@ -924,6 +936,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onMoveStart={onMoveStart}
+        onNodeMouseEnter={(_event, node) => {
+          console.log('🔍 节点信息:', {
+            reactFlowId: node.id,
+            nodeId: node.data.nodeId,
+            qaId: node.data.qaId,
+            parentNodeId: node.data.parentNodeId,  // 父节点的业务 ID
+            parentReactFlowId: node.data.parentReactFlowId,  // 父节点的 React Flow ID
+            type: node.type,
+            isPending: node.data.isPending,
+            isHorizontalRoot: node.data.isHorizontalRoot,
+            position: node.position
+          });
+        }}
         zoomOnDoubleClick={false}
         zoomOnScroll={false}
         panOnScroll={true}
