@@ -62,8 +62,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const layoutInProgressRef = useRef(false);
 
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => {
+    setNodes((nds) => {
+      const updatedNodes = nds.map((node) => {
         if (node.type === 'acard') {
           const newIsOpen = node.id === openDrawerId;
           if (node.data.isOpen === newIsOpen) return node;
@@ -76,8 +76,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           };
         }
         return node;
-      })
-    );
+      });
+      nodesRef.current = updatedNodes;
+      return updatedNodes;
+    });
   }, [openDrawerId, setNodes]);
 
   useEffect(() => {
@@ -94,6 +96,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const lastFollowUpNodeIdRef = useRef<string | null>(null);
   // 记录上一个 followUpNodeId，用于恢复 hideAskButton
   const prevFollowUpNodeIdRef = useRef<string | null>(null);
+
+  // 用于存储最新的 nodes 和 edges，解决异步状态更新导致的竞态条件
+  const nodesRef = useRef<Node[]>([]);
+  const edgesRef = useRef<any[]>([]);
 
   useEffect(() => {
     // 如果followUpNodeId没有变化,不执行
@@ -124,13 +130,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           setEdges((currentEdges) => {
             const { cleanedEdges } = cleanupPendingNodes(cleanedNodes, currentEdges);
             const edgeExists = cleanedEdges.some(e => e.id === pendingEdge.id);
-            if (edgeExists) {
-              return cleanedEdges;
-            }
-            return [...cleanedEdges, pendingEdge];
+            const newEdges = edgeExists ? cleanedEdges : [...cleanedEdges, pendingEdge];
+            edgesRef.current = newEdges;
+            return newEdges;
           });
 
-          return [...cleanedNodes, pendingQNode];
+          const newNodes = [...cleanedNodes, pendingQNode];
+          nodesRef.current = newNodes;
+          return newNodes;
         }
 
         return currentNodes;
@@ -141,16 +148,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       setNodes((currentNodes) => {
         setEdges((currentEdges) => {
           const { cleanedEdges } = cleanupPendingNodes(currentNodes, currentEdges);
+          edgesRef.current = cleanedEdges;
           return cleanedEdges;
         });
         const { cleanedNodes } = cleanupPendingNodes(currentNodes, []);
 
         // 恢复所有ACard的hideAskButton
-        return cleanedNodes.map(n =>
+        const finalNodes = cleanedNodes.map(n =>
           n.type === 'acard' && n.data.hideAskButton
             ? { ...n, data: { ...n.data, hideAskButton: false }}
             : n
         );
+        nodesRef.current = finalNodes;
+        return finalNodes;
       });
     }
   }, [followUpNodeId]);
@@ -164,11 +174,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     );
 
     if (pendingNode) {
-      setNodes((nds) => nds.map(n =>
-        n.id === pendingNode.id
-          ? { ...n, data: { ...n.data, question: newText }}
-          : n
-      ));
+      setNodes((nds) => {
+        const updatedNodes = nds.map(n =>
+          n.id === pendingNode.id
+            ? { ...n, data: { ...n.data, question: newText }}
+            : n
+        );
+        nodesRef.current = updatedNodes;
+        return updatedNodes;
+      });
     }
 
     // 保存草稿（followUpNodeId始终是父ACard的ID）
@@ -203,28 +217,20 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         );
         const { q_node_id, qa_id } = data;
 
-        // 确认pending节点
-        setNodes((currentNodes) => {
-          const { updatedNodes } = confirmPendingNode(
-            currentNodes,
-            edges,
-            pendingNode.id,
-            q_node_id,
-            qa_id
-          );
-          return updatedNodes;
-        });
+        // 先计算新的节点和边
+        const { updatedNodes, updatedEdges } = confirmPendingNode(
+          nodesRef.current,
+          edgesRef.current,
+          pendingNode.id,
+          q_node_id,
+          qa_id
+        );
 
-        setEdges((currentEdges) => {
-          const { updatedEdges } = confirmPendingNode(
-            nodes,
-            currentEdges,
-            pendingNode.id,
-            q_node_id,
-            qa_id
-          );
-          return updatedEdges;
-        });
+        // 同步更新 ref 和状态
+        nodesRef.current = updatedNodes;
+        edgesRef.current = updatedEdges;
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
 
         // 清理草稿（followUpNodeId就是父ACard的ID）
         setDrafts(prevDrafts => {
@@ -233,7 +239,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           return newDrafts;
         });
 
-        // 启动SSE连接接收Answer内容
+        // 启动SSE连接接收Answer内容（此时 ref 已包含最新数据）
         startMockSSE({
           onMessage: (event, data) => {
             handleMessageRef.current(event, data);
@@ -249,10 +255,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         // 删除pending节点
         setNodes((currentNodes) => {
           const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
+          nodesRef.current = cleanedNodes;
           return cleanedNodes;
         });
         setEdges((currentEdges) => {
           const { cleanedEdges } = cleanupPendingNodes(nodes, currentEdges);
+          edgesRef.current = cleanedEdges;
           return cleanedEdges;
         });
       }
@@ -268,13 +276,17 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
 
     // Deselect node after submit and restore hideAskButton
-    setNodes((nds) => nds.map(n => ({
-      ...n,
-      selected: false,
-      data: n.type === 'acard' && n.data.hideAskButton
-        ? { ...n.data, hideAskButton: false }
-        : n.data
-    })));
+    setNodes((nds) => {
+      const updatedNodes = nds.map(n => ({
+        ...n,
+        selected: false,
+        data: n.type === 'acard' && n.data.hideAskButton
+          ? { ...n.data, hideAskButton: false }
+          : n.data
+      }));
+      nodesRef.current = updatedNodes;
+      return updatedNodes;
+    });
     setFollowUpNodeId(null);
   };
 
@@ -284,9 +296,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, []);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
-    setNodes((nds) =>
-      nds.map((node) => ({ ...node, selected: node.id === nodeId }))
-    );
+    setNodes((nds) => {
+      const updatedNodes = nds.map((node) => ({ ...node, selected: node.id === nodeId }));
+      nodesRef.current = updatedNodes;
+      return updatedNodes;
+    });
     setFollowUpNodeId(null);
   }, [setNodes]);
 
@@ -306,6 +320,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           : node.data
       }));
 
+      nodesRef.current = updatedNodes;
       return updatedNodes;
     });
 
@@ -314,12 +329,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [setNodes]);
 
   const handleNodeLocate = useCallback((nodeId: string) => {
-    setNodes((nds) =>
-      nds.map((node) => ({
+    setNodes((nds) => {
+      const updatedNodes = nds.map((node) => ({
         ...node,
         selected: node.id === nodeId,
-      }))
-    );
+      }));
+      nodesRef.current = updatedNodes;
+      return updatedNodes;
+    });
     setTimeout(() => {
       const currentZoom = getZoom();
       fitView({
@@ -340,6 +357,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           ? { ...node, height: newHeight }
           : node
       );
+      nodesRef.current = updated;
       return updated;
     });
 
@@ -404,11 +422,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
               };
             } else {
-              // 后续节点:基于 parentId 查找父节点，垂直堆叠
-              const parentNode = currentNodes.find(n => n.id === parentId);
+              // 后续节点:基于 parentId 查找父节点，从 ref 中查找以获取最新状态
+              const parentNode = nodesRef.current.find(n => n.id === parentId);
 
               if (!parentNode) {
-                console.error('未找到父节点:', parentId);
+                console.error('未找到父节点:', parentId, '当前节点列表:', nodesRef.current.map(n => n.id));
                 return currentNodes;
               }
 
@@ -472,9 +490,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               };
             }
 
-            return [...currentNodes, newNode];
+            const newNodes = [...currentNodes, newNode];
+            nodesRef.current = newNodes;
+            return newNodes;
           } else {
-            return currentNodes.map(n => {
+            const updatedNodes = currentNodes.map(n => {
               if (n.id === id) {
                 // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
                 // A 节点才累加流式内容
@@ -495,6 +515,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
               return n;
             });
+            nodesRef.current = updatedNodes;
+            return updatedNodes;
           }
         });
 
@@ -503,7 +525,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const edgeId = `${parentId}-${id}`;
             const existingEdge = currentEdges.find(e => e.id === edgeId);
             if (!existingEdge) {
-              return [...currentEdges, {
+              const newEdges = [...currentEdges, {
                 id: edgeId,
                 source: parentId,
                 target: id,
@@ -513,6 +535,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   strokeWidth: 2
                 }
               }];
+              edgesRef.current = newEdges;
+              return newEdges;
             }
             return currentEdges;
           });
@@ -522,11 +546,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       if (event === 'ask_back') {
         const { node_id, ask_back } = payload;
-        setNodes(currentNodes => currentNodes.map(n =>
-          n.id === node_id ? {
-            ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id, 'acard') }
-          } : n
-        ));
+        setNodes(currentNodes => {
+          const updatedNodes = currentNodes.map(n =>
+            n.id === node_id ? {
+              ...n, data: { ...n.data, relatedQuestions: ask_back, ...cardActions(node_id, 'acard') }
+            } : n
+          );
+          nodesRef.current = updatedNodes;
+          return updatedNodes;
+        });
       }
     }
 
@@ -571,14 +599,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         };
 
         // 更新节点
-        setNodes(prev => [...prev, newFNode]);
+        setNodes(prev => {
+          const newNodes = [...prev, newFNode];
+          nodesRef.current = newNodes;
+          return newNodes;
+        });
 
         // 更新边
         setEdges(prevEdges => {
           const edgeId = `${lastANode.id}-${nextFNodeId}`;
           const existingEdge = prevEdges.find(e => e.id === edgeId);
           if (!existingEdge) {
-            return [...prevEdges, {
+            const newEdges = [...prevEdges, {
               id: edgeId,
               source: lastANode.id,
               target: nextFNodeId,
@@ -588,6 +620,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 strokeWidth: 2
               }
             }];
+            edgesRef.current = newEdges;
+            return newEdges;
           }
           return prevEdges;
         });
@@ -676,6 +710,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     setNodes(initialNodes);
     setEdges(initialEdges);
+
+    // 同步更新 ref
+    nodesRef.current = initialNodes;
+    edgesRef.current = initialEdges;
 
     // 启动 SSE 接收 A 节点
     const abortSSE = startMockSSE({
@@ -818,6 +856,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }))
             });
 
+            nodesRef.current = allNodes;
             setNodes(allNodes);
           } else {
             // 合并 pending 节点和横向根节点
@@ -833,6 +872,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 position: { x: n.position.x, y: n.position.y }
               }))
             });
+            nodesRef.current = allNodes;
             setNodes(allNodes);
           }
 
@@ -850,6 +890,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           const finalLayoutedEdges = layoutedEdges.filter(e => !excludedEdgeIds.has(e.id));
 
           const allEdges = [...finalLayoutedEdges, ...excludedEdges];
+          edgesRef.current = allEdges;
           setEdges(allEdges);
 
           // 布局完成,清除进行中标记
@@ -890,18 +931,21 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           setNodes((currentNodes) => {
             setEdges((currentEdges) => {
               const { cleanedEdges } = cleanupPendingNodes(currentNodes, currentEdges);
+              edgesRef.current = cleanedEdges;
               return cleanedEdges;
             });
             const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
 
             // 取消选中并恢复追问按钮
-            return cleanedNodes.map(n => ({
+            const finalNodes = cleanedNodes.map(n => ({
               ...n,
               selected: false,
               data: n.type === 'acard' && n.data.hideAskButton
                 ? { ...n.data, hideAskButton: false }
                 : n.data
             }));
+            nodesRef.current = finalNodes;
+            return finalNodes;
           });
           setFollowUpNodeId(null);
         }}
