@@ -21,6 +21,7 @@ import {
   confirmPendingNode,
   cleanupPendingNodes
 } from '../../../utils/pending-node-utils';
+import { createHorizontalFollowUp } from '../../../services/qatree-api';
 
 const nodeTypes = {
   qcard: QCardNode,
@@ -195,22 +196,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     if (pendingNode && pendingNode.data.pendingType === 'horizontal') {
       // 横向追问：调用API并确认pending节点
       try {
-        const response = await fetch('/api/followup/horizontal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tree_id: treeId,
-            parent_node_id: pendingNode.data.parentNodeId,
-            question: submittedText
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('API request failed');
-        }
-
-        const data = await response.json();
-        const { node_id, qa_id } = data;
+        const data = await createHorizontalFollowUp(
+          treeId,
+          pendingNode.data.parentNodeId,
+          submittedText
+        );
+        const { q_node_id, qa_id } = data;
 
         // 确认pending节点
         setNodes((currentNodes) => {
@@ -218,7 +209,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             currentNodes,
             edges,
             pendingNode.id,
-            node_id,
+            q_node_id,
             qa_id
           );
           return updatedNodes;
@@ -229,7 +220,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             nodes,
             currentEdges,
             pendingNode.id,
-            node_id,
+            q_node_id,
             qa_id
           );
           return updatedEdges;
@@ -242,8 +233,16 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           return newDrafts;
         });
 
-        // TODO: 启动SSE连接接收Answer内容
-        console.log('横向追问成功，TODO: 启动SSE连接');
+        // 启动SSE连接接收Answer内容
+        startMockSSE({
+          onMessage: (event, data) => {
+            handleMessageRef.current(event, data);
+          },
+          onClose: () => console.log("Horizontal follow-up SSE stream closed."),
+        }, {
+          qaId: qa_id,        // 从 API 返回的 qa_id
+          parentNodeId: q_node_id  // Q 节点 ID
+        });
 
       } catch (error) {
         console.error('横向追问失败:', error);
@@ -259,8 +258,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }
     } else if (nodeForFollowUp?.type === 'followup') {
       // 垂直追问：保持原有逻辑
-      const apiEndpoint = '/api/followup/vertical';
-      console.log(`API endpoint: ${apiEndpoint}`);
       // TODO: 调用真实 API
 
       setDrafts(prevDrafts => {
@@ -336,8 +333,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 处理节点高度变化
   const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
-    console.log('🎯 FlowView 收到高度变化通知:', { nodeId, newHeight });
-
     // 更新节点高度并触发布局重新计算
     setNodes((currentNodes) => {
       const updated = currentNodes.map(node =>
@@ -537,8 +532,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     // 监听 SSE 完成事件，在最后一个 A 节点下方创建 F 节点
     if (event === 'done') {
-      console.log('🎯 SSE 流结束，在最后一个 A 节点下方创建 F 节点');
-
       setTimeout(() => {
         // 使用 getNodes() 获取当前节点状态，避免在 setNodes reducer 中产生副作用
         const currentNodes = getNodes();
@@ -609,7 +602,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [handleMessage]);
 
   useEffect(() => {
-    console.log('🔵 FlowView useEffect 触发，treeId:', treeId);
     const currentTree = trees.find(tree => tree.id === treeId);
     if (!currentTree) {
       router.push('/');
@@ -629,13 +621,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     const canvasHeight = window.innerHeight;
     const centerX = (canvasWidth / 2) - 12; // 12 = 24px F节点宽度的一半
     const centerY = canvasHeight / 2;
-    console.log('📐 画布尺寸:', { canvasWidth, canvasHeight, centerX, centerY });
 
     // 创建 F0 节点
     if (currentTree.dummyNodeId) {
       const f0X = centerX; // F0直接居中,不需要偏移
       const f0Y = centerY - 104;
-      console.log('🔴 创建 F0 节点:', { id: currentTree.dummyNodeId, x: f0X, y: f0Y });
       const f0Node: Node = {
         id: currentTree.dummyNodeId,
         type: 'followup',
@@ -652,7 +642,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     // 创建 Q1 节点
     if (currentTree.qNodeId) {
       const q1X = centerX - (360 - 24) / 2; // 基于F0中心向左偏移
-      console.log('🟢 创建 Q1 节点:', { id: currentTree.qNodeId, x: q1X, y: centerY });
       const q1Node: Node = {
         id: currentTree.qNodeId,
         type: 'qcard',
@@ -689,17 +678,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     setEdges(initialEdges);
 
     // 启动 SSE 接收 A 节点
-    console.log('🟡 启动 SSE 连接');
     const abortSSE = startMockSSE({
       onMessage: (event, data) => {
         handleMessageRef.current(event, data);
       },
       onClose: () => console.log("Mock SSE stream closed."),
+    }, {
+      qaId: currentTree.qaId || 'qa1',        // 从 create API 返回的 qa_id
+      parentNodeId: currentTree.qNodeId || 'q1'  // Q1 节点 ID
     });
 
     // Cleanup 函数：组件卸载或 treeId 变化时中止 SSE
     return () => {
-      console.log('🧹 清理 SSE 连接');
       abortSSE();
     };
 
@@ -709,7 +699,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   useEffect(() => {
     // 如果布局正在进行中,跳过
     if (layoutInProgressRef.current) {
-      console.log('⏸️ 布局正在进行中,跳过本次触发');
       return;
     }
 
@@ -723,18 +712,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       // 生成当前节点的高度签名
       const currentSignature = nodes.map(n => `${n.id}:${n.height}`).join(',');
 
-      // 打印高度变化日志
-      if (currentSignature !== lastLayoutSignatureRef.current) {
-        console.log('📏 高度签名变化:', {
-          old: lastLayoutSignatureRef.current,
-          new: currentSignature,
-          allMeasured: allNodesMeasured
-        });
-      }
-
       // 只有在节点都测量完成,且高度签名发生变化时才执行布局
       if (allNodesMeasured && currentSignature !== lastLayoutSignatureRef.current) {
-        console.log('✅ 准备执行布局,设置标记为 true');
         lastLayoutSignatureRef.current = currentSignature;
         layoutInProgressRef.current = true; // 标记布局开始
 
@@ -752,28 +731,29 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             }))
           });
 
-          // 过滤掉pending节点,它们不参与布局
-          const nonPendingNodes = nodes.filter(n => !n.data.isPending);
-          const nonPendingEdges = edges.filter(e => {
+          // 过滤掉 pending 节点和横向根节点（横向的 Q 节点），它们不参与 ELK 布局
+          // 但横向根节点的子节点（A、F）会参与 ELK 布局，保证垂直对齐
+          const layoutNodes = nodes.filter(n => !n.data.isPending && !n.data.isHorizontalRoot);
+          const layoutEdges = edges.filter(e => {
             const sourceNode = nodes.find(n => n.id === e.source);
             const targetNode = nodes.find(n => n.id === e.target);
 
-            // 如果任一节点不存在，说明是孤立的pending边，应该过滤掉
+            // 如果任一节点不存在，说明是孤立边，应该过滤掉
             if (!sourceNode || !targetNode) {
               return false;
             }
 
-            // 如果任一节点是pending，边也是pending
-            const sourceIsPending = sourceNode.data.isPending;
-            const targetIsPending = targetNode.data.isPending;
-            return !sourceIsPending && !targetIsPending;
+            // 排除 pending 节点和横向根节点的边
+            const sourceExcluded = sourceNode.data.isPending || sourceNode.data.isHorizontalRoot;
+            const targetExcluded = targetNode.data.isPending || targetNode.data.isHorizontalRoot;
+            return !sourceExcluded && !targetExcluded;
           });
 
           // 1. 找到第一个 F 节点作为参考点(锚点)
-          const referenceNode = nonPendingNodes.find(n => n.type === 'followup');
+          const referenceNode = layoutNodes.find(n => n.type === 'followup');
           const referenceOldPos = referenceNode?.position;
 
-          const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(nonPendingNodes, nonPendingEdges);
+          const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(layoutNodes, layoutEdges);
 
           // 2. 后处理:调整QA节点的x坐标,与父F节点中心对齐
           const adjustedNodes = layoutedNodes.map(node => {
@@ -788,16 +768,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 if (parentNode && parentNode.type === 'followup') {
                   const fCenterX = parentNode.position.x + 12; // F节点中心x坐标 (x + width/2)
                   const alignedX = fCenterX - 180; // QA节点左边缘 = F中心 - 180 (360/2)
-
-                  console.log('🔧 后处理调整节点:', {
-                    nodeId: node.id,
-                    nodeType: node.type,
-                    parentFId: parentNode.id,
-                    fCenterX,
-                    originalX: node.position.x,
-                    alignedX,
-                    deltaX: alignedX - node.position.x
-                  });
 
                   return {
                     ...node,
@@ -822,13 +792,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const deltaX = referenceOldPos.x - referenceNewPos.x;
             const deltaY = referenceOldPos.y - referenceNewPos.y;
 
-            console.log('📍 参考节点位置调整:', {
-              referenceNodeId: referenceNode?.id,
-              oldPos: referenceOldPos,
-              newPos: referenceNewPos,
-              delta: { deltaX, deltaY }
-            });
-
             const finalNodes = adjustedNodes.map(node => ({
               ...node,
               position: {
@@ -837,9 +800,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
             }));
 
-            // 合并pending节点
-            const pendingNodes = nodes.filter(n => n.data.isPending);
-            const allNodes = [...finalNodes, ...pendingNodes];
+            // 合并 pending 节点和横向根节点
+            const excludedNodes = nodes.filter(n => n.data.isPending || n.data.isHorizontalRoot);
+            const allNodes = [...finalNodes, ...excludedNodes];
 
             console.log('📍 最终节点位置:', {
               referenceNodeId: referenceNode?.id,
@@ -857,11 +820,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
             setNodes(allNodes);
           } else {
-            // 合并pending节点
-            const pendingNodes = nodes.filter(n => n.data.isPending);
-            const allNodes = [...adjustedNodes, ...pendingNodes];
+            // 合并 pending 节点和横向根节点
+            const excludedNodes = nodes.filter(n => n.data.isPending || n.data.isHorizontalRoot);
+            const allNodes = [...adjustedNodes, ...excludedNodes];
 
-            console.log('⚠️ 没有参考节点,直接使用调整后的节点');
             console.log('📍 最终节点位置 (无参考):', {
               finalPositions: allNodes.map(n => ({
                 reactFlowId: n.id,
@@ -874,18 +836,20 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             setNodes(allNodes);
           }
 
-          // 合并pending边
-          const pendingEdges = edges.filter(e => {
-            const sourceIsPending = nodes.find(n => n.id === e.source)?.data.isPending;
-            const targetIsPending = nodes.find(n => n.id === e.target)?.data.isPending;
-            return sourceIsPending || targetIsPending;
+          // 合并被排除的边（pending 边和横向根节点的边）
+          const excludedEdges = edges.filter(e => {
+            const sourceNode = nodes.find(n => n.id === e.source);
+            const targetNode = nodes.find(n => n.id === e.target);
+            const sourceExcluded = sourceNode?.data.isPending || sourceNode?.data.isHorizontalRoot;
+            const targetExcluded = targetNode?.data.isPending || targetNode?.data.isHorizontalRoot;
+            return sourceExcluded || targetExcluded;
           });
 
-          // 从layoutedEdges中排除已存在于pendingEdges中的边(避免重复)
-          const pendingEdgeIds = new Set(pendingEdges.map(e => e.id));
-          const nonPendingLayoutedEdges = layoutedEdges.filter(e => !pendingEdgeIds.has(e.id));
+          // 从 layoutedEdges 中排除已存在的边（避免重复）
+          const excludedEdgeIds = new Set(excludedEdges.map(e => e.id));
+          const finalLayoutedEdges = layoutedEdges.filter(e => !excludedEdgeIds.has(e.id));
 
-          const allEdges = [...nonPendingLayoutedEdges, ...pendingEdges];
+          const allEdges = [...finalLayoutedEdges, ...excludedEdges];
           setEdges(allEdges);
 
           // 布局完成,清除进行中标记

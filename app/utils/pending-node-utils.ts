@@ -129,7 +129,9 @@ export function confirmPendingNode(
           ...node.data,
           nodeId: realId,
           qaId: qaId,
-          isPending: false
+          isPending: false,
+          // 只标记横向的根节点（Q 节点），它的子节点会参与 ELK 布局
+          isHorizontalRoot: node.data.pendingType === 'horizontal'
         }
       };
     }

@@ -76,29 +76,15 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   const isVisible = selected || isHovered;
 
-  // 调试日志：追问按钮显示条件
-  const shouldShowAskButton = isVisible && !data.hideAskButton;
-
   // 当节点失去 selected 状态时，强制清除 isHovered
   const prevSelectedRef = useRef(selected);
   useEffect(() => {
     if (!selected && prevSelectedRef.current) {
-      // 刚刚从 selected=true 变成 selected=false
-      console.log(`🧹 ${id} 失去 selected，强制清除 isHovered`);
       setIsHovered(false);
     }
     prevSelectedRef.current = selected;
   }, [selected, id]);
 
-  useEffect(() => {
-    console.log(`🎯 ACard ${id} 按钮状态:`, {
-      selected,
-      isHovered,
-      isVisible,
-      hideAskButton: data.hideAskButton,
-      shouldShow: shouldShowAskButton
-    });
-  }, [id, selected, isHovered, isVisible, data.hideAskButton, shouldShowAskButton]);
 
   return (
     <motion.div
