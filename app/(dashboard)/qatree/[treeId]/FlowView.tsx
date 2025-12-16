@@ -102,17 +102,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     lastFollowUpNodeIdRef.current = followUpNodeId;
 
     if (followUpNodeId) {
-      console.log('🟢 followUpNodeId 变化，创建 pending 节点:', followUpNodeId);
-
       setNodes((currentNodes) => {
         const currentNode = currentNodes.find(n => n.id === followUpNodeId);
 
         // 如果是ACard,需要创建horizontal pending节点
         if (currentNode?.type === 'acard') {
-          // 先清理旧的pending节点
-          const oldPendingNodes = currentNodes.filter(n => n.data.isPending);
-          console.log('🧹 清理旧的 pending 节点:', oldPendingNodes.map(n => n.id));
-
           const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
 
           // 创建新的pending节点
@@ -135,14 +129,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             return [...cleanedEdges, pendingEdge];
           });
 
-          console.log('✅ 创建新的 pending 节点:', pendingQNode.id);
           return [...cleanedNodes, pendingQNode];
         }
 
         return currentNodes;
       });
     } else {
-      console.log('🔴 followUpNodeId 为 null，清理所有 pending 节点');
 
       // 输入框关闭时,删除所有pending节点和边，并恢复追问按钮
       setNodes((currentNodes) => {
@@ -153,11 +145,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const { cleanedNodes } = cleanupPendingNodes(currentNodes, []);
 
         // 恢复所有ACard的hideAskButton
-        const nodesToRestore = cleanedNodes.filter(n => n.type === 'acard' && n.data.hideAskButton);
-        if (nodesToRestore.length > 0) {
-          console.log('🔄 恢复这些节点的追问按钮:', nodesToRestore.map(n => n.id));
-        }
-
         return cleanedNodes.map(n =>
           n.type === 'acard' && n.data.hideAskButton
             ? { ...n, data: { ...n.data, hideAskButton: false }}
@@ -307,15 +294,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [setNodes]);
 
   const handleAskFollowUp = useCallback((nodeId: string) => {
-    console.log('🔵 handleAskFollowUp 被调用:', nodeId);
     const previousNodeId = prevFollowUpNodeIdRef.current;
 
     setNodes((nds) => {
-      console.log('🔍 当前所有节点的hideAskButton状态:');
-      nds.filter(n => n.type === 'acard').forEach(n => {
-        console.log(`  - ${n.id}: hideAskButton=${n.data.hideAskButton}, selected=${n.selected}`);
-      });
-
       const updatedNodes = nds.map((node) => ({
         ...node,
         selected: node.id === nodeId,
@@ -327,11 +308,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               : node.data                                         // 其他节点：保持不变
           : node.data
       }));
-
-      console.log('✅ 更新后所有节点的hideAskButton状态:');
-      updatedNodes.filter(n => n.type === 'acard').forEach(n => {
-        console.log(`  - ${n.id}: hideAskButton=${n.data.hideAskButton}, selected=${n.selected}`);
-      });
 
       return updatedNodes;
     });
@@ -433,27 +409,33 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
               };
             } else {
-              // 后续节点:垂直堆叠，保持与第一个卡片节点（360px）中心对齐
-              const lastNode = currentNodes[currentNodes.length - 1];
-              const lastNodeHeight = lastNode.height || (
-                lastNode.type === 'acard' ? 550 :
-                lastNode.type === 'followup' ? 24 : 250
+              // 后续节点:基于 parentId 查找父节点，垂直堆叠
+              const parentNode = currentNodes.find(n => n.id === parentId);
+
+              if (!parentNode) {
+                console.error('未找到父节点:', parentId);
+                return currentNodes;
+              }
+
+              const parentHeight = parentNode.height || (
+                parentNode.type === 'acard' ? 550 :
+                parentNode.type === 'followup' ? 24 : 250
               );
               const GAP = 80; // 与 ELK 的 nodeSpacing 保持一致
 
-              // 计算 x 位置：如果当前节点和上个节点宽度不同，需要调整以保持中心对齐
-              let xPosition = lastNode.position.x;
-              if (type === 'followup' && lastNode.type !== 'followup') {
+              // 计算 x 位置：如果当前节点和父节点宽度不同，需要调整以保持中心对齐
+              let xPosition = parentNode.position.x;
+              if (type === 'followup' && parentNode.type !== 'followup') {
                 // 从 360px 卡片到 24px followup：向右偏移
-                xPosition = lastNode.position.x + (360 - 24) / 2;
-              } else if (type !== 'followup' && lastNode.type === 'followup') {
+                xPosition = parentNode.position.x + (360 - 24) / 2;
+              } else if (type !== 'followup' && parentNode.type === 'followup') {
                 // 从 24px followup 到 360px 卡片：向左偏移
-                xPosition = lastNode.position.x - (360 - 24) / 2;
+                xPosition = parentNode.position.x - (360 - 24) / 2;
               }
 
               initialPosition = {
                 x: xPosition,
-                y: lastNode.position.y + lastNodeHeight + GAP
+                y: parentNode.position.y + parentHeight + GAP
               };
             }
 
@@ -497,22 +479,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
             return [...currentNodes, newNode];
           } else {
-            // 内容更新(ResizeObserver会自动监听高度变化)
-            console.log('📝 内容更新:', id, 'content length:', content.length, 'chunk:', content);
-
             return currentNodes.map(n => {
               if (n.id === id) {
                 // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
                 // A 节点才累加流式内容
                 const currentContent = n.data.content;
                 const updatedContent = n.type === 'qcard' ? currentContent : currentContent + content;
-                console.log('💬 节点内容累加:', {
-                  nodeId: id,
-                  nodeType: n.type,
-                  currentLength: currentContent.length,
-                  chunkLength: content.length,
-                  newLength: updatedContent.length
-                });
 
                 return {
                   ...n,
@@ -720,7 +692,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     console.log('🟡 启动 SSE 连接');
     const abortSSE = startMockSSE({
       onMessage: (event, data) => {
-        console.log('📨 SSE 收到事件:', event, 'data length:', data.length);
         handleMessageRef.current(event, data);
       },
       onClose: () => console.log("Mock SSE stream closed."),
@@ -771,7 +742,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           // 调试日志
           console.log('🔄 触发布局 (onLayout 函数执行):', {
             nodeCount: nodes.length,
-            heights: nodes.map(n => ({ id: n.id, height: n.height }))
+            nodes: nodes.map(n => ({
+              reactFlowId: n.id,
+              nodeId: n.data.nodeId || 'N/A',
+              type: n.type,
+              isPending: n.data.isPending || false,
+              height: n.height,
+              position: n.position
+            }))
           });
 
           // 过滤掉pending节点,它们不参与布局
@@ -868,7 +846,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               oldPos: referenceOldPos,
               newPos: referenceNewPos,
               delta: { deltaX, deltaY },
-              finalPositions: allNodes.map(n => ({ id: n.id, type: n.type, x: n.position.x, y: n.position.y }))
+              finalPositions: allNodes.map(n => ({
+                reactFlowId: n.id,
+                nodeId: n.data.nodeId || 'N/A',
+                type: n.type,
+                isPending: n.data.isPending || false,
+                position: { x: n.position.x, y: n.position.y }
+              }))
             });
 
             setNodes(allNodes);
@@ -878,6 +862,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const allNodes = [...adjustedNodes, ...pendingNodes];
 
             console.log('⚠️ 没有参考节点,直接使用调整后的节点');
+            console.log('📍 最终节点位置 (无参考):', {
+              finalPositions: allNodes.map(n => ({
+                reactFlowId: n.id,
+                nodeId: n.data.nodeId || 'N/A',
+                type: n.type,
+                isPending: n.data.isPending || false,
+                position: { x: n.position.x, y: n.position.y }
+              }))
+            });
             setNodes(allNodes);
           }
 
