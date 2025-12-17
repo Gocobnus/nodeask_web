@@ -8,7 +8,7 @@ import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
-import { getLayoutedElements } from '../../../utils/layout-utils';
+import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -781,60 +781,24 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             }))
           });
 
-          // 过滤掉 pending 节点和横向根节点（横向的 Q 节点），它们不参与 ELK 布局
-          // 但横向根节点的子节点（A、F）会参与 ELK 布局，保证垂直对齐
-          const layoutNodes = nodes.filter(n => !n.data.isPending && !n.data.isHorizontalRoot);
+          // 使用新的多列布局算法
+          // 只过滤掉 pending 节点，横向根节点现在也参与布局
+          const layoutNodes = nodes.filter(n => !n.data.isPending);
           const layoutEdges = edges.filter(e => {
             const sourceNode = nodes.find(n => n.id === e.source);
             const targetNode = nodes.find(n => n.id === e.target);
-
-            // 如果任一节点不存在，说明是孤立边，应该过滤掉
-            if (!sourceNode || !targetNode) {
-              return false;
-            }
-
-            // 排除 pending 节点和横向根节点的边
-            const sourceExcluded = sourceNode.data.isPending || sourceNode.data.isHorizontalRoot;
-            const targetExcluded = targetNode.data.isPending || targetNode.data.isHorizontalRoot;
-            return !sourceExcluded && !targetExcluded;
+            return !sourceNode?.data.isPending && !targetNode?.data.isPending;
           });
 
           // 1. 找到第一个 F 节点作为参考点(锚点)
           const referenceNode = layoutNodes.find(n => n.type === 'followup');
           const referenceOldPos = referenceNode?.position;
 
-          const { nodes: layoutedNodes, edges: layoutedEdges } = await getLayoutedElements(layoutNodes, layoutEdges);
+          // 2. 使用新的多列布局算法
+          const { nodes: layoutedNodes, edges: layoutedEdges } = await getMultiColumnLayoutedElements(layoutNodes, layoutEdges);
 
-          // 2. 后处理:调整QA节点的x坐标,与父F节点中心对齐
-          const adjustedNodes = layoutedNodes.map(node => {
-            // 只处理QA节点
-            if (node.type === 'qcard' || node.type === 'acard') {
-              // 找到这个节点的父边
-              const parentEdge = edges.find(e => e.target === node.id);
-              if (parentEdge) {
-                // 找到父节点
-                const parentNode = layoutedNodes.find(n => n.id === parentEdge.source);
-                // 如果父节点是F节点,基于F的中心线对齐当前QA节点
-                if (parentNode && parentNode.type === 'followup') {
-                  const fCenterX = parentNode.position.x + 12; // F节点中心x坐标 (x + width/2)
-                  const alignedX = fCenterX - 180; // QA节点左边缘 = F中心 - 180 (360/2)
-
-                  return {
-                    ...node,
-                    position: {
-                      x: alignedX,
-                      y: node.position.y  // y坐标保持ELK的结果
-                    }
-                  };
-                }
-              }
-            }
-            // F节点和其他节点保持ELK的结果
-            return node;
-          });
-
-          // 3. 获取布局后参考节点的位置(使用调整后的节点)
-          const referenceLayoutedNode = referenceNode ? adjustedNodes.find(n => n.id === referenceNode.id) : undefined;
+          // 3. 获取布局后参考节点的位置
+          const referenceLayoutedNode = referenceNode ? layoutedNodes.find(n => n.id === referenceNode.id) : undefined;
           const referenceNewPos = referenceLayoutedNode?.position;
 
           // 4. 计算偏移量并应用到所有节点（基于F0参考节点）
@@ -842,7 +806,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const deltaX = referenceOldPos.x - referenceNewPos.x;
             const deltaY = referenceOldPos.y - referenceNewPos.y;
 
-            const finalNodes = adjustedNodes.map(node => ({
+            const finalNodes = layoutedNodes.map(node => ({
               ...node,
               position: {
                 x: node.position.x + deltaX,
@@ -850,9 +814,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
             }));
 
-            // 合并 pending 节点和横向根节点
-            const excludedNodes = nodes.filter(n => n.data.isPending || n.data.isHorizontalRoot);
-            const allNodes = [...finalNodes, ...excludedNodes];
+            // 合并 pending 节点
+            const pendingNodes = nodes.filter(n => n.data.isPending);
+            const allNodes = [...finalNodes, ...pendingNodes];
 
             console.log('📍 最终节点位置:', {
               referenceNodeId: referenceNode?.id,
@@ -864,6 +828,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 nodeId: n.data.nodeId || 'N/A',
                 type: n.type,
                 isPending: n.data.isPending || false,
+                isHorizontalRoot: n.data.isHorizontalRoot || false,
                 position: { x: n.position.x, y: n.position.y }
               }))
             });
@@ -871,9 +836,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             nodesRef.current = allNodes;
             setNodes(allNodes);
           } else {
-            // 合并 pending 节点和横向根节点
-            const excludedNodes = nodes.filter(n => n.data.isPending || n.data.isHorizontalRoot);
-            const allNodes = [...adjustedNodes, ...excludedNodes];
+            // 合并 pending 节点
+            const pendingNodes = nodes.filter(n => n.data.isPending);
+            const allNodes = [...layoutedNodes, ...pendingNodes];
 
             console.log('📍 最终节点位置 (无参考):', {
               finalPositions: allNodes.map(n => ({
@@ -881,6 +846,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 nodeId: n.data.nodeId || 'N/A',
                 type: n.type,
                 isPending: n.data.isPending || false,
+                isHorizontalRoot: n.data.isHorizontalRoot || false,
                 position: { x: n.position.x, y: n.position.y }
               }))
             });
@@ -888,20 +854,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             setNodes(allNodes);
           }
 
-          // 合并被排除的边（pending 边和横向根节点的边）
-          const excludedEdges = edges.filter(e => {
+          // 合并 pending 边
+          const pendingEdges = edges.filter(e => {
             const sourceNode = nodes.find(n => n.id === e.source);
             const targetNode = nodes.find(n => n.id === e.target);
-            const sourceExcluded = sourceNode?.data.isPending || sourceNode?.data.isHorizontalRoot;
-            const targetExcluded = targetNode?.data.isPending || targetNode?.data.isHorizontalRoot;
-            return sourceExcluded || targetExcluded;
+            return sourceNode?.data.isPending || targetNode?.data.isPending;
           });
 
-          // 从 layoutedEdges 中排除已存在的边（避免重复）
-          const excludedEdgeIds = new Set(excludedEdges.map(e => e.id));
-          const finalLayoutedEdges = layoutedEdges.filter(e => !excludedEdgeIds.has(e.id));
-
-          const allEdges = [...finalLayoutedEdges, ...excludedEdges];
+          const allEdges = [...layoutedEdges, ...pendingEdges];
           edgesRef.current = allEdges;
           setEdges(allEdges);
 
