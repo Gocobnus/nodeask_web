@@ -124,10 +124,18 @@ export function startMockSSE(callbacks: MockSSECallbacks, options?: MockSSEOptio
       }
     }
 
-    // 4. Send Done event
+    // 4. Send Done event (包含 CommonFields)
     await delay(500);
     if (aborted) return;
-    const donePayload = { reason: "Stream completed successfully" };
+    const donePayload = {
+      log_id: 'log_done',
+      tree_id: 'tree_mock',
+      qa_id: qaId,  // 添加 qa_id 到 done 事件
+      pkg_index: 0,
+      created_at: new Date().toISOString(),
+      done: true,
+      reason: "Stream completed successfully"
+    };
     onMessage('done', JSON.stringify(donePayload));
     onClose();
   })();

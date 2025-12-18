@@ -435,6 +435,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       if (event === 'text') {
         const { id, pos, content, finish, parentNodeId } = payload.node_data;
         const done = payload.done || false; // 从 CommonFields 获取 done 字段
+        const qaId = payload.qa_id; // 从 CommonFields 获取 qa_id
         const isGenerating = !finish;
 
         // 根据 pos 判断节点类型
@@ -536,6 +537,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   content: initialContent,
                   isGenerating,
                   nodeId: id, // 添加业务 ID
+                  qaId: qaId, // 添加 qa_id，用于在 done 事件中查找对应的 A 节点
                   parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
@@ -544,6 +546,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
               };
+
+              // 调试日志：记录创建的节点信息
+              if (cardType === 'acard') {
+                console.log('🎨 Creating A node:', { id, qaId, type: cardType });
+              }
             }
 
             const newNodes = [...currentNodes, newNode];
@@ -615,32 +622,54 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }
     }
 
-    // 监听 SSE 完成事件，在最后一个 A 节点下方创建 F 节点
+    // 监听 SSE 完成事件，在对应的 A 节点下方创建 F 节点
     if (event === 'done') {
       setTimeout(() => {
         // 使用 getNodes() 获取当前节点状态，避免在 setNodes reducer 中产生副作用
         const currentNodes = getNodes();
-        
-        // 找到最后一个 A 节点
-        const aNodes = currentNodes.filter(n => n.type === 'acard');
-        if (aNodes.length === 0) return;
 
-        const lastANode = aNodes[aNodes.length - 1];
+        // 从 payload 中获取 qa_id
+        const qaId = payload.qa_id;
+        console.log('🔍 Done event received:', { qaId, payload });
+
+        if (!qaId) {
+          console.warn('done event missing qa_id');
+          return;
+        }
+
+        // 打印所有 A 节点的 qaId，便于调试
+        const aNodes = currentNodes.filter(n => n.type === 'acard');
+        console.log('🔍 All A nodes:', aNodes.map(n => ({ id: n.id, qaId: n.data.qaId })));
+
+        // 通过 qa_id 查找对应的 A 节点 - 找到最后一个匹配的 A 节点
+        // 因为一个 QA 对可能包含多个 A 节点（A1 → A2 → A3），F 节点应该在最后一个 A 节点下面
+        const matchingANodes = currentNodes.filter(n =>
+          n.type === 'acard' && n.data.qaId === qaId
+        );
+
+        if (matchingANodes.length === 0) {
+          console.warn(`A node not found for qa_id: ${qaId}`);
+          return;
+        }
+
+        // 取最后一个匹配的 A 节点
+        const targetANode = matchingANodes[matchingANodes.length - 1];
+        console.log('✅ Found target A node:', targetANode.id, `(${matchingANodes.length} total A nodes with this qa_id)`);
 
         // 检查是否已经存在 F 节点
         const existingFNode = currentNodes.find(n =>
           n.type === 'followup' &&
-          n.data.parentACardId === lastANode.id
+          n.data.parentACardId === targetANode.id
         );
         if (existingFNode) return;
 
         // 创建新的 F 节点
-        const nextFNodeId = `f-${lastANode.id}-${Date.now()}`;
-        const aNodeHeight = lastANode.height || 550;
+        const nextFNodeId = `f-${targetANode.id}-${Date.now()}`;
+        const aNodeHeight = targetANode.height || 550;
         const GAP = 80;
         const fNodePosition = {
-          x: lastANode.position.x + (540 - 24) / 2, // 360px 卡片中心对齐 24px followup
-          y: lastANode.position.y + aNodeHeight + GAP
+          x: targetANode.position.x + (540 - 24) / 2, // 360px 卡片中心对齐 24px followup
+          y: targetANode.position.y + aNodeHeight + GAP
         };
 
         const newFNode: Node = {
@@ -649,8 +678,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           position: fNodePosition,
           draggable: false,
           data: {
-            nodeId: lastANode.id, // 业务 ID 复用最后一个 A 节点的 ID
-            parentACardId: lastANode.id,
+            nodeId: targetANode.id, // 业务 ID 复用对应的 A 节点的 ID
+            parentACardId: targetANode.id,
             onClick: () => handleAskFollowUp(nextFNodeId),
           },
         };
@@ -664,12 +693,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
         // 更新边
         setEdges(prevEdges => {
-          const edgeId = `${lastANode.id}-${nextFNodeId}`;
+          const edgeId = `${targetANode.id}-${nextFNodeId}`;
           const existingEdge = prevEdges.find(e => e.id === edgeId);
           if (!existingEdge) {
             const newEdges = [...prevEdges, {
               id: edgeId,
-              source: lastANode.id,
+              source: targetANode.id,
               target: nextFNodeId,
               type: 'smoothstep',
               style: {
