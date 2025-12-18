@@ -88,8 +88,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       const node = nodesRef.current.find(n => n.id === followUpNodeId);
 
       if (node?.type === 'qcard') {
-        // Q节点：显示问题内容
-        const questionText = node.data.question || node.data.content || '';
+        // Q节点：优先从drafts读取（用户编辑的内容），否则从节点数据读取
+        const draftText = drafts[followUpNodeId];
+        const questionText = draftText !== undefined
+          ? draftText
+          : (node.data.question || node.data.content || '');
         setEditingText(questionText);
       } else {
         // A节点或F节点：从drafts读取草稿
