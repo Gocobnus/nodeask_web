@@ -5,7 +5,7 @@ const elk = new ELK();
 
 // 常量定义
 const GAP = 80;  // 节点间距
-const HORIZONTAL_GAP = 80;  // 横向追问与父节点的水平间距
+const HORIZONTAL_GAP = 120;  // 横向追问与父节点的水平间距
 const CARD_WIDTH = 360;  // 卡片宽度
 const FOLLOWUP_WIDTH = 24;  // F节点宽度
 

@@ -544,6 +544,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 id: edgeId,
                 source: parentNodeId,
                 target: id,
+                type: 'smoothstep',
                 style: {
                   strokeDasharray: '5,5',
                   stroke: '#b1b1b7',
@@ -629,6 +630,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               id: edgeId,
               source: lastANode.id,
               target: nextFNodeId,
+              type: 'smoothstep',
               style: {
                 strokeDasharray: '5,5',
                 stroke: '#b1b1b7',
@@ -717,6 +719,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           id: `${currentTree.dummyNodeId}-${currentTree.qNodeId}`,
           source: currentTree.dummyNodeId,
           target: currentTree.qNodeId,
+          type: 'smoothstep',
           style: {
             strokeDasharray: '5,5',
             stroke: '#b1b1b7',

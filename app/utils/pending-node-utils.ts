@@ -25,7 +25,7 @@ export function createPendingNode(config: CreatePendingNodeConfig): Node {
   if (pendingType === 'horizontal') {
     // 横向追问：在父节点右侧，上边缘对齐
     position = {
-      x: parentNode.position.x + 360 + 80, // 卡片宽度360 + 连接线80
+      x: parentNode.position.x + 360 + 120, // 卡片宽度360 + 连接线80
       y: parentNode.position.y
     };
   } else {
@@ -95,6 +95,7 @@ export function createPendingEdge(
     target: targetNode.id,
     sourceHandle,
     targetHandle,
+    type: 'smoothstep',
     style: {
       strokeDasharray: '5,5',
       stroke: '#b1b1b7',
