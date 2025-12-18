@@ -137,6 +137,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
           const newNodes = [...cleanedNodes, pendingQNode];
           nodesRef.current = newNodes;
+          // 触发布局更新,让布局算法处理pending节点的位置
+          setTimeout(() => {
+            setLayoutTrigger(prev => prev + 1);
+          }, 0);
+
           return newNodes;
         }
 
@@ -362,6 +367,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     });
 
     // 强制触发布局更新
+    // 这样横向分支节点高度增长时,主链路节点(如A2)会自动下移,避免重叠
     setLayoutTrigger(prev => prev + 1);
   }, [setNodes]);
 
@@ -783,12 +789,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
           // 使用新的多列布局算法
           // 只过滤掉 pending 节点，横向根节点现在也参与布局
-          const layoutNodes = nodes.filter(n => !n.data.isPending);
-          const layoutEdges = edges.filter(e => {
-            const sourceNode = nodes.find(n => n.id === e.source);
-            const targetNode = nodes.find(n => n.id === e.target);
-            return !sourceNode?.data.isPending && !targetNode?.data.isPending;
-          });
+          const layoutNodes = nodes;
+          const layoutEdges = edges;
 
           // 1. 找到第一个 F 节点作为参考点(锚点)
           const referenceNode = layoutNodes.find(n => n.type === 'followup');
@@ -813,17 +815,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: node.position.y + deltaY
               }
             }));
-
-            // 合并 pending 节点
-            const pendingNodes = nodes.filter(n => n.data.isPending);
-            const allNodes = [...finalNodes, ...pendingNodes];
-
+            
             console.log('📍 最终节点位置:', {
               referenceNodeId: referenceNode?.id,
               oldPos: referenceOldPos,
               newPos: referenceNewPos,
               delta: { deltaX, deltaY },
-              finalPositions: allNodes.map(n => ({
+              finalPositions: finalNodes.map(n => ({
                 reactFlowId: n.id,
                 nodeId: n.data.nodeId || 'N/A',
                 type: n.type,
@@ -833,15 +831,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }))
             });
 
-            nodesRef.current = allNodes;
-            setNodes(allNodes);
+            nodesRef.current = finalNodes;
+            setNodes(finalNodes);
           } else {
-            // 合并 pending 节点
-            const pendingNodes = nodes.filter(n => n.data.isPending);
-            const allNodes = [...layoutedNodes, ...pendingNodes];
-
             console.log('📍 最终节点位置 (无参考):', {
-              finalPositions: allNodes.map(n => ({
+              finalPositions: layoutedNodes.map(n => ({
                 reactFlowId: n.id,
                 nodeId: n.data.nodeId || 'N/A',
                 type: n.type,
@@ -850,20 +844,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 position: { x: n.position.x, y: n.position.y }
               }))
             });
-            nodesRef.current = allNodes;
-            setNodes(allNodes);
+            nodesRef.current = layoutedNodes;
+            setNodes(layoutedNodes);
           }
 
-          // 合并 pending 边
-          const pendingEdges = edges.filter(e => {
-            const sourceNode = nodes.find(n => n.id === e.source);
-            const targetNode = nodes.find(n => n.id === e.target);
-            return sourceNode?.data.isPending || targetNode?.data.isPending;
-          });
+          edgesRef.current = layoutedEdges;
+          setEdges(layoutedEdges);
 
-          const allEdges = [...layoutedEdges, ...pendingEdges];
-          edgesRef.current = allEdges;
-          setEdges(allEdges);
 
           // 布局完成,清除进行中标记
           layoutInProgressRef.current = false;

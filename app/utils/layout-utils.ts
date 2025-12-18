@@ -222,6 +222,8 @@ function layoutNodeRecursive(
 
   // 布局纵向分叉
   if (vertical.length > 0) {
+    const nodeHeight = node.height || (node.type === 'acard' ? 550 :
+                                       node.type === 'followup' ? 24 : 250);
     const parentCenterX = startX + (node.type === 'followup' ? FOLLOWUP_WIDTH / 2 : CARD_WIDTH / 2);
 
     // 计算纵向子节点的起始Y坐标
@@ -229,15 +231,15 @@ function layoutNodeRecursive(
     if (horizontal.length > 0) {
       // 有横向分支：找到横向分支中所有节点的最底部位置
       // A2的上边缘 = 横向分支最底部节点的下边缘 + GAP
-      let maxBottomY = startY; // 初始化为父节点的Y
+      let maxBottomY = startY + nodeHeight;
 
       // 遍历所有已布局的节点，找出属于横向分支的最底部节点
       for (const layoutedNode of layoutedNodes.values()) {
         // 检查这个节点是否属于当前节点的横向分支子树
         // 简单判断：如果节点的X坐标大于当前节点，且在合理范围内
-        if (layoutedNode.position.x > startX) {
-          const nodeBottom = layoutedNode.position.y + (layoutedNode.height || (layoutedNode.type === 'acard' ? 550 :
-                                                                                 layoutedNode.type === 'followup' ? 24 : 250));
+        if (layoutedNode.position.x > startX && (layoutedNode.type === 'acard' || layoutedNode.type === 'followup')) 
+        {
+          const nodeBottom = layoutedNode.position.y + (layoutedNode.height || (layoutedNode.type === 'acard' ? 550 : 24));
           maxBottomY = Math.max(maxBottomY, nodeBottom);
         }
       }
@@ -245,8 +247,6 @@ function layoutNodeRecursive(
       childStartY = maxBottomY + GAP;
     } else {
       // 没有横向分支，使用节点自身高度
-      const nodeHeight = node.height || (node.type === 'acard' ? 550 :
-                                         node.type === 'followup' ? 24 : 250);
       childStartY = startY + nodeHeight + GAP;
     }
 
