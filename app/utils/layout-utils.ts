@@ -304,8 +304,6 @@ export async function getMultiColumnLayoutedElements(
   nodes: Node[],
   edges: Edge[]
 ): Promise<{ nodes: Node[], edges: Edge[] }> {
-  console.log('🚀 开始多列布局算法', { nodeCount: nodes.length, edgeCount: edges.length });
-
   if (nodes.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -315,12 +313,6 @@ export async function getMultiColumnLayoutedElements(
   for (const node of nodes) {
     calculateSubtreeSize(node.id, nodes, edges, sizeCache);
   }
-
-  console.log('📏 子树尺寸计算完成', Array.from(sizeCache.entries()).map(([id, size]) => ({
-    id,
-    width: size.width,
-    height: size.height
-  })));
 
   // 2. 找到根节点（没有入边的节点）
   const nodesWithIncomingEdges = new Set(edges.map(e => e.target));
@@ -332,7 +324,6 @@ export async function getMultiColumnLayoutedElements(
   }
 
   const rootNode = rootNodes[0];
-  console.log('🌳 根节点:', rootNode.id);
 
   // 3. 从根节点开始递归布局
   const layoutedNodesMap = new Map<string, Node>();
@@ -350,7 +341,5 @@ export async function getMultiColumnLayoutedElements(
 
   // 4. 返回布局结果
   const layoutedNodes = Array.from(layoutedNodesMap.values());
-  console.log('✅ 布局完成', { layoutedCount: layoutedNodes.length });
-
   return { nodes: layoutedNodes, edges };
 }

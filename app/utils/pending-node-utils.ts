@@ -50,7 +50,8 @@ export function createPendingNode(config: CreatePendingNodeConfig): Node {
 
   if (type === 'qcard') {
     nodeData.question = initialContent;
-    nodeData.avatar = undefined; // Q节点可能需要avatar，这里暂时不设置
+    nodeData.content = initialContent; // 同时设置 content 字段
+    nodeData.avatar = parentNode.data?.avatar; // 继承父节点的 avatar（如果有）
   } else {
     nodeData.content = initialContent;
     nodeData.title = 'Answer (pending)';
@@ -62,6 +63,7 @@ export function createPendingNode(config: CreatePendingNodeConfig): Node {
     type,
     position,
     draggable: false,
+    selectable: true,  // 允许选中
     data: nodeData
   };
 }
@@ -124,11 +126,15 @@ export function confirmPendingNode(
   // 更新节点
   const updatedNodes = nodes.map(node => {
     if (node.id === tempId) {
+      // 保留原有的 cardActions (onClick, onCopy, onDelete 等)
+      // 只更新必要的字段，不要重新构建整个 data 对象
       return {
         ...node,
         id: realId,
+        draggable: true,  // 确认后允许拖动
+        selectable: true, // 确认后允许选中
         data: {
-          ...node.data,
+          ...node.data,  // 保留所有原有数据，包括 cardActions
           nodeId: realId,
           qaId: qaId,
           isPending: false,

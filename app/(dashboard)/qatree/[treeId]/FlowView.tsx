@@ -84,9 +84,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   useEffect(() => {
     if (followUpNodeId) {
-      // followUpNodeId始终是父ACard的ID，直接使用
-      const initialText = drafts[followUpNodeId] || '';
-      setEditingText(initialText);
+      // 从 nodesRef 中查找节点
+      const node = nodesRef.current.find(n => n.id === followUpNodeId);
+
+      if (node?.type === 'qcard') {
+        // Q节点：显示问题内容
+        const questionText = node.data.question || node.data.content || '';
+        setEditingText(questionText);
+      } else {
+        // A节点或F节点：从drafts读取草稿
+        const initialText = drafts[followUpNodeId] || '';
+        setEditingText(initialText);
+      }
     } else {
       setEditingText('');
     }
@@ -124,6 +133,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             initialContent: drafts[followUpNodeId] || ''
           });
 
+          // 添加 cardActions，使节点可以被选中和交互
+          pendingQNode.data = {
+            ...pendingQNode.data,
+            ...cardActions(pendingQNode.id, 'qcard')
+          };
+
           const pendingEdge = createPendingEdge(currentNode, pendingQNode, 'horizontal');
 
           // 添加pending边
@@ -135,7 +150,16 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             return newEdges;
           });
 
-          const newNodes = [...cleanedNodes, pendingQNode];
+          // 取消所有节点的选中状态，然后选中 pending 节点
+          const nodesWithSelection = cleanedNodes.map(n => ({
+            ...n,
+            selected: false  // 取消所有节点的选中
+          }));
+
+          // 将 pending 节点标记为选中
+          pendingQNode.selected = true;
+
+          const newNodes = [...nodesWithSelection, pendingQNode];
           nodesRef.current = newNodes;
           // 触发布局更新,让布局算法处理pending节点的位置
           setTimeout(() => {
@@ -231,10 +255,24 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           qa_id
         );
 
+        // 重新添加 cardActions，使用真实的 ID
+        const finalNodes = updatedNodes.map(node => {
+          if (node.id === q_node_id) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                ...cardActions(q_node_id, 'qcard')  // 使用真实 ID 重新创建 cardActions
+              }
+            };
+          }
+          return node;
+        });
+
         // 同步更新 ref 和状态
-        nodesRef.current = updatedNodes;
+        nodesRef.current = finalNodes;
         edgesRef.current = updatedEdges;
-        setNodes(updatedNodes);
+        setNodes(finalNodes);
         setEdges(updatedEdges);
 
         // 清理草稿（followUpNodeId就是父ACard的ID）
@@ -777,21 +815,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         layoutInProgressRef.current = true; // 标记布局开始
 
         const onLayout = async () => {
-          // 调试日志
-          console.log('🔄 触发布局 (onLayout 函数执行):', {
-            nodeCount: nodes.length,
-            nodes: nodes.map(n => ({
-              reactFlowId: n.id,
-              nodeId: n.data.nodeId || 'N/A',
-              type: n.type,
-              isPending: n.data.isPending || false,
-              height: n.height,
-              position: n.position
-            }))
-          });
 
           // 使用新的多列布局算法
-          // 只过滤掉 pending 节点，横向根节点现在也参与布局
           const layoutNodes = nodes;
           const layoutEdges = edges;
 
@@ -818,35 +843,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: node.position.y + deltaY
               }
             }));
-            
-            console.log('📍 最终节点位置:', {
-              referenceNodeId: referenceNode?.id,
-              oldPos: referenceOldPos,
-              newPos: referenceNewPos,
-              delta: { deltaX, deltaY },
-              finalPositions: finalNodes.map(n => ({
-                reactFlowId: n.id,
-                nodeId: n.data.nodeId || 'N/A',
-                type: n.type,
-                isPending: n.data.isPending || false,
-                isHorizontalRoot: n.data.isHorizontalRoot || false,
-                position: { x: n.position.x, y: n.position.y }
-              }))
-            });
 
             nodesRef.current = finalNodes;
             setNodes(finalNodes);
           } else {
-            console.log('📍 最终节点位置 (无参考):', {
-              finalPositions: layoutedNodes.map(n => ({
-                reactFlowId: n.id,
-                nodeId: n.data.nodeId || 'N/A',
-                type: n.type,
-                isPending: n.data.isPending || false,
-                isHorizontalRoot: n.data.isHorizontalRoot || false,
-                position: { x: n.position.x, y: n.position.y }
-              }))
-            });
             nodesRef.current = layoutedNodes;
             setNodes(layoutedNodes);
           }
