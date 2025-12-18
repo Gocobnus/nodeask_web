@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
 import { CardDeleteIcon, FollowUpIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
+import { CARD_WIDTH } from '@/app/config/constants';
 
 
 const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
@@ -93,7 +94,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
-      style={{ width: 360, position: 'relative' }}
+      style={{ width: CARD_WIDTH, position: 'relative' }}
       onMouseEnter={() => {
         console.log(`🐭 ${id} onMouseEnter`);
         setIsHovered(true);

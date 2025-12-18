@@ -4,3 +4,8 @@
 @plugin './hero.ts';
 @source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant light (&:is(.light *));
+
+:root {
+  /* 卡片尺寸 - 需与 app/config/constants.ts 中的 CARD_WIDTH 保持同步 */
+  --card-width: 440px;
+}

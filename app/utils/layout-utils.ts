@@ -1,13 +1,8 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from 'reactflow';
+import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP } from '../config/constants';
 
 const elk = new ELK();
-
-// 常量定义
-const GAP = 80;  // 节点间距
-const HORIZONTAL_GAP = 120;  // 横向追问与父节点的水平间距
-const CARD_WIDTH = 360;  // 卡片宽度
-const FOLLOWUP_WIDTH = 24;  // F节点宽度
 
 // 子树尺寸接口
 interface SubtreeSize {
@@ -33,16 +28,16 @@ export const getLayoutedElements = async (nodes: Node[], edges: Edge[]): Promise
       let width;
       if (node.type === 'acard') {
         height = node.height || 550; // ACard高度范围344-760px,使用中值
-        width = node.width || 360;
+        width = node.width || CARD_WIDTH;
       } else if (node.type === 'qcard') {
         height = node.height || 250; // QCard高度范围约100-344px,使用中值
-        width = node.width || 360;
+        width = node.width || CARD_WIDTH;
       } else if (node.type === 'followup') {
         height = node.height || 24; // FollowUp节点固定大小
         width = node.width || 24;
       } else {
         height = node.height || 150;
-        width = node.width || 360;
+        width = node.width || CARD_WIDTH;
       }
 
       return {

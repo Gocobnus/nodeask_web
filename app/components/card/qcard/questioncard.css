@@ -1,5 +1,5 @@
 .qcard__background-card {
-  --qcard-width: 360px;
+  --qcard-width: var(--card-width);
   --qcard-max-height: 344px;
   --qcard-border-radius: 20px;
   --header-height: 48px;

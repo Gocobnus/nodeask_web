@@ -420,7 +420,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               const canvasHeight = window.innerHeight;
 
               // 根据节点类型确定宽度
-              const nodeWidth = type === 'followup' ? 24 : 360;
+              const nodeWidth = type === 'followup' ? 24 : 540;
               const nodeHeight = 150;
 
               initialPosition = {
@@ -453,10 +453,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               let xPosition = parentNode.position.x;
               if (type === 'followup' && parentNode.type !== 'followup') {
                 // 从 360px 卡片到 24px followup：向右偏移
-                xPosition = parentNode.position.x + (360 - 24) / 2;
+                xPosition = parentNode.position.x + (540 - 24) / 2;
               } else if (type !== 'followup' && parentNode.type === 'followup') {
                 // 从 24px followup 到 360px 卡片：向左偏移
-                xPosition = parentNode.position.x - (360 - 24) / 2;
+                xPosition = parentNode.position.x - (540 - 24) / 2;
               }
 
               initialPosition = {
@@ -598,7 +598,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const aNodeHeight = lastANode.height || 550;
         const GAP = 80;
         const fNodePosition = {
-          x: lastANode.position.x + (360 - 24) / 2, // 360px 卡片中心对齐 24px followup
+          x: lastANode.position.x + (540 - 24) / 2, // 360px 卡片中心对齐 24px followup
           y: lastANode.position.y + aNodeHeight + GAP
         };
 
@@ -693,7 +693,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     // 创建 Q1 节点
     if (currentTree.qNodeId) {
-      const q1X = centerX - (360 - 24) / 2; // 基于F0中心向左偏移
+      const q1X = centerX - (540 - 24) / 2; // 基于F0中心向左偏移
       const q1Node: Node = {
         id: currentTree.qNodeId,
         type: 'qcard',

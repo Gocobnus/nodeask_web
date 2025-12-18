@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
 import { CardDeleteIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
+import { CARD_WIDTH } from '@/app/config/constants';
 
 
 const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
@@ -34,7 +35,7 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
-      style={{ width: 360, position: 'relative' }}
+      style={{ width: CARD_WIDTH, position: 'relative' }}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (

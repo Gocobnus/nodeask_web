@@ -7,6 +7,7 @@ import {
   ConfirmPendingNodeResult,
   CleanupPendingNodesResult
 } from '../types/pending-node';
+import { CARD_WIDTH, GAP, HORIZONTAL_GAP } from '../config/constants';
 
 /**
  * 创建一个pending节点
@@ -25,7 +26,7 @@ export function createPendingNode(config: CreatePendingNodeConfig): Node {
   if (pendingType === 'horizontal') {
     // 横向追问：在父节点右侧，上边缘对齐
     position = {
-      x: parentNode.position.x + 360 + 120, // 卡片宽度360 + 连接线80
+      x: parentNode.position.x + CARD_WIDTH + HORIZONTAL_GAP,
       y: parentNode.position.y
     };
   } else {
@@ -33,7 +34,7 @@ export function createPendingNode(config: CreatePendingNodeConfig): Node {
     const parentHeight = parentNode.height || 550; // 默认高度
     position = {
       x: parentNode.position.x,
-      y: parentNode.position.y + parentHeight + 80 // 间隙80
+      y: parentNode.position.y + parentHeight + GAP
     };
   }
 
