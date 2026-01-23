@@ -1,6 +1,6 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from 'reactflow';
-import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP } from '../config/constants';
+import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP, HORIZONTAL_BRANCH_GAP, HORIZONTAL_BRANCH_TO_VERTICAL_GAP } from '../config/constants';
 
 const elk = new ELK();
 
@@ -134,7 +134,7 @@ function calculateSubtreeSize(
     for (const childId of horizontal) {
       const childSize = calculateSubtreeSize(childId, nodes, edges, cache);
       maxHorizontalWidth = Math.max(maxHorizontalWidth, childSize.width);
-      totalHorizontalHeight += childSize.height + GAP;
+      totalHorizontalHeight += childSize.height + HORIZONTAL_BRANCH_GAP;
     }
 
     totalWidth = Math.max(totalWidth, selfWidth + HORIZONTAL_GAP + maxHorizontalWidth);
@@ -211,7 +211,7 @@ function layoutNodeRecursive(
         console.warn(`横向子节点 ${childId} 的尺寸未找到，跳过`);
         continue;
       }
-      currentY += childSize.height + GAP;
+      currentY += childSize.height + HORIZONTAL_BRANCH_GAP;
     }
   }
 
@@ -239,7 +239,7 @@ function layoutNodeRecursive(
         }
       }
 
-      childStartY = maxBottomY + GAP;
+      childStartY = maxBottomY + HORIZONTAL_BRANCH_TO_VERTICAL_GAP;
     } else {
       // 没有横向分支，使用节点自身高度
       childStartY = startY + nodeHeight + GAP;

@@ -4,4 +4,6 @@
 export const CARD_WIDTH = 440;
 export const FOLLOWUP_WIDTH = 24;
 export const GAP = 80;
+export const HORIZONTAL_BRANCH_GAP = 80;
+export const HORIZONTAL_BRANCH_TO_VERTICAL_GAP = 260;
 export const HORIZONTAL_GAP = 160;
