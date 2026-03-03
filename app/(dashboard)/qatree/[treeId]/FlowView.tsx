@@ -9,6 +9,7 @@ import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
 import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
+import { GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -60,6 +61,88 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
+
+  const getNodeHeight = useCallback((node: Node): number => {
+    if (typeof node.height === 'number') return node.height;
+    if (node.type === 'acard') return 550;
+    if (node.type === 'followup') return 24;
+    return 250;
+  }, []);
+
+  const collectDescendantIds = useCallback((rootId: string, allEdges: any[]): Set<string> => {
+    const descendants = new Set<string>();
+    const queue: string[] = [rootId];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      if (descendants.has(currentId)) continue;
+      descendants.add(currentId);
+
+      allEdges.forEach((edge) => {
+        if (edge.source === currentId && !descendants.has(edge.target)) {
+          queue.push(edge.target);
+        }
+      });
+    }
+
+    return descendants;
+  }, []);
+
+  const applyHorizontalPendingCollisionAvoidance = useCallback((
+    currentNodes: Node[],
+    allEdges: any[],
+    parentNodeId: string,
+    pendingNode: Node
+  ): Node[] => {
+    const nodeById = new Map(currentNodes.map((node) => [node.id, node]));
+
+    // 主链路下一个节点（a -> b）
+    const verticalChildIds = allEdges
+      .filter((edge) => edge.source === parentNodeId && edge.sourceHandle !== 'right')
+      .map((edge) => edge.target);
+
+    if (verticalChildIds.length === 0) return currentNodes;
+
+    const verticalChildren = verticalChildIds
+      .map((id) => nodeById.get(id))
+      .filter((node): node is Node => Boolean(node));
+
+    if (verticalChildren.length === 0) return currentNodes;
+
+    const downstreamRoot = verticalChildren.sort((a, b) => a.position.y - b.position.y)[0];
+    const downstreamIds = collectDescendantIds(downstreamRoot.id, allEdges);
+
+    // 在右侧列中找“a1 下方”的最近节点；没有则不移动
+    const rightColumnCandidates = Array.from(downstreamIds)
+      .map((id) => nodeById.get(id))
+      .filter((node): node is Node => Boolean(node))
+      .filter((node) => node.id !== pendingNode.id)
+      .filter((node) => node.position.x >= pendingNode.position.x - 1)
+      .filter((node) => node.position.y >= pendingNode.position.y);
+
+    if (rightColumnCandidates.length === 0) return currentNodes;
+
+    const nearestTop = Math.min(...rightColumnCandidates.map((node) => node.position.y));
+    const pendingBottom = pendingNode.position.y + getNodeHeight(pendingNode);
+    const minGap = GAP;
+    const distance = nearestTop - pendingBottom;
+
+    if (distance >= minGap) return currentNodes;
+
+    const deltaY = minGap - distance;
+
+    return currentNodes.map((node) =>
+      downstreamIds.has(node.id)
+        ? {
+            ...node,
+            position: {
+              ...node.position,
+              y: node.position.y + deltaY,
+            },
+          }
+        : node
+    );
+  }, [collectDescendantIds, getNodeHeight]);
 
   useEffect(() => {
     setNodes((nds) => {
@@ -126,7 +209,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
         // 如果是ACard,需要创建horizontal pending节点
         if (currentNode?.type === 'acard') {
-          const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
+          const { cleanedNodes } = cleanupPendingNodes(currentNodes, edgesRef.current);
 
           // 创建新的pending节点
           const pendingQNode = createPendingNode({
@@ -162,12 +245,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           // 将 pending 节点标记为选中
           pendingQNode.selected = true;
 
-          const newNodes = [...nodesWithSelection, pendingQNode];
+          const nodesWithPending = [...nodesWithSelection, pendingQNode];
+          const newNodes = applyHorizontalPendingCollisionAvoidance(
+            nodesWithPending,
+            edgesRef.current,
+            currentNode.id,
+            pendingQNode
+          );
           nodesRef.current = newNodes;
-          // 触发布局更新,让布局算法处理pending节点的位置
-          setTimeout(() => {
-            setLayoutTrigger(prev => prev + 1);
-          }, 0);
 
           return newNodes;
         }
@@ -826,6 +911,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [treeId, router, setNodes, setEdges]);
 
   useEffect(() => {
+    const hasHorizontalPending = nodes.some(node =>
+      node.data?.isPending && node.data?.pendingType === 'horizontal'
+    );
+    if (hasHorizontalPending) {
+      return;
+    }
+
     // 如果布局正在进行中,跳过
     if (layoutInProgressRef.current) {
       return;
