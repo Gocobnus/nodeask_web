@@ -290,6 +290,99 @@ function layoutNodeRecursive(
   }
 }
 
+function getNodeHeightForConstraint(node: Node): number {
+  if (typeof node.height === 'number') return node.height;
+  if (node.type === 'acard') return 550;
+  if (node.type === 'followup') return 24;
+  return 250;
+}
+
+function collectSubtreeIds(rootId: string, edges: Edge[]): Set<string> {
+  const ids = new Set<string>();
+  const queue: string[] = [rootId];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    if (ids.has(currentId)) continue;
+    ids.add(currentId);
+
+    edges.forEach((edge) => {
+      if (edge.source === currentId && !ids.has(edge.target)) {
+        queue.push(edge.target);
+      }
+    });
+  }
+
+  return ids;
+}
+
+function enforceHorizontalSiblingSpacing(nodes: Node[], edges: Edge[]): Node[] {
+  const adjustedNodes = nodes.map((node) => ({
+    ...node,
+    position: { ...node.position },
+  }));
+  const nodeMap = new Map(adjustedNodes.map((node) => [node.id, node]));
+
+  const shiftSubtree = (rootId: string, deltaY: number) => {
+    const subtreeIds = collectSubtreeIds(rootId, edges);
+    subtreeIds.forEach((id) => {
+      const node = nodeMap.get(id);
+      if (!node) return;
+      node.position.y += deltaY;
+    });
+  };
+
+  const subtreeBottom = (rootId: string): number => {
+    const subtreeIds = collectSubtreeIds(rootId, edges);
+    let bottom = Number.NEGATIVE_INFINITY;
+    subtreeIds.forEach((id) => {
+      const node = nodeMap.get(id);
+      if (!node) return;
+      const nodeBottom = node.position.y + getNodeHeightForConstraint(node);
+      bottom = Math.max(bottom, nodeBottom);
+    });
+    return bottom;
+  };
+
+  const parentToHorizontalChildren = new Map<string, string[]>();
+  edges.forEach((edge) => {
+    if (edge.sourceHandle !== 'right') return;
+    const list = parentToHorizontalChildren.get(edge.source) || [];
+    list.push(edge.target);
+    parentToHorizontalChildren.set(edge.source, list);
+  });
+
+  const maxPasses = Math.max(1, adjustedNodes.length * 2);
+  for (let pass = 0; pass < maxPasses; pass++) {
+    let changed = false;
+
+    for (const [, childIds] of parentToHorizontalChildren) {
+      if (childIds.length <= 1) continue;
+
+      let prevBottom = subtreeBottom(childIds[0]);
+
+      for (let i = 1; i < childIds.length; i++) {
+        const currentId = childIds[i];
+        const currentNode = nodeMap.get(currentId);
+        if (!currentNode) continue;
+
+        const requiredTop = prevBottom + HORIZONTAL_BRANCH_GAP;
+        if (currentNode.position.y < requiredTop) {
+          const deltaY = requiredTop - currentNode.position.y;
+          shiftSubtree(currentId, deltaY);
+          changed = true;
+        }
+
+        prevBottom = subtreeBottom(currentId);
+      }
+    }
+
+    if (!changed) break;
+  }
+
+  return nodes.map((node) => nodeMap.get(node.id) || node);
+}
+
 /**
  * 多列布局主入口
  */
@@ -334,5 +427,6 @@ export async function getMultiColumnLayoutedElements(
 
   // 4. 返回布局结果
   const layoutedNodes = Array.from(layoutedNodesMap.values());
-  return { nodes: layoutedNodes, edges };
+  const stabilizedNodes = enforceHorizontalSiblingSpacing(layoutedNodes, edges);
+  return { nodes: stabilizedNodes, edges };
 }

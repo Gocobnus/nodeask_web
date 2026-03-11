@@ -110,12 +110,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     if (verticalChildren.length === 0) return currentNodes;
 
     const downstreamRoot = verticalChildren.sort((a, b) => a.position.y - b.position.y)[0];
-    const downstreamIds = collectDescendantIds(downstreamRoot.id, allEdges);
 
     // 在右侧列中找“a1 下方”的最近节点；没有则不移动
-    const rightColumnCandidates = Array.from(downstreamIds)
-      .map((id) => nodeById.get(id))
-      .filter((node): node is Node => Boolean(node))
+    const rightColumnCandidates = currentNodes
       .filter((node) => node.id !== pendingNode.id)
       .filter((node) => node.position.x >= pendingNode.position.x - 1)
       .filter((node) => node.position.y >= pendingNode.position.y);
@@ -130,9 +127,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     if (distance >= minGap) return currentNodes;
 
     const deltaY = minGap - distance;
+    const shiftStartY = downstreamRoot.position.y;
+    const shiftMinX = Math.min(downstreamRoot.position.x, pendingNode.position.x) - 1;
 
     return currentNodes.map((node) =>
-      downstreamIds.has(node.id)
+      node.position.y >= shiftStartY && node.position.x >= shiftMinX
         ? {
             ...node,
             position: {
@@ -142,7 +141,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           }
         : node
     );
-  }, [collectDescendantIds, getNodeHeight]);
+  }, [getNodeHeight]);
 
   const placePendingBelowExistingHorizontalBranches = useCallback((
     currentNodes: Node[],
