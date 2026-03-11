@@ -123,9 +123,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     const deltaY = minGap - distance;
     const shiftStartY = downstreamRoot.position.y;
     const shiftMinX = Math.min(downstreamRoot.position.x, pendingNode.position.x) - 1;
-
     return currentNodes.map((node) =>
-      node.position.y >= shiftStartY && node.position.x >= shiftMinX
+      node.position.y >= shiftStartY &&
+      node.position.x >= shiftMinX &&
+      node.type !== 'followup'
         ? {
             ...node,
             position: {

@@ -230,7 +230,18 @@ function layoutNodeRecursive(
       // 仅在横向分支真实占用空间不足时，才下移纵向下游
       const baseY = startY + nodeHeight + GAP;
       const requiredY = horizontalBottomY + GAP;
-      childStartY = Math.max(baseY, requiredY);
+      // 特例：如果纵向下一个节点是 followup（例如最后一个A节点下的追问入口），
+      // 保持它贴主链基础间距，不因横向分支增长被下推。
+      if (vertical.length === 1) {
+        const onlyVerticalChild = nodes.find(n => n.id === vertical[0]);
+        if (onlyVerticalChild?.type === 'followup') {
+          childStartY = baseY;
+        } else {
+          childStartY = Math.max(baseY, requiredY);
+        }
+      } else {
+        childStartY = Math.max(baseY, requiredY);
+      }
     } else {
       // 没有横向分支，使用节点自身高度
       childStartY = startY + nodeHeight + GAP;
