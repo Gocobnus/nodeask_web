@@ -1,6 +1,6 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { Node, Edge } from 'reactflow';
-import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP, HORIZONTAL_BRANCH_GAP, HORIZONTAL_BRANCH_TO_VERTICAL_GAP } from '../config/constants';
+import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP, HORIZONTAL_BRANCH_GAP } from '../config/constants';
 
 const elk = new ELK();
 
@@ -189,6 +189,9 @@ function layoutNodeRecursive(
     return;
   }
 
+  const nodeHeight = node.height || (node.type === 'acard' ? 550 :
+                                     node.type === 'followup' ? 24 : 250);
+
   // 放置当前节点
   const layoutedNode = {
     ...node,
@@ -199,6 +202,7 @@ function layoutNodeRecursive(
   const { horizontal, vertical } = findChildren(nodeId, edges);
 
   // 布局横向分支
+  let horizontalBottomY = startY + nodeHeight;
   if (horizontal.length > 0) {
     const branchX = startX + CARD_WIDTH + HORIZONTAL_GAP;
     let currentY = startY;
@@ -211,35 +215,22 @@ function layoutNodeRecursive(
         console.warn(`横向子节点 ${childId} 的尺寸未找到，跳过`);
         continue;
       }
+      horizontalBottomY = Math.max(horizontalBottomY, currentY + childSize.height);
       currentY += childSize.height + HORIZONTAL_BRANCH_GAP;
     }
   }
 
   // 布局纵向分叉
   if (vertical.length > 0) {
-    const nodeHeight = node.height || (node.type === 'acard' ? 550 :
-                                       node.type === 'followup' ? 24 : 250);
     const parentCenterX = startX + (node.type === 'followup' ? FOLLOWUP_WIDTH / 2 : CARD_WIDTH / 2);
 
     // 计算纵向子节点的起始Y坐标
     let childStartY;
     if (horizontal.length > 0) {
-      // 有横向分支：找到横向分支中所有节点的最底部位置
-      // A2的上边缘 = 横向分支最底部节点的下边缘 + GAP
-      let maxBottomY = startY + nodeHeight;
-
-      // 遍历所有已布局的节点，找出属于横向分支的最底部节点
-      for (const layoutedNode of layoutedNodes.values()) {
-        // 检查这个节点是否属于当前节点的横向分支子树
-        // 简单判断：如果节点的X坐标大于当前节点，且在合理范围内
-        if (layoutedNode.position.x > startX && (layoutedNode.type === 'acard' || layoutedNode.type === 'followup')) 
-        {
-          const nodeBottom = layoutedNode.position.y + (layoutedNode.height || (layoutedNode.type === 'acard' ? 550 : 24));
-          maxBottomY = Math.max(maxBottomY, nodeBottom);
-        }
-      }
-
-      childStartY = maxBottomY + HORIZONTAL_BRANCH_TO_VERTICAL_GAP;
+      // 仅在横向分支真实占用空间不足时，才下移纵向下游
+      const baseY = startY + nodeHeight + GAP;
+      const requiredY = horizontalBottomY + GAP;
+      childStartY = Math.max(baseY, requiredY);
     } else {
       // 没有横向分支，使用节点自身高度
       childStartY = startY + nodeHeight + GAP;

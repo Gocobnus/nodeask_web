@@ -911,6 +911,20 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [treeId, router, setNodes, setEdges]);
 
   useEffect(() => {
+    // Prevent macOS two-finger horizontal swipe from triggering browser back/forward
+    // while this canvas is active.
+    const prevHtmlOverscrollX = document.documentElement.style.overscrollBehaviorX;
+    const prevBodyOverscrollX = document.body.style.overscrollBehaviorX;
+    document.documentElement.style.overscrollBehaviorX = 'none';
+    document.body.style.overscrollBehaviorX = 'none';
+
+    return () => {
+      document.documentElement.style.overscrollBehaviorX = prevHtmlOverscrollX;
+      document.body.style.overscrollBehaviorX = prevBodyOverscrollX;
+    };
+  }, []);
+
+  useEffect(() => {
     const hasHorizontalPending = nodes.some(node =>
       node.data?.isPending && node.data?.pendingType === 'horizontal'
     );
@@ -1002,7 +1016,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }
 
   return (
-    <div style={{ width: '100%', height: '100vh' }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100vh',
+        overscrollBehaviorX: 'none',
+        overscrollBehaviorY: 'none',
+        touchAction: 'none'
+      }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -1026,6 +1048,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         zoomOnDoubleClick={false}
         zoomOnScroll={false}
         panOnScroll={true}
+        preventScrolling={true}
         onPaneClick={() => {
           setNodes((currentNodes) => {
             setEdges((currentEdges) => {
