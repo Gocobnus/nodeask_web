@@ -3,7 +3,6 @@ import { Node, Edge } from 'reactflow';
 import { CARD_WIDTH, FOLLOWUP_WIDTH, GAP, HORIZONTAL_GAP, HORIZONTAL_BRANCH_GAP } from '../config/constants';
 
 const elk = new ELK();
-const PENDING_QCARD_HEIGHT = 250;
 
 // 子树尺寸接口
 interface SubtreeSize {
@@ -230,8 +229,7 @@ function layoutNodeRecursive(
     if (horizontal.length > 0) {
       // 仅在横向分支真实占用空间不足时，才下移纵向下游
       const baseY = startY + nodeHeight + GAP;
-      // 额外预留一个 pending Q 节点的高度，避免与主链路节点过于贴近
-      const requiredY = horizontalBottomY + GAP + PENDING_QCARD_HEIGHT;
+      const requiredY = horizontalBottomY + GAP;
       childStartY = Math.max(baseY, requiredY);
     } else {
       // 没有横向分支，使用节点自身高度

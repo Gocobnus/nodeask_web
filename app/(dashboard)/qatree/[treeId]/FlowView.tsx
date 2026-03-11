@@ -9,19 +9,13 @@ import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
 import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
-import { GAP, HORIZONTAL_BRANCH_GAP } from '../../../config/constants';
+import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, HORIZONTAL_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
 import ACardNode from '../../../components/flow-nodes/ACardNode';
 import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
 import { Skeleton } from '@heroui/react';
-import {
-  createPendingNode,
-  createPendingEdge,
-  confirmPendingNode,
-  cleanupPendingNodes
-} from '../../../utils/pending-node-utils';
 import { createHorizontalFollowUp } from '../../../services/qatree-api';
 
 const nodeTypes = {
@@ -88,7 +82,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     return descendants;
   }, []);
 
-  const applyHorizontalPendingCollisionAvoidance = useCallback((
+  const applyHorizontalCollisionAvoidance = useCallback((
     currentNodes: Node[],
     allEdges: any[],
     parentNodeId: string,
@@ -143,23 +137,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     );
   }, [getNodeHeight]);
 
-  const placePendingBelowExistingHorizontalBranches = useCallback((
+  const placeHorizontalQBelowExistingBranches = useCallback((
     currentNodes: Node[],
     allEdges: any[],
     parentNodeId: string,
-    pendingNode: Node
+    qNode: Node
   ): Node => {
     const nodeById = new Map(currentNodes.map((node) => [node.id, node]));
     const existingHorizontalRoots = allEdges
       .filter((edge) => edge.source === parentNodeId && edge.sourceHandle === 'right')
       .map((edge) => edge.target)
-      .filter((targetId) => targetId !== pendingNode.id);
+      .filter((targetId) => targetId !== qNode.id);
 
     if (existingHorizontalRoots.length === 0) {
-      return pendingNode;
+      return qNode;
     }
 
-    let maxBottomY = pendingNode.position.y;
+    let maxBottomY = qNode.position.y;
     existingHorizontalRoots.forEach((rootId) => {
       const subtreeIds = collectDescendantIds(rootId, allEdges);
       subtreeIds.forEach((nodeId) => {
@@ -173,9 +167,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     });
 
     return {
-      ...pendingNode,
+      ...qNode,
       position: {
-        ...pendingNode.position,
+        ...qNode.position,
         y: maxBottomY + HORIZONTAL_BRANCH_GAP,
       },
     };
@@ -224,8 +218,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
   }, [followUpNodeId, drafts]);
 
-  // 管理pending节点的生命周期 (与输入框同步)
-  const lastFollowUpNodeIdRef = useRef<string | null>(null);
   // 记录上一个 followUpNodeId，用于恢复 hideAskButton
   const prevFollowUpNodeIdRef = useRef<string | null>(null);
 
@@ -235,113 +227,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const lastNodeHeightsRef = useRef<Record<string, number>>({});
   const layoutTriggerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    // 如果followUpNodeId没有变化,不执行
-    if (followUpNodeId === lastFollowUpNodeIdRef.current) {
-      return;
-    }
-    lastFollowUpNodeIdRef.current = followUpNodeId;
-
-    if (followUpNodeId) {
-      setNodes((currentNodes) => {
-        const currentNode = currentNodes.find(n => n.id === followUpNodeId);
-
-        // 如果是ACard,需要创建horizontal pending节点
-        if (currentNode?.type === 'acard') {
-          const { cleanedNodes } = cleanupPendingNodes(currentNodes, edgesRef.current);
-
-          // 创建新的pending节点
-          const pendingQNode = createPendingNode({
-            type: 'qcard',
-            parentNode: currentNode,
-            pendingType: 'horizontal',
-            initialContent: drafts[followUpNodeId] || ''
-          });
-
-          // 添加 cardActions，使节点可以被选中和交互
-          pendingQNode.data = {
-            ...pendingQNode.data,
-            ...cardActions(pendingQNode.id, 'qcard')
-          };
-
-          const pendingEdge = createPendingEdge(currentNode, pendingQNode, 'horizontal');
-          const { cleanedEdges } = cleanupPendingNodes(cleanedNodes, edgesRef.current);
-          const edgeExists = cleanedEdges.some(e => e.id === pendingEdge.id);
-          const newEdges = edgeExists ? cleanedEdges : [...cleanedEdges, pendingEdge];
-
-          // 取消所有节点的选中状态，然后选中 pending 节点
-          const nodesWithSelection = cleanedNodes.map(n => ({
-            ...n,
-            selected: false  // 取消所有节点的选中
-          }));
-
-          // 将 pending 节点标记为选中
-          pendingQNode.selected = true;
-          const placedPendingQNode = placePendingBelowExistingHorizontalBranches(
-            nodesWithSelection,
-            newEdges,
-            currentNode.id,
-            pendingQNode
-          );
-
-          const nodesWithPending = [...nodesWithSelection, placedPendingQNode];
-          const newNodes = applyHorizontalPendingCollisionAvoidance(
-            nodesWithPending,
-            newEdges,
-            currentNode.id,
-            placedPendingQNode
-          );
-          nodesRef.current = newNodes;
-          edgesRef.current = newEdges;
-          setEdges(newEdges);
-
-          return newNodes;
-        }
-
-        return currentNodes;
-      });
-    } else {
-
-      // 输入框关闭时,删除所有pending节点和边，并恢复追问按钮
-      setNodes((currentNodes) => {
-        setEdges((currentEdges) => {
-          const { cleanedEdges } = cleanupPendingNodes(currentNodes, currentEdges);
-          edgesRef.current = cleanedEdges;
-          return cleanedEdges;
-        });
-        const { cleanedNodes } = cleanupPendingNodes(currentNodes, []);
-
-        // 恢复所有ACard的hideAskButton
-        const finalNodes = cleanedNodes.map(n =>
-          n.type === 'acard' && n.data.hideAskButton
-            ? { ...n, data: { ...n.data, hideAskButton: false }}
-            : n
-        );
-        nodesRef.current = finalNodes;
-        return finalNodes;
-      });
-    }
-  }, [followUpNodeId]);
-
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
-
-    // 查找pending节点：parentReactFlowId === followUpNodeId
-    const pendingNode = nodes.find(n =>
-      n.data.isPending && n.data.parentReactFlowId === followUpNodeId
-    );
-
-    if (pendingNode) {
-      setNodes((nds) => {
-        const updatedNodes = nds.map(n =>
-          n.id === pendingNode.id
-            ? { ...n, data: { ...n.data, question: newText }}
-            : n
-        );
-        nodesRef.current = updatedNodes;
-        return updatedNodes;
-      });
-    }
 
     // 保存草稿（followUpNodeId始终是父ACard的ID）
     if (followUpNodeId) {
@@ -360,49 +247,82 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const handleSubmit = async (submittedText: string) => {
     if (!followUpNodeId) return;
 
-    // 查找pending节点：parentReactFlowId === followUpNodeId
-    const pendingNode = nodes.find(n =>
-      n.data.isPending && n.data.parentReactFlowId === followUpNodeId
-    );
+    const trimmedText = submittedText.trim();
+    if (!trimmedText) return;
 
-    if (pendingNode && pendingNode.data.pendingType === 'horizontal') {
-      // 横向追问：调用API并确认pending节点
+    if (nodeForFollowUp?.type === 'acard') {
+      // 横向追问：一阶段成功后再创建真实Q节点
+      setIsSubmitting(true);
       try {
+        const parentNode = nodesRef.current.find(n => n.id === followUpNodeId);
+        if (!parentNode) {
+          throw new Error('Parent node not found');
+        }
+        const parentBusinessNodeId = parentNode.data?.nodeId || parentNode.id;
         const data = await createHorizontalFollowUp(
           treeId,
-          pendingNode.data.parentNodeId,
-          submittedText
+          parentBusinessNodeId,
+          trimmedText
         );
         const { q_node_id, qa_id } = data;
-
-        // 先计算新的节点和边
-        const { updatedNodes, updatedEdges } = confirmPendingNode(
+        const newQNodeBase: Node = {
+          id: q_node_id,
+          type: 'qcard',
+          position: {
+            x: parentNode.position.x + CARD_WIDTH + HORIZONTAL_GAP,
+            y: parentNode.position.y
+          },
+          draggable: false,
+          selected: true,
+          data: {
+            pos: 0,
+            content: trimmedText,
+            question: trimmedText,
+            isGenerating: false,
+            nodeId: q_node_id,
+            qaId: qa_id,
+            parentNodeId: parentBusinessNodeId,
+            parentReactFlowId: parentNode.id,
+            avatar: mockUser.avatar,
+            ...cardActions(q_node_id, 'qcard')
+          }
+        };
+        const newEdge = {
+          id: `${parentNode.id}-${q_node_id}`,
+          source: parentNode.id,
+          target: q_node_id,
+          sourceHandle: 'right',
+          targetHandle: 'left',
+          type: 'smoothstep',
+          style: {
+            strokeDasharray: '5,5',
+            stroke: '#b1b1b7',
+            strokeWidth: 2
+          }
+        };
+        const edgeExists = edgesRef.current.some((e: any) => e.id === newEdge.id);
+        const nextEdges = edgeExists ? edgesRef.current : [...edgesRef.current, newEdge];
+        const placedQNode = placeHorizontalQBelowExistingBranches(
           nodesRef.current,
-          edgesRef.current,
-          pendingNode.id,
-          q_node_id,
-          qa_id
+          nextEdges,
+          parentNode.id,
+          newQNodeBase
+        );
+        const nodesWithSelection = nodesRef.current.map(node => ({
+          ...node,
+          selected: false
+        }));
+        const nextNodes = applyHorizontalCollisionAvoidance(
+          [...nodesWithSelection, placedQNode],
+          nextEdges,
+          parentNode.id,
+          placedQNode
         );
 
-        // 重新添加 cardActions，使用真实的 ID
-        const finalNodes = updatedNodes.map(node => {
-          if (node.id === q_node_id) {
-            return {
-              ...node,
-              data: {
-                ...node.data,
-                ...cardActions(q_node_id, 'qcard')  // 使用真实 ID 重新创建 cardActions
-              }
-            };
-          }
-          return node;
-        });
-
-        // 同步更新 ref 和状态
-        nodesRef.current = finalNodes;
-        edgesRef.current = updatedEdges;
-        setNodes(finalNodes);
-        setEdges(updatedEdges);
+        nodesRef.current = nextNodes;
+        edgesRef.current = nextEdges;
+        setNodes(nextNodes);
+        setEdges(nextEdges);
 
         // 清理草稿（followUpNodeId就是父ACard的ID）
         setDrafts(prevDrafts => {
@@ -424,17 +344,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       } catch (error) {
         console.error('横向追问失败:', error);
-        // 删除pending节点
-        setNodes((currentNodes) => {
-          const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
-          nodesRef.current = cleanedNodes;
-          return cleanedNodes;
-        });
-        setEdges((currentEdges) => {
-          const { cleanedEdges } = cleanupPendingNodes(nodes, currentEdges);
-          edgesRef.current = cleanedEdges;
-          return cleanedEdges;
-        });
+      } finally {
+        setIsSubmitting(false);
       }
     } else if (nodeForFollowUp?.type === 'followup') {
       // 垂直追问：保持原有逻辑
@@ -986,13 +897,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, []);
 
   useEffect(() => {
-    const hasHorizontalPending = nodes.some(node =>
-      node.data?.isPending && node.data?.pendingType === 'horizontal'
-    );
-    if (hasHorizontalPending) {
-      return;
-    }
-
     // 如果布局正在进行中,跳过
     if (layoutInProgressRef.current) {
       return;
@@ -1099,15 +1003,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         preventScrolling={true}
         onPaneClick={() => {
           setNodes((currentNodes) => {
-            setEdges((currentEdges) => {
-              const { cleanedEdges } = cleanupPendingNodes(currentNodes, currentEdges);
-              edgesRef.current = cleanedEdges;
-              return cleanedEdges;
-            });
-            const { cleanedNodes } = cleanupPendingNodes(currentNodes, edges);
-
             // 取消选中并恢复追问按钮
-            const finalNodes = cleanedNodes.map(n => ({
+            const finalNodes = currentNodes.map(n => ({
               ...n,
               selected: false,
               data: n.type === 'acard' && n.data.hideAskButton
