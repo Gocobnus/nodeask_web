@@ -9,7 +9,7 @@ import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
 import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
-import { GAP } from '../../../config/constants';
+import { GAP, HORIZONTAL_BRANCH_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -144,6 +144,44 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     );
   }, [collectDescendantIds, getNodeHeight]);
 
+  const placePendingBelowExistingHorizontalBranches = useCallback((
+    currentNodes: Node[],
+    allEdges: any[],
+    parentNodeId: string,
+    pendingNode: Node
+  ): Node => {
+    const nodeById = new Map(currentNodes.map((node) => [node.id, node]));
+    const existingHorizontalRoots = allEdges
+      .filter((edge) => edge.source === parentNodeId && edge.sourceHandle === 'right')
+      .map((edge) => edge.target)
+      .filter((targetId) => targetId !== pendingNode.id);
+
+    if (existingHorizontalRoots.length === 0) {
+      return pendingNode;
+    }
+
+    let maxBottomY = pendingNode.position.y;
+    existingHorizontalRoots.forEach((rootId) => {
+      const subtreeIds = collectDescendantIds(rootId, allEdges);
+      subtreeIds.forEach((nodeId) => {
+        const node = nodeById.get(nodeId);
+        if (!node) return;
+        const nodeBottom = node.position.y + getNodeHeight(node);
+        if (nodeBottom > maxBottomY) {
+          maxBottomY = nodeBottom;
+        }
+      });
+    });
+
+    return {
+      ...pendingNode,
+      position: {
+        ...pendingNode.position,
+        y: maxBottomY + HORIZONTAL_BRANCH_GAP,
+      },
+    };
+  }, [collectDescendantIds, getNodeHeight]);
+
   useEffect(() => {
     setNodes((nds) => {
       const updatedNodes = nds.map((node) => {
@@ -226,15 +264,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           };
 
           const pendingEdge = createPendingEdge(currentNode, pendingQNode, 'horizontal');
-
-          // 添加pending边
-          setEdges((currentEdges) => {
-            const { cleanedEdges } = cleanupPendingNodes(cleanedNodes, currentEdges);
-            const edgeExists = cleanedEdges.some(e => e.id === pendingEdge.id);
-            const newEdges = edgeExists ? cleanedEdges : [...cleanedEdges, pendingEdge];
-            edgesRef.current = newEdges;
-            return newEdges;
-          });
+          const { cleanedEdges } = cleanupPendingNodes(cleanedNodes, edgesRef.current);
+          const edgeExists = cleanedEdges.some(e => e.id === pendingEdge.id);
+          const newEdges = edgeExists ? cleanedEdges : [...cleanedEdges, pendingEdge];
 
           // 取消所有节点的选中状态，然后选中 pending 节点
           const nodesWithSelection = cleanedNodes.map(n => ({
@@ -244,15 +276,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
           // 将 pending 节点标记为选中
           pendingQNode.selected = true;
-
-          const nodesWithPending = [...nodesWithSelection, pendingQNode];
-          const newNodes = applyHorizontalPendingCollisionAvoidance(
-            nodesWithPending,
-            edgesRef.current,
+          const placedPendingQNode = placePendingBelowExistingHorizontalBranches(
+            nodesWithSelection,
+            newEdges,
             currentNode.id,
             pendingQNode
           );
+
+          const nodesWithPending = [...nodesWithSelection, placedPendingQNode];
+          const newNodes = applyHorizontalPendingCollisionAvoidance(
+            nodesWithPending,
+            newEdges,
+            currentNode.id,
+            placedPendingQNode
+          );
           nodesRef.current = newNodes;
+          edgesRef.current = newEdges;
+          setEdges(newEdges);
 
           return newNodes;
         }
@@ -1072,7 +1112,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           setFollowUpNodeId(null);
         }}
         selectNodesOnDrag={false}
-        minZoom={0.4}
+        minZoom={0.1}
       />
       <AnimatePresence>
         {nodeForFollowUp && (
