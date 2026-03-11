@@ -232,6 +232,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   // 用于存储最新的 nodes 和 edges，解决异步状态更新导致的竞态条件
   const nodesRef = useRef<Node[]>([]);
   const edgesRef = useRef<any[]>([]);
+  const lastNodeHeightsRef = useRef<Record<string, number>>({});
+  const layoutTriggerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // 如果followUpNodeId没有变化,不执行
@@ -520,6 +522,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 处理节点高度变化
   const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
+    const prevHeight = lastNodeHeightsRef.current[nodeId];
+    if (prevHeight !== undefined && Math.abs(newHeight - prevHeight) < 8) {
+      return;
+    }
+    lastNodeHeightsRef.current[nodeId] = newHeight;
+
     // 更新节点高度并触发布局重新计算
     setNodes((currentNodes) => {
       const updated = currentNodes.map(node =>
@@ -531,10 +539,24 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       return updated;
     });
 
-    // 强制触发布局更新
-    // 这样横向分支节点高度增长时,主链路节点(如A2)会自动下移,避免重叠
-    setLayoutTrigger(prev => prev + 1);
+    // 节流布局触发，避免收起/展开动画期间多次全量重排
+    if (layoutTriggerTimeoutRef.current) {
+      return;
+    }
+    layoutTriggerTimeoutRef.current = setTimeout(() => {
+      layoutTriggerTimeoutRef.current = null;
+      setLayoutTrigger(prev => prev + 1);
+    }, 120);
   }, [setNodes]);
+
+  useEffect(() => {
+    return () => {
+      if (layoutTriggerTimeoutRef.current) {
+        clearTimeout(layoutTriggerTimeoutRef.current);
+        layoutTriggerTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // 卡片操作函数
   const cardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
@@ -1071,19 +1093,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onMoveStart={onMoveStart}
-        onNodeMouseEnter={(_event, node) => {
-          console.log('🔍 节点信息:', {
-            reactFlowId: node.id,
-            nodeId: node.data.nodeId,
-            qaId: node.data.qaId,
-            parentNodeId: node.data.parentNodeId,  // 父节点的业务 ID
-            parentReactFlowId: node.data.parentReactFlowId,  // 父节点的 React Flow ID
-            type: node.type,
-            isPending: node.data.isPending,
-            isHorizontalRoot: node.data.isHorizontalRoot,
-            position: node.position
-          });
-        }}
         zoomOnDoubleClick={false}
         zoomOnScroll={false}
         panOnScroll={true}

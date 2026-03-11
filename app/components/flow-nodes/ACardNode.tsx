@@ -16,6 +16,8 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const updateNodeInternals = useUpdateNodeInternals();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastHeightRef = useRef<number>(0);
+  const resizeRafRef = useRef<number | null>(null);
+  const pendingHeightRef = useRef<number>(0);
 
   // ResizeObserver 监听高度变化
   useEffect(() => {
@@ -39,26 +41,37 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       const bottomMargin = 16;
       const estimatedTotalHeight = headerHeight + contentHeight + bottomMargin;
 
-      if (estimatedTotalHeight !== lastHeightRef.current && estimatedTotalHeight > 0) {
-        console.log('🔍 ACard ResizeObserver 检测到高度变化:', {
-          id,
-          oldHeight: lastHeightRef.current,
-          newHeight: estimatedTotalHeight,
-          contentHeight,
-          diff: estimatedTotalHeight - lastHeightRef.current
-        });
-        lastHeightRef.current = estimatedTotalHeight;
-
-        // 通知父组件高度已变化
-        if (data.onHeightChange) {
-          data.onHeightChange(id, estimatedTotalHeight);
-        }
+      if (estimatedTotalHeight <= 0) {
+        return;
       }
+
+      pendingHeightRef.current = estimatedTotalHeight;
+      if (resizeRafRef.current !== null) {
+        return;
+      }
+
+      resizeRafRef.current = window.requestAnimationFrame(() => {
+        resizeRafRef.current = null;
+        const nextHeight = pendingHeightRef.current;
+        if (Math.abs(nextHeight - lastHeightRef.current) < 8) {
+          return;
+        }
+        lastHeightRef.current = nextHeight;
+        if (data.onHeightChange) {
+          data.onHeightChange(id, nextHeight);
+        }
+      });
     });
 
     // 监听内容容器的变化
     resizeObserver.observe(contentWrapper);
-    return () => resizeObserver.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+      if (resizeRafRef.current !== null) {
+        cancelAnimationFrame(resizeRafRef.current);
+        resizeRafRef.current = null;
+      }
+    };
   }, [id, data.onHeightChange]);
 
   useEffect(() => {
@@ -95,14 +108,8 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: CARD_WIDTH, position: 'relative' }}
-      onMouseEnter={() => {
-        console.log(`🐭 ${id} onMouseEnter`);
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => {
-        console.log(`🐭 ${id} onMouseLeave`);
-        setIsHovered(false);
-      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
