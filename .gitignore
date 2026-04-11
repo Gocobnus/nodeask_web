@@ -46,6 +46,9 @@ next-env.d.ts
 # claude 
 .claude
 
+# codex
+.codex
+
 
 # AI RULE
 AGENTS.md
