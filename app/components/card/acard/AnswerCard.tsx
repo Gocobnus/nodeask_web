@@ -37,6 +37,7 @@ export default function AnswerCard({
   onCopyError,
   onClick,
   onLocate,
+  onRelatedQuestionClick,
   relatedQuestions = [],
   tooltipSize = 'sm'
 }: CustomACardProps) {
@@ -132,6 +133,14 @@ export default function AnswerCard({
 
   // 相关问题列表数据
   const listBoxItems = relatedQuestions.map((q, index) => ({ id: index.toString(), text: q }));
+
+  const handleRelatedQuestionAction = (key: React.Key) => {
+    const selectedItem = listBoxItems.find((item) => item.id === String(key));
+    if (!selectedItem || !onRelatedQuestionClick) {
+      return;
+    }
+    onRelatedQuestionClick(selectedItem.text);
+  };
 
   // --- 事件处理函数 ---
   const handleButtonPress = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -436,7 +445,7 @@ export default function AnswerCard({
                     aria-label="相关问题"
                     selectionMode="none"
                     items={listBoxItems}
-                    onAction={(key) => console.log(`Chose related question: ${key}`)}
+                    onAction={handleRelatedQuestionAction}
                     itemClasses={{
                       base: "acard__related-question-item",
                     }}
@@ -536,7 +545,7 @@ export default function AnswerCard({
               aria-label="相关问题"
               selectionMode="none"
               items={listBoxItems}
-              onAction={(key) => console.log(`Chose related question: ${key}`)}
+              onAction={handleRelatedQuestionAction}
               itemClasses={{
                 base: "acard__related-question-item",
               }}

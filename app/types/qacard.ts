@@ -35,4 +35,5 @@ export interface ACardProps {
   onCopyError?: (error: Error) => void;
   onClick?: (e?: React.MouseEvent) => void;
   onDelete?: () => void;
+  onRelatedQuestionClick?: (question: string) => void;
 }

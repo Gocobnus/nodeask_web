@@ -251,11 +251,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     const trimmedText = submittedText.trim();
     if (!trimmedText) return;
 
-    if (nodeForFollowUp?.type === 'acard') {
-      // 横向追问：一阶段成功后再创建真实Q节点
+    const runHorizontalFollowUpFromNode = async (parentReactFlowNodeId: string, questionText: string) => {
       setIsSubmitting(true);
       try {
-        const parentNode = nodesRef.current.find(n => n.id === followUpNodeId);
+        const parentNode = nodesRef.current.find(n => n.id === parentReactFlowNodeId);
         if (!parentNode) {
           throw new Error('Parent node not found');
         }
@@ -263,7 +262,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const data = await createHorizontalFollowUp(
           treeId,
           parentBusinessNodeId,
-          trimmedText
+          questionText
         );
         const { q_node_id, qa_id } = data;
         const newQNodeBase: Node = {
@@ -277,8 +276,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           selected: true,
           data: {
             pos: 0,
-            content: trimmedText,
-            question: trimmedText,
+            content: questionText,
+            question: questionText,
             isGenerating: false,
             nodeId: q_node_id,
             qaId: qa_id,
@@ -325,29 +324,31 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         setNodes(nextNodes);
         setEdges(nextEdges);
 
-        // 清理草稿（followUpNodeId就是父ACard的ID）
-        setDrafts(prevDrafts => {
-          const newDrafts = { ...prevDrafts };
-          delete newDrafts[followUpNodeId];
-          return newDrafts;
-        });
-
-        // 启动SSE连接接收Answer内容（此时 ref 已包含最新数据）
         startMockSSE({
           onMessage: (event, data) => {
             handleMessageRef.current(event, data);
           },
           onClose: () => console.log("Horizontal follow-up SSE stream closed."),
         }, {
-          qaId: qa_id,        // 从 API 返回的 qa_id
-          parentNodeId: q_node_id  // Q 节点 ID
+          qaId: qa_id,
+          parentNodeId: q_node_id
         });
-
       } catch (error) {
         console.error('横向追问失败:', error);
       } finally {
         setIsSubmitting(false);
       }
+    };
+
+    if (nodeForFollowUp?.type === 'acard') {
+      await runHorizontalFollowUpFromNode(followUpNodeId, trimmedText);
+
+      // 清理草稿（followUpNodeId就是父ACard的ID）
+      setDrafts(prevDrafts => {
+        const newDrafts = { ...prevDrafts };
+        delete newDrafts[followUpNodeId];
+        return newDrafts;
+      });
     } else if (nodeForFollowUp?.type === 'followup') {
       // 垂直追问：保持原有逻辑
       // TODO: 调用真实 API
@@ -411,6 +412,102 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     prevFollowUpNodeIdRef.current = nodeId;  // 更新记录
     setFollowUpNodeId(nodeId);
   }, [setNodes]);
+
+  const handleRelatedQuestionFollowUp = useCallback((nodeId: string, question: string) => {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) return;
+    // 相关问题点击走静默横向追问，不设置 followUpNodeId，避免弹出底部输入框
+    setIsSubmitting(true);
+    (async () => {
+      try {
+        const parentNode = nodesRef.current.find(n => n.id === nodeId);
+        if (!parentNode) {
+          throw new Error('Parent node not found');
+        }
+        const parentBusinessNodeId = parentNode.data?.nodeId || parentNode.id;
+        const data = await createHorizontalFollowUp(
+          treeId,
+          parentBusinessNodeId,
+          trimmedQuestion
+        );
+        const { q_node_id, qa_id } = data;
+        const newQNodeBase: Node = {
+          id: q_node_id,
+          type: 'qcard',
+          position: {
+            x: parentNode.position.x + CARD_WIDTH + HORIZONTAL_GAP,
+            y: parentNode.position.y
+          },
+          draggable: false,
+          selected: true,
+          data: {
+            pos: 0,
+            content: trimmedQuestion,
+            question: trimmedQuestion,
+            isGenerating: false,
+            nodeId: q_node_id,
+            qaId: qa_id,
+            parentNodeId: parentBusinessNodeId,
+            parentReactFlowId: parentNode.id,
+            avatar: mockUser.avatar,
+            onDelete: () => console.log(`Delete card ${q_node_id}`),
+            onCopy: () => console.log(`Copy card ${q_node_id}`),
+            onClick: () => handleAskFollowUp(q_node_id),
+          }
+        };
+        const newEdge = {
+          id: `${parentNode.id}-${q_node_id}`,
+          source: parentNode.id,
+          target: q_node_id,
+          sourceHandle: 'right',
+          targetHandle: 'left',
+          type: 'smoothstep',
+          style: {
+            strokeDasharray: '5,5',
+            stroke: '#b1b1b7',
+            strokeWidth: 2
+          }
+        };
+        const edgeExists = edgesRef.current.some((e: any) => e.id === newEdge.id);
+        const nextEdges = edgeExists ? edgesRef.current : [...edgesRef.current, newEdge];
+        const placedQNode = placeHorizontalQBelowExistingBranches(
+          nodesRef.current,
+          nextEdges,
+          parentNode.id,
+          newQNodeBase
+        );
+        const nodesWithSelection = nodesRef.current.map(node => ({
+          ...node,
+          selected: false
+        }));
+        const nextNodes = applyHorizontalCollisionAvoidance(
+          [...nodesWithSelection, placedQNode],
+          nextEdges,
+          parentNode.id,
+          placedQNode
+        );
+
+        nodesRef.current = nextNodes;
+        edgesRef.current = nextEdges;
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+
+        startMockSSE({
+          onMessage: (event, data) => {
+            handleMessageRef.current(event, data);
+          },
+          onClose: () => console.log("Horizontal follow-up SSE stream closed."),
+        }, {
+          qaId: qa_id,
+          parentNodeId: q_node_id
+        });
+      } catch (error) {
+        console.error('横向追问失败:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
+  }, [treeId, placeHorizontalQBelowExistingBranches, applyHorizontalCollisionAvoidance, handleAskFollowUp]);
 
   const handleNodeLocate = useCallback((nodeId: string) => {
     setNodes((nds) => {
@@ -476,9 +573,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     onCopy: () => console.log(`Copy card ${id}`),
     onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
     onAsk: () => handleAskFollowUp(id),
+    onRelatedQuestionClick: type === 'acard'
+      ? (question: string) => handleRelatedQuestionFollowUp(id, question)
+      : undefined,
     onLocate: () => handleNodeLocate(id),
     onHeightChange: handleHeightChange,
-  }), [handleAskFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange]);
+  }), [handleAskFollowUp, handleRelatedQuestionFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange]);
 
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);

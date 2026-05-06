@@ -184,6 +184,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         onCopyError={data.onCopyError}
         onClick={data.onClick}
         onLocate={data.onLocate}
+        onRelatedQuestionClick={data.onRelatedQuestionClick}
         relatedQuestions={data.relatedQuestions}
         tooltipSize={dynamicTooltipSize}
       />
