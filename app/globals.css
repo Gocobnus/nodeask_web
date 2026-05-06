@@ -9,3 +9,7 @@
   /* 卡片尺寸 - 需与 app/config/constants.ts 中的 CARD_WIDTH 保持同步 */
   --card-width: 440px;
 }
+
+.flow-canvas--layout-transition .react-flow__node {
+  transition: transform 220ms ease;
+}

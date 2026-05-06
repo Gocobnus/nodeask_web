@@ -56,6 +56,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   // 用于强制触发布局更新的状态
   const [layoutTrigger, setLayoutTrigger] = useState(0);
   const locateAnimationRef = useRef<number | null>(null);
+  const animateNextLayoutRef = useRef(false);
+  const [layoutTransitionEnabled, setLayoutTransitionEnabled] = useState(false);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
@@ -374,6 +376,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       edgesRef.current = nextEdges;
       setNodes(nextNodes);
       setEdges(nextEdges);
+      animateNextLayoutRef.current = true;
       setLayoutTrigger(prev => prev + 1);
 
       startMockSSE({
@@ -1054,6 +1057,17 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           const referenceNewPos = referenceLayoutedNode?.position;
 
           // 4. 计算偏移量并应用到所有节点（基于F0参考节点）
+          const applyLayoutNodes = (targetNodes: Node[]) => {
+            const shouldAnimate = animateNextLayoutRef.current;
+            animateNextLayoutRef.current = false;
+            if (shouldAnimate) {
+              setLayoutTransitionEnabled(true);
+              setTimeout(() => setLayoutTransitionEnabled(false), 260);
+            }
+            nodesRef.current = targetNodes;
+            setNodes(targetNodes);
+          };
+
           if (referenceOldPos && referenceNewPos) {
             const deltaX = referenceOldPos.x - referenceNewPos.x;
             const deltaY = referenceOldPos.y - referenceNewPos.y;
@@ -1066,11 +1080,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
             }));
 
-            nodesRef.current = finalNodes;
-            setNodes(finalNodes);
+            applyLayoutNodes(finalNodes);
           } else {
-            nodesRef.current = layoutedNodes;
-            setNodes(layoutedNodes);
+            applyLayoutNodes(layoutedNodes);
           }
 
           edgesRef.current = layoutedEdges;
@@ -1132,8 +1144,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     handleRelatedQuestionFollowUp(openDrawerId, selectedItem.text);
   };
 
+  const canvasClassName = layoutTransitionEnabled ? 'flow-canvas flow-canvas--layout-transition' : 'flow-canvas';
+
   return (
     <div
+      className={canvasClassName}
       style={{
         width: '100%',
         height: '100vh',
