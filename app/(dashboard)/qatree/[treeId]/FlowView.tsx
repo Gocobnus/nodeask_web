@@ -15,8 +15,11 @@ import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
 import ACardNode from '../../../components/flow-nodes/ACardNode';
 import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
-import { Skeleton } from '@heroui/react';
+import { Button, Listbox, ListboxItem, Skeleton } from '@heroui/react';
 import { createHorizontalFollowUp, createVerticalFollowUp } from '../../../services/qatree-api';
+import { CustomDrawer } from '../../../components/card/acard/CustomDrawer';
+import { CustomTooltip } from '../../../components/ui/CustomTooltip';
+import { CloseIcon, CopyIcon, LocationIcon } from '../../../components/icons';
 
 const nodeTypes = {
   qcard: QCardNode,
@@ -35,7 +38,7 @@ interface FlowCanvasProps extends FlowViewProps {
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
-  const { fitView, getZoom, getNodes } = useReactFlow();
+  const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +55,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 用于强制触发布局更新的状态
   const [layoutTrigger, setLayoutTrigger] = useState(0);
+  const locateAnimationRef = useRef<number | null>(null);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
@@ -231,6 +235,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       return updatedNodes;
     });
   }, [openDrawerId, setNodes]);
+
+  useEffect(() => {
+    if (!openDrawerId) return;
+    const exists = nodes.some((n) => n.id === openDrawerId && n.type === 'acard');
+    if (!exists) {
+      setOpenDrawerId(null);
+    }
+  }, [openDrawerId, nodes]);
 
   useEffect(() => {
     if (followUpNodeId) {
@@ -476,16 +488,54 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       return updatedNodes;
     });
     setTimeout(() => {
+      const targetNode = nodesRef.current.find((n) => n.id === nodeId);
+      if (!targetNode) return;
+      const nodeWidth = typeof targetNode.width === 'number'
+        ? targetNode.width
+        : (targetNode.type === 'followup' ? 24 : CARD_WIDTH);
+      const nodeHeight = typeof targetNode.height === 'number'
+        ? targetNode.height
+        : (targetNode.type === 'acard' ? 550 : targetNode.type === 'followup' ? 24 : 250);
       const currentZoom = getZoom();
-      fitView({
-        nodes: [{ id: nodeId }],
-        duration: 500,
-        minZoom: currentZoom,
-        maxZoom: currentZoom
-      });
-    }, 0);
-  }, [setNodes, fitView, getZoom]);
+      const viewport = getViewport();
+      const targetCenterX = targetNode.position.x + nodeWidth / 2;
+      const targetCenterY = targetNode.position.y + nodeHeight / 2;
+      const reactFlowEl = document.querySelector('.react-flow') as HTMLElement | null;
+      const viewportWidth = reactFlowEl?.clientWidth ?? window.innerWidth;
+      const viewportHeight = reactFlowEl?.clientHeight ?? window.innerHeight;
+      const nextX = viewportWidth / 2 - targetCenterX * currentZoom;
+      const nextY = viewportHeight / 2 - targetCenterY * currentZoom;
+      if (locateAnimationRef.current !== null) {
+        cancelAnimationFrame(locateAnimationRef.current);
+        locateAnimationRef.current = null;
+      }
+      const start = performance.now();
+      const duration = 10;
+      const fromX = viewport.x;
+      const fromY = viewport.y;
+      const zoom = currentZoom;
+      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        const k = easeOutCubic(t);
+        setViewport(
+          {
+            x: fromX + (nextX - fromX) * k,
+            y: fromY + (nextY - fromY) * k,
+            zoom,
+          }
+        );
+        if (t < 1) {
+          locateAnimationRef.current = requestAnimationFrame(step);
+        } else {
+          locateAnimationRef.current = null;
+        }
+      };
+
+      locateAnimationRef.current = requestAnimationFrame(step);
+    }, 0);
+  }, [setNodes, getZoom, setViewport, getViewport]);
   // 处理节点高度变化
   const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
     const prevHeight = lastNodeHeightsRef.current[nodeId];
@@ -520,6 +570,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       if (layoutTriggerTimeoutRef.current) {
         clearTimeout(layoutTriggerTimeoutRef.current);
         layoutTriggerTimeoutRef.current = null;
+      }
+      if (locateAnimationRef.current !== null) {
+        cancelAnimationFrame(locateAnimationRef.current);
+        locateAnimationRef.current = null;
       }
     };
   }, []);
@@ -837,7 +891,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, setOpenDrawerId, getNodes, getZoom, fitView]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, setOpenDrawerId, getNodes, getZoom]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -1045,6 +1099,39 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     );
   }
 
+  const openDrawerNode = openDrawerId
+    ? nodes.find((n) => n.id === openDrawerId && n.type === 'acard')
+    : undefined;
+  const drawerTitle = openDrawerNode?.data?.title || '';
+  const drawerContent = openDrawerNode?.data?.content || '这里是回答内容的占位文本...';
+  const drawerQuestions: string[] = Array.isArray(openDrawerNode?.data?.relatedQuestions)
+    ? openDrawerNode!.data.relatedQuestions
+    : [];
+  const drawerListItems = drawerQuestions.map((q, index) => ({ id: index.toString(), text: q }));
+
+  const handleDrawerClose = () => {
+    setOpenDrawerId(null);
+  };
+
+  const handleDrawerLocate = () => {
+    if (!openDrawerId) return;
+    handleNodeLocate(openDrawerId);
+  };
+
+  const handleDrawerCopy = async () => {
+    const answerText = drawerContent || '';
+    const questionsText = drawerQuestions.map(q => `- ${q}`).join('\n');
+    const combinedText = `回答:\n${answerText}\n\n相关问题:\n${questionsText}`;
+    await navigator.clipboard.writeText(combinedText);
+  };
+
+  const handleDrawerRelatedQuestionAction = (key: React.Key) => {
+    if (!openDrawerId) return;
+    const selectedItem = drawerListItems.find((item) => item.id === String(key));
+    if (!selectedItem) return;
+    handleRelatedQuestionFollowUp(openDrawerId, selectedItem.text);
+  };
+
   return (
     <div
       style={{
@@ -1114,6 +1201,52 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      <CustomDrawer isOpen={Boolean(openDrawerId && openDrawerNode)} onClose={handleDrawerClose} className="acard__drawer">
+        <div className="drawer__header">
+          <CustomTooltip content="定位卡片" placement="bottom">
+            <button className="acard__icon-btn drawer__location-btn" onClick={handleDrawerLocate}>
+              <LocationIcon />
+            </button>
+          </CustomTooltip>
+          <CustomTooltip content="关闭" placement="bottom">
+            <button className="acard__icon-btn drawer__close-btn" onClick={handleDrawerClose}>
+              <CloseIcon />
+            </button>
+          </CustomTooltip>
+        </div>
+        <div className="drawer-section-title drawer__fixed-title">{drawerTitle}</div>
+        <div className="drawer__content-area drawer__content-area--with-fixed-title">
+          {drawerContent}
+        </div>
+        <div className="drawer__related-questions">
+          <div className="drawer-section-title">相关问题</div>
+          <Listbox
+            aria-label="相关问题"
+            selectionMode="none"
+            items={drawerListItems}
+            onAction={handleDrawerRelatedQuestionAction}
+            itemClasses={{
+              base: "acard__related-question-item",
+            }}
+            classNames={{
+              base: "p-0",
+              list: "gap-0",
+            }}
+          >
+            {(item) => (
+              <ListboxItem key={item.id} textValue={item.text}>{item.text}</ListboxItem>
+            )}
+          </Listbox>
+        </div>
+        <div className="acard__drawer-footer">
+          <Button variant="light" onPress={handleDrawerClose} className="drawer-btn-close">
+            Close
+          </Button>
+          <Button onPress={handleDrawerCopy} className="drawer-btn-copy" startContent={<CopyIcon width={16} height={16} />}>
+            Copy
+          </Button>
+        </div>
+      </CustomDrawer>
     </div>
   );
 }

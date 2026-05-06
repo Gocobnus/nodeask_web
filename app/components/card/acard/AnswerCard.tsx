@@ -2,7 +2,7 @@
 
 // 导入需要的 React Hooks 和类型
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
-import { motion, LayoutGroup } from "framer-motion";
+import { motion } from "framer-motion";
 // 路径可能需要根据您的项目结构调整
 import { ACardProps } from "../../../types/qacard";
 import { TooltipProps } from "@heroui/react";
@@ -14,12 +14,11 @@ interface CustomACardProps extends ACardProps {
 }
 
 // 导入 HeroUI 组件和自定义组件
-import { Button, Listbox, ListboxItem, useDisclosure } from "@heroui/react";
+import { Listbox, ListboxItem } from "@heroui/react";
 // 路径可能需要根据您的项目结构调整
-import { PullIcon, StopIcon, CardDeleteIcon, CopyIcon, ExplodeIcon, SendIcon, LocationIcon, CloseIcon, ContractIcon } from "../../icons";
+import { PullIcon, StopIcon, CopyIcon, ExplodeIcon, ContractIcon } from "../../icons";
 // 路径可能需要根据您的项目结构调整
 import { CustomTooltip } from "../../ui/CustomTooltip";
-import { CustomDrawer } from './CustomDrawer';
 import "./answercard.css"; // 确保 CSS 文件已导入
 
 
@@ -181,32 +180,6 @@ export default function AnswerCard({
           }
         });
     }
-  };
-
-  const handleLocateClick = () => {
-     if (onLocate) {
-       onLocate();
-     } else if (onClick) {
-       onClick();
-     }
-  };
-
-  const handleDrawerCopy = () => {
-    const answerText = content || "";
-    const questionsText = relatedQuestions.map(q => `- ${q}`).join('\n');
-    const combinedText = `回答:\n${answerText}\n\n相关问题:\n${questionsText}`;
-    
-    navigator.clipboard.writeText(combinedText)
-      .then(() => {
-        if (onCopy) {
-          onCopy();
-        }
-      })
-      .catch(err => {
-        if (onCopyError) {
-          onCopyError(err);
-        }
-      });
   };
 
   const iconVariants = {
@@ -521,53 +494,6 @@ export default function AnswerCard({
         </motion.div>
       </div>
 
-      {/* 抽屉组件 */}
-      <CustomDrawer isOpen={isOpen} onClose={() => onExpand && onExpand()} className="acard__drawer">
-        <div className="drawer__header">
-          <CustomTooltip content="定位卡片" placement="bottom">
-            <button className="acard__icon-btn drawer__location-btn" onClick={handleLocateClick}>
-              <LocationIcon/>
-            </button>
-          </CustomTooltip>
-          <CustomTooltip content="关闭" placement="bottom">
-            <button className="acard__icon-btn drawer__close-btn" onClick={() => onExpand && onExpand()}>
-              <CloseIcon />
-            </button>
-          </CustomTooltip>
-        </div>
-        <div className="drawer-section-title drawer__fixed-title">{title}</div>
-        <div className="drawer__content-area drawer__content-area--with-fixed-title">
-          {content || "这里是回答内容的占位文本..."}
-        </div>
-        <div className="drawer__related-questions">
-          <div className="drawer-section-title">相关问题</div>
-          <Listbox
-              aria-label="相关问题"
-              selectionMode="none"
-              items={listBoxItems}
-              onAction={handleRelatedQuestionAction}
-              itemClasses={{
-                base: "acard__related-question-item",
-              }}
-              classNames={{
-                base: "p-0",
-                list: "gap-0",
-              }}
-            >
-              {(item) => (
-                <ListboxItem key={item.id} textValue={item.text}>{item.text}</ListboxItem>
-              )}
-            </Listbox>
-        </div>
-        <div className="acard__drawer-footer">
-          <Button variant="light" onPress={() => onExpand && onExpand()} className="drawer-btn-close">
-            Close
-          </Button>
-          <Button onPress={handleDrawerCopy} className="drawer-btn-copy">
-            Copy
-          </Button>
-        </div>
-      </CustomDrawer>
     </motion.div>
   );
 }
