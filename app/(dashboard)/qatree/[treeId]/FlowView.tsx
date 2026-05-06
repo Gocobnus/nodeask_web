@@ -1051,6 +1051,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onlyRenderVisibleElements
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}

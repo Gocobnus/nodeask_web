@@ -164,11 +164,18 @@ function calculateSubtreeSize(
 
       for (const childId of vertical) {
         const childSize = calculateSubtreeSize(childId, nodes, edges, cache);
-        forkTotalWidth += childSize.width;
         forkMaxHeight = Math.max(forkMaxHeight, childSize.height);
       }
 
-      forkTotalWidth += VERTICAL_QA_CLUSTER_GAP * (vertical.length - 1); // QA簇之间的间距
+      if (node.type === 'followup') {
+        forkTotalWidth = CARD_WIDTH * vertical.length + VERTICAL_QA_CLUSTER_GAP * (vertical.length - 1);
+      } else {
+        for (const childId of vertical) {
+          const childSize = calculateSubtreeSize(childId, nodes, edges, cache);
+          forkTotalWidth += childSize.width;
+        }
+        forkTotalWidth += VERTICAL_QA_CLUSTER_GAP * (vertical.length - 1); // QA簇之间的间距
+      }
 
       totalWidth = Math.max(totalWidth, forkTotalWidth);
       totalHeight += GAP + forkMaxHeight;
@@ -267,8 +274,9 @@ function layoutNodeRecursive(
         return;
       }
 
-      const totalWidth = childSizes.reduce((sum, size) => sum + size.width, 0) +
-                         VERTICAL_QA_CLUSTER_GAP * (childSizes.length - 1);
+      const totalWidth = node.type === 'followup'
+        ? CARD_WIDTH * childSizes.length + VERTICAL_QA_CLUSTER_GAP * (childSizes.length - 1)
+        : childSizes.reduce((sum, size) => sum + size.width, 0) + VERTICAL_QA_CLUSTER_GAP * (childSizes.length - 1);
 
       let currentX = parentCenterX - totalWidth / 2;
 
@@ -287,12 +295,13 @@ function layoutNodeRecursive(
         }
         const childWidth = childNode.type === 'followup' ? FOLLOWUP_WIDTH : CARD_WIDTH;
 
-        // 子节点在其分配空间内居中
-        const childX = currentX + (childSize.width - childWidth) / 2;
+        const childX = node.type === 'followup'
+          ? currentX
+          : currentX + (childSize.width - childWidth) / 2;
 
         layoutNodeRecursive(childId, childX, childStartY, nodes, edges, sizeCache, layoutedNodes);
 
-        currentX += childSize.width + VERTICAL_QA_CLUSTER_GAP;
+        currentX += (node.type === 'followup' ? CARD_WIDTH : childSize.width) + VERTICAL_QA_CLUSTER_GAP;
       }
     }
   }
@@ -514,7 +523,6 @@ function enforceVerticalClusterSeparation(nodes: Node[], edges: Edge[]): Node[] 
     if (childIds.length <= 1) continue;
     const parentNode = nodeMap.get(parentId);
     if (!parentNode) continue;
-    if (parentNode.type === 'followup') continue;
 
     const parentWidth = getNodeWidthForConstraint(parentNode);
     const parentCenterX = parentNode.position.x + parentWidth / 2;
@@ -538,6 +546,22 @@ function enforceVerticalClusterSeparation(nodes: Node[], edges: Edge[]): Node[] 
         node.position.x += deltaX;
       });
     });
+  }
+
+  // 回正后再做一轮边界分离，防止中点回正导致兄弟子树再次挤压重叠
+  for (const [, childIds] of parentToVerticalChildren) {
+    if (childIds.length <= 1) continue;
+    for (let i = 1; i < childIds.length; i++) {
+      const prevId = childIds[i - 1];
+      const currId = childIds[i];
+      const prevBounds = getSubtreeBounds(prevId, edges, nodeMap);
+      const currBounds = getSubtreeBounds(currId, edges, nodeMap);
+      if (!prevBounds || !currBounds) continue;
+      const requiredLeft = prevBounds.right + VERTICAL_QA_CLUSTER_GAP;
+      if (currBounds.left < requiredLeft) {
+        shiftSubtreeX(currId, requiredLeft - currBounds.left);
+      }
+    }
   }
 
   return nodes.map((node) => nodeMap.get(node.id) || node);
@@ -779,5 +803,7 @@ export async function getMultiColumnLayoutedElements(
   const stabilizedNodes = enforceHorizontalSiblingSpacing(layoutedNodes, edges);
   const separatedNodes = enforceVerticalClusterSeparation(stabilizedNodes, edges);
   const anchoredNodes = enforceAnchoredChildrenAndFatherCenter(separatedNodes, edges);
-  return { nodes: anchoredNodes, edges };
+  // 锚定与回正可能再次改变子树边界，最后再做一轮分离收口，避免深层场景重叠
+  const finalSeparatedNodes = enforceVerticalClusterSeparation(anchoredNodes, edges);
+  return { nodes: finalSeparatedNodes, edges };
 }
