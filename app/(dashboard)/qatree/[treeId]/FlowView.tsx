@@ -552,6 +552,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const done = payload.done || false; // 从 CommonFields 获取 done 字段
         const qaId = payload.qa_id; // 从 CommonFields 获取 qa_id
         const isGenerating = !finish;
+        let resolvedParentReactFlowId: string | undefined;
 
         // 根据 pos 判断节点类型
         let type: 'qcard' | 'acard' | 'followup';
@@ -585,13 +586,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 y: (canvasHeight / 2) - nodeHeight        // 下边缘垂直居中
               };
             } else {
-              // 后续节点:基于 parentNodeId 查找父节点，从 ref 中查找以获取最新状态
-              const parentNode = nodesRef.current.find(n => n.id === parentNodeId);
+              // 后续节点: parentNodeId 可能是业务ID，也可能是 ReactFlow ID，需做双通道解析
+              const parentNode = currentNodes.find(n => n.id === parentNodeId)
+                || currentNodes.find(n => n.data?.nodeId === parentNodeId);
 
               if (!parentNode) {
                 console.error('未找到父节点:', parentNodeId, '当前节点列表:', nodesRef.current.map(n => n.id));
                 return currentNodes;
               }
+              resolvedParentReactFlowId = parentNode.id;
 
               console.log('📍 新节点位置计算 - 节点ID:', id, '父节点:', {
                 id: parentNode.id,
@@ -700,12 +703,16 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
         if (parentNodeId) {
           setEdges(currentEdges => {
-            const edgeId = `${parentNodeId}-${id}`;
+            const sourceNodeId = resolvedParentReactFlowId
+              || nodesRef.current.find(n => n.id === parentNodeId)?.id
+              || nodesRef.current.find(n => n.data?.nodeId === parentNodeId)?.id
+              || parentNodeId;
+            const edgeId = `${sourceNodeId}-${id}`;
             const existingEdge = currentEdges.find(e => e.id === edgeId);
             if (!existingEdge) {
               const newEdges = [...currentEdges, {
                 id: edgeId,
-                source: parentNodeId,
+                source: sourceNodeId,
                 target: id,
                 type: 'smoothstep',
                 style: {
@@ -1051,7 +1058,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onlyRenderVisibleElements
+        onlyRenderVisibleElements={!openDrawerId}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
