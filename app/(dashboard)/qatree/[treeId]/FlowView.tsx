@@ -58,6 +58,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const locateAnimationRef = useRef<number | null>(null);
   const animateNextLayoutRef = useRef(false);
   const [layoutTransitionEnabled, setLayoutTransitionEnabled] = useState(false);
+  const pendingCenterNodeIdRef = useRef<string | null>(null);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
@@ -277,6 +278,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const handleAskFollowUpRef = useRef<(nodeId: string) => void>(() => {});
   const lastNodeHeightsRef = useRef<Record<string, number>>({});
   const layoutTriggerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTextEventsRef = useRef<Array<{ key: string; event: string; data: string; retries: number }>>([]);
+  const flushingPendingRef = useRef(false);
+
+  const resolveParentNodeIn = useCallback((allNodes: Node[], parentNodeId?: string) => {
+    if (!parentNodeId) return undefined;
+    return allNodes.find((n) => n.id === parentNodeId) || allNodes.find((n) => n.data?.nodeId === parentNodeId);
+  }, []);
+
+  const enqueuePendingTextEvent = useCallback((event: string, data: string, key: string) => {
+    const exists = pendingTextEventsRef.current.some((item) => item.key === key);
+    if (exists) return;
+    pendingTextEventsRef.current.push({ key, event, data, retries: 0 });
+  }, []);
 
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
@@ -312,6 +326,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         : await createVerticalFollowUp(treeId, parentBusinessNodeId, questionText);
 
       const { q_node_id, qa_id } = data;
+      const shouldFocusAfterLayout = true;
       const newQNodeBase: Node = {
         id: q_node_id,
         type: 'qcard',
@@ -372,22 +387,31 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         );
       }
 
-      nodesRef.current = nextNodes;
-      edgesRef.current = nextEdges;
-      setNodes(nextNodes);
-      setEdges(nextEdges);
-      animateNextLayoutRef.current = true;
-      setLayoutTrigger(prev => prev + 1);
+      const commitFollowUp = () => {
+        nodesRef.current = nextNodes;
+        edgesRef.current = nextEdges;
+        setNodes(nextNodes);
+        setEdges(nextEdges);
+        if (shouldFocusAfterLayout) {
+          pendingCenterNodeIdRef.current = q_node_id;
+        }
+        animateNextLayoutRef.current = true;
+        setLayoutTrigger(prev => prev + 1);
 
-      startMockSSE({
-        onMessage: (event, data) => {
-          handleMessageRef.current(event, data);
-        },
-        onClose: () => console.log(`${mode} follow-up SSE stream closed.`),
-      }, {
-        qaId: qa_id,
-        parentNodeId: q_node_id
-      });
+        // 节点入图后再启动 SSE，避免流式消息先到导致父节点尚未可见
+        startMockSSE({
+          onMessage: (event, data) => {
+            handleMessageRef.current(event, data);
+          },
+          onClose: () => console.log(`${mode} follow-up SSE stream closed.`),
+        }, {
+          qaId: qa_id,
+          parentNodeId: q_node_id
+        });
+      };
+
+      commitFollowUp();
+
     } catch (error) {
       console.error(`${mode}追问失败:`, error);
     } finally {
@@ -481,15 +505,43 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     void runCreateQFollowUp(nodeId, trimmedQuestion, 'horizontal');
   }, [runCreateQFollowUp]);
 
-  const handleNodeLocate = useCallback((nodeId: string) => {
-    setNodes((nds) => {
-      const updatedNodes = nds.map((node) => ({
-        ...node,
-        selected: node.id === nodeId,
-      }));
-      nodesRef.current = updatedNodes;
-      return updatedNodes;
-    });
+  function centerPointInCanvas(targetCenterX: number, targetCenterY: number, onDone?: () => void) {
+    const currentZoom = getZoom();
+    const reactFlowEl = document.querySelector('.react-flow') as HTMLElement | null;
+    const viewportWidth = reactFlowEl?.clientWidth ?? window.innerWidth;
+    const viewportHeight = reactFlowEl?.clientHeight ?? window.innerHeight;
+    const nextX = viewportWidth / 2 - targetCenterX * currentZoom;
+    const nextY = viewportHeight / 2 - targetCenterY * currentZoom;
+    if (locateAnimationRef.current !== null) {
+      cancelAnimationFrame(locateAnimationRef.current);
+      locateAnimationRef.current = null;
+    }
+    setViewport(
+      {
+        x: nextX,
+        y: nextY,
+        zoom: currentZoom,
+      },
+      {
+        duration: 520,
+      }
+    );
+    if (onDone) {
+      window.setTimeout(onDone, 560);
+    }
+  }
+
+  function centerNodeInCanvas(nodeId: string, selectNode: boolean, onDone?: () => void) {
+    if (selectNode) {
+      setNodes((nds) => {
+        const updatedNodes = nds.map((node) => ({
+          ...node,
+          selected: node.id === nodeId,
+        }));
+        nodesRef.current = updatedNodes;
+        return updatedNodes;
+      });
+    }
     setTimeout(() => {
       const targetNode = nodesRef.current.find((n) => n.id === nodeId);
       if (!targetNode) return;
@@ -499,46 +551,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       const nodeHeight = typeof targetNode.height === 'number'
         ? targetNode.height
         : (targetNode.type === 'acard' ? 550 : targetNode.type === 'followup' ? 24 : 250);
-      const currentZoom = getZoom();
-      const viewport = getViewport();
       const targetCenterX = targetNode.position.x + nodeWidth / 2;
       const targetCenterY = targetNode.position.y + nodeHeight / 2;
-      const reactFlowEl = document.querySelector('.react-flow') as HTMLElement | null;
-      const viewportWidth = reactFlowEl?.clientWidth ?? window.innerWidth;
-      const viewportHeight = reactFlowEl?.clientHeight ?? window.innerHeight;
-      const nextX = viewportWidth / 2 - targetCenterX * currentZoom;
-      const nextY = viewportHeight / 2 - targetCenterY * currentZoom;
-      if (locateAnimationRef.current !== null) {
-        cancelAnimationFrame(locateAnimationRef.current);
-        locateAnimationRef.current = null;
-      }
-      const start = performance.now();
-      const duration = 10;
-      const fromX = viewport.x;
-      const fromY = viewport.y;
-      const zoom = currentZoom;
-      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-
-      const step = (now: number) => {
-        const t = Math.min(1, (now - start) / duration);
-        const k = easeOutCubic(t);
-        setViewport(
-          {
-            x: fromX + (nextX - fromX) * k,
-            y: fromY + (nextY - fromY) * k,
-            zoom,
-          }
-        );
-        if (t < 1) {
-          locateAnimationRef.current = requestAnimationFrame(step);
-        } else {
-          locateAnimationRef.current = null;
-        }
-      };
-
-      locateAnimationRef.current = requestAnimationFrame(step);
+      centerPointInCanvas(targetCenterX, targetCenterY, onDone);
     }, 0);
-  }, [setNodes, getZoom, setViewport, getViewport]);
+  }
+
+  const handleNodeLocate = useCallback((nodeId: string) => {
+    centerNodeInCanvas(nodeId, true);
+  }, []);
   // 处理节点高度变化
   const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
     const prevHeight = lastNodeHeightsRef.current[nodeId];
@@ -610,6 +631,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const qaId = payload.qa_id; // 从 CommonFields 获取 qa_id
         const isGenerating = !finish;
         let resolvedParentReactFlowId: string | undefined;
+        let shouldDeferForMissingParent = false;
 
         // 根据 pos 判断节点类型
         let type: 'qcard' | 'acard' | 'followup';
@@ -644,11 +666,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               };
             } else {
               // 后续节点: parentNodeId 可能是业务ID，也可能是 ReactFlow ID，需做双通道解析
-              const parentNode = currentNodes.find(n => n.id === parentNodeId)
-                || currentNodes.find(n => n.data?.nodeId === parentNodeId);
+              const parentNode = resolveParentNodeIn(currentNodes, parentNodeId);
 
               if (!parentNode) {
-                console.error('未找到父节点:', parentNodeId, '当前节点列表:', nodesRef.current.map(n => n.id));
+                shouldDeferForMissingParent = true;
+                const pendingKey = `${event}:${id}:${parentNodeId ?? ''}`;
+                enqueuePendingTextEvent(event, data, pendingKey);
                 return currentNodes;
               }
               resolvedParentReactFlowId = parentNode.id;
@@ -758,11 +781,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           }
         });
 
-        if (parentNodeId) {
+        if (parentNodeId && !shouldDeferForMissingParent) {
           setEdges(currentEdges => {
             const sourceNodeId = resolvedParentReactFlowId
-              || nodesRef.current.find(n => n.id === parentNodeId)?.id
-              || nodesRef.current.find(n => n.data?.nodeId === parentNodeId)?.id
+              || resolveParentNodeIn(nodesRef.current, parentNodeId)?.id
               || parentNodeId;
             const edgeId = `${sourceNodeId}-${id}`;
             const existingEdge = currentEdges.find(e => e.id === edgeId);
@@ -900,6 +922,33 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   useEffect(() => {
     handleMessageRef.current = handleMessage;
   }, [handleMessage]);
+
+  useEffect(() => {
+    if (flushingPendingRef.current) return;
+    if (pendingTextEventsRef.current.length === 0) return;
+
+    flushingPendingRef.current = true;
+    try {
+      const remaining: Array<{ key: string; event: string; data: string; retries: number }> = [];
+      for (const item of pendingTextEventsRef.current) {
+        try {
+          const payload = JSON.parse(item.data);
+          const pendingParentId: string | undefined = payload?.node_data?.parentNodeId;
+          const parentReady = !pendingParentId || Boolean(resolveParentNodeIn(nodesRef.current, pendingParentId));
+          if (parentReady) {
+            handleMessageRef.current(item.event, item.data);
+          } else if (item.retries < 30) {
+            remaining.push({ ...item, retries: item.retries + 1 });
+          }
+        } catch {
+          // 丢弃无效事件
+        }
+      }
+      pendingTextEventsRef.current = remaining;
+    } finally {
+      flushingPendingRef.current = false;
+    }
+  }, [nodes, resolveParentNodeIn]);
 
   useEffect(() => {
     const currentTree = trees.find(tree => tree.id === treeId);
@@ -1088,6 +1137,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           edgesRef.current = layoutedEdges;
           setEdges(layoutedEdges);
 
+          if (pendingCenterNodeIdRef.current) {
+            const focusId = pendingCenterNodeIdRef.current;
+            pendingCenterNodeIdRef.current = null;
+            centerNodeInCanvas(focusId, false);
+          }
 
           // 布局完成,清除进行中标记
           layoutInProgressRef.current = false;
