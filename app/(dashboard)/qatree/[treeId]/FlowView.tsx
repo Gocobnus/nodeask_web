@@ -9,7 +9,7 @@ import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
 import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
-import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, HORIZONTAL_GAP, MAIN_TO_HORIZONTAL_CLUSTER_GAP } from '../../../config/constants';
+import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, FOLLOWUP_WIDTH, HORIZONTAL_GAP, MAIN_TO_HORIZONTAL_CLUSTER_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
 import QCardNode from '../../../components/flow-nodes/QCardNode';
@@ -36,6 +36,7 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
+  const DRAWER_SWITCH_DELAY_MS = 300;
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
@@ -56,6 +57,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   // 用于强制触发布局更新的状态
   const [layoutTrigger, setLayoutTrigger] = useState(0);
   const locateAnimationRef = useRef<number | null>(null);
+  const drawerSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openDrawerIdRef = useRef<string | null>(null);
+  const pendingDrawerOpenIdRef = useRef<string | null>(null);
   const animateNextLayoutRef = useRef(false);
   const [layoutTransitionEnabled, setLayoutTransitionEnabled] = useState(false);
   const pendingCenterNodeIdRef = useRef<string | null>(null);
@@ -268,6 +272,37 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       setEditingText('');
     }
   }, [followUpNodeId, drafts]);
+
+  useEffect(() => {
+    openDrawerIdRef.current = openDrawerId;
+  }, [openDrawerId]);
+
+  const handleToggleDrawer = useCallback((nodeId: string) => {
+    if (drawerSwitchTimerRef.current) {
+      clearTimeout(drawerSwitchTimerRef.current);
+      drawerSwitchTimerRef.current = null;
+    }
+    const currentOpenId = openDrawerIdRef.current;
+    if (currentOpenId === nodeId) {
+      pendingDrawerOpenIdRef.current = null;
+      setOpenDrawerId(null);
+      return;
+    }
+    if (currentOpenId) {
+      pendingDrawerOpenIdRef.current = nodeId;
+      setOpenDrawerId(null);
+      drawerSwitchTimerRef.current = setTimeout(() => {
+        if (openDrawerIdRef.current === null && pendingDrawerOpenIdRef.current) {
+          setOpenDrawerId(pendingDrawerOpenIdRef.current);
+        }
+        pendingDrawerOpenIdRef.current = null;
+        drawerSwitchTimerRef.current = null;
+      }, DRAWER_SWITCH_DELAY_MS);
+      return;
+    }
+    pendingDrawerOpenIdRef.current = null;
+    setOpenDrawerId(nodeId);
+  }, []);
 
   // 记录上一个 followUpNodeId，用于恢复 hideAskButton
   const prevFollowUpNodeIdRef = useRef<string | null>(null);
@@ -591,6 +626,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   useEffect(() => {
     return () => {
+      if (drawerSwitchTimerRef.current) {
+        clearTimeout(drawerSwitchTimerRef.current);
+        drawerSwitchTimerRef.current = null;
+      }
+      pendingDrawerOpenIdRef.current = null;
       if (layoutTriggerTimeoutRef.current) {
         clearTimeout(layoutTriggerTimeoutRef.current);
         layoutTriggerTimeoutRef.current = null;
@@ -657,7 +697,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               const canvasHeight = window.innerHeight;
 
               // 根据节点类型确定宽度
-              const nodeWidth = type === 'followup' ? 24 : 540;
+              const nodeWidth = type === 'followup' ? FOLLOWUP_WIDTH : CARD_WIDTH;
               const nodeHeight = 150;
 
               initialPosition = {
@@ -693,10 +733,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               let xPosition = parentNode.position.x;
               if (type === 'followup' && parentNode.type !== 'followup') {
                 // 从 360px 卡片到 24px followup：向右偏移
-                xPosition = parentNode.position.x + (540 - 24) / 2;
+                xPosition = parentNode.position.x + (CARD_WIDTH - FOLLOWUP_WIDTH) / 2;
               } else if (type !== 'followup' && parentNode.type === 'followup') {
                 // 从 24px followup 到 360px 卡片：向左偏移
-                xPosition = parentNode.position.x - (540 - 24) / 2;
+                xPosition = parentNode.position.x - (CARD_WIDTH - FOLLOWUP_WIDTH) / 2;
               }
 
               initialPosition = {
@@ -740,7 +780,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
-                  onExpand: cardType === 'acard' ? () => setOpenDrawerId(prevId => prevId === id ? null : id) : undefined,
+                  onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
               };
@@ -769,7 +809,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                     content: updatedContent,
                     // QCard 的 question 字段保持不变（已经是 initialQuestion）
                     isGenerating,
-                    onExpand: n.type === 'acard' ? () => setOpenDrawerId(prevId => prevId === id ? null : id) : n.data.onExpand,
+                    onExpand: n.type === 'acard' ? () => handleToggleDrawer(id) : n.data.onExpand,
                     ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
                   }
                 };
@@ -869,7 +909,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const aNodeHeight = targetANode.height || 550;
         const GAP = 80;
         const fNodePosition = {
-          x: targetANode.position.x + (540 - 24) / 2, // 360px 卡片中心对齐 24px followup
+          x: targetANode.position.x + (CARD_WIDTH - FOLLOWUP_WIDTH) / 2,
           y: targetANode.position.y + aNodeHeight + GAP
         };
 
@@ -916,7 +956,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, setOpenDrawerId, getNodes, getZoom]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, handleToggleDrawer, getNodes, getZoom]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -991,7 +1031,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     // 创建 Q1 节点
     if (currentTree.qNodeId) {
-      const q1X = centerX - (540 - 24) / 2; // 基于F0中心向左偏移
+      const q1X = centerX - (CARD_WIDTH - FOLLOWUP_WIDTH) / 2;
       const q1Node: Node = {
         id: currentTree.qNodeId,
         type: 'qcard',

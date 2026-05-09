@@ -13,6 +13,7 @@ import { CARD_WIDTH } from '@/app/config/constants';
 const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
+  const [isCollapsedLocal, setIsCollapsedLocal] = useState(false);
   const updateNodeInternals = useUpdateNodeInternals();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastHeightRef = useRef<number>(0);
@@ -89,6 +90,12 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const dynamicTooltipSize = getTooltipSize(zoom);
 
   const isVisible = selected || isHovered;
+  const isAskVisible = isVisible && !data.hideAskButton;
+  const attachToAskButtonRight = isCollapsedLocal && isAskVisible;
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, attachToAskButtonRight, updateNodeInternals]);
 
   // 当节点失去 selected 状态时，强制清除 isHovered
   const prevSelectedRef = useRef(selected);
@@ -130,7 +137,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         </CustomTooltip>
       )}
       <AnimatePresence>
-        {isVisible && !data.hideAskButton && (
+        {isAskVisible && (
           <CustomTooltip
             placement="right"
             content="追问卡片内容"
@@ -178,7 +185,12 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         isSelected={selected}
         isOpen={data.isOpen}
         onPause={data.onPause}
-        onCollapse={data.onCollapse}
+        onCollapse={() => {
+          setIsCollapsedLocal((prev) => !prev);
+          if (data.onCollapse) {
+            data.onCollapse();
+          }
+        }}
         onExpand={data.onExpand}
         onCopy={data.onCopy}
         onCopyError={data.onCopyError}
@@ -212,8 +224,8 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           border: 'none',
           width: '1px',
           height: '1px',
-          top: '24px',
-          right: '-8px'
+          top: attachToAskButtonRight ? '50%' : '24px',
+          right: attachToAskButtonRight ? '-52px' : '-8px'
         }}
       />
     </motion.div>
