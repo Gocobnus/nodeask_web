@@ -57,6 +57,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   // 用于强制触发布局更新的状态
   const [layoutTrigger, setLayoutTrigger] = useState(0);
   const locateAnimationRef = useRef<number | null>(null);
+  const isCenteringRef = useRef(false);
+  const lockedCenterZoomRef = useRef<number | null>(null);
   const drawerSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openDrawerIdRef = useRef<string | null>(null);
   const pendingDrawerOpenIdRef = useRef<string | null>(null);
@@ -350,6 +352,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     mode: 'horizontal' | 'vertical'
   ) => {
     setIsSubmitting(true);
+    // 锁定一次追问流程内的居中缩放，避免视图外定位时出现缩放变化
+    lockedCenterZoomRef.current = getZoom();
     try {
       const parentNode = nodesRef.current.find(n => n.id === parentReactFlowNodeId);
       if (!parentNode) {
@@ -450,9 +454,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     } catch (error) {
       console.error(`${mode}追问失败:`, error);
     } finally {
+      // 释放缩放锁，后续流程可使用最新缩放
+      lockedCenterZoomRef.current = null;
       setIsSubmitting(false);
     }
-  }, [treeId, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp]);
+  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp]);
 
   const handleSubmit = async (submittedText: string) => {
     if (!followUpNodeId) return;
@@ -541,7 +547,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, [runCreateQFollowUp]);
 
   function centerPointInCanvas(targetCenterX: number, targetCenterY: number, onDone?: () => void) {
-    const currentZoom = getZoom();
+    const currentZoom = lockedCenterZoomRef.current ?? getZoom();
     const reactFlowEl = document.querySelector('.react-flow') as HTMLElement | null;
     const viewportWidth = reactFlowEl?.clientWidth ?? window.innerWidth;
     const viewportHeight = reactFlowEl?.clientHeight ?? window.innerHeight;
@@ -551,6 +557,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       cancelAnimationFrame(locateAnimationRef.current);
       locateAnimationRef.current = null;
     }
+    // 居中期间只保留画布平移，禁用节点重排过渡，避免“收缩”体感
+    isCenteringRef.current = true;
+    setLayoutTransitionEnabled(false);
     setViewport(
       {
         x: nextX,
@@ -561,9 +570,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         duration: 550,
       }
     );
-    if (onDone) {
-      window.setTimeout(onDone, 590);
-    }
+    window.setTimeout(() => {
+      isCenteringRef.current = false;
+      if (onDone) onDone();
+    }, 590);
   }
 
   function centerNodeInCanvas(nodeId: string, selectNode: boolean, onDone?: () => void) {
@@ -1149,7 +1159,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           const applyLayoutNodes = (targetNodes: Node[]) => {
             const shouldAnimate = animateNextLayoutRef.current;
             animateNextLayoutRef.current = false;
-            if (shouldAnimate) {
+            if (shouldAnimate && !isCenteringRef.current) {
               setLayoutTransitionEnabled(true);
               setTimeout(() => setLayoutTransitionEnabled(false), 260);
             }
