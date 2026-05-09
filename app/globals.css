@@ -11,5 +11,5 @@
 }
 
 .flow-canvas--layout-transition .react-flow__node {
-  transition: transform 500ms ease;
+  transition: transform 550ms ease;
 }

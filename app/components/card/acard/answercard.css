@@ -609,7 +609,7 @@
   position: absolute;
   top: 50%;
   right: -40px;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(var(--ask-btn-scale, 1));
   width: 24px;
   height: 24px;
   border: none;
@@ -619,9 +619,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease-in-out;
+  transition: opacity 0.18s ease-in-out, color 0.2s ease-in-out, background-color 0.2s ease-in-out;
   z-index: 50;
   padding: 0;
+  opacity: 1;
   animation: breathe-centered 2s infinite ease-in-out;
 }
 
@@ -635,6 +636,14 @@
   border-radius: 50%;
   border: 1px solid var(--acard-icon-add);
   animation: ripple 2s infinite ease-in-out;
+}
+
+.acard-node__ask-btn--hiding {
+  animation-play-state: paused;
+}
+
+.acard-node__ask-btn--hiding::after {
+  animation-play-state: paused;
 }
 
 .acard-node__ask-btn:hover {
@@ -651,11 +660,6 @@
   position: relative; /* Ensure pseudo-element is positioned relative to this */
 }
 
-.acard-node-wrapper:hover {
-  /* 使用一个足够高的值，确保它高于任何相邻的未悬停节点 */
-  z-index: 1000; 
-}
-
 .acard-node-wrapper::after {
   content: '';
   position: absolute;
@@ -665,7 +669,7 @@
   width: 16px; /* The gap width */
   height: 32px; /* Match the button's height */
   /* For debugging, you can add: background: rgba(0, 255, 0, 0.2); */
-  pointer-events: auto; /* Ensure it can receive mouse events */
+  pointer-events: none;
 }
 
 /* FollowUpNode 独立样式 - 用于垂直流程图中的追问节点 */

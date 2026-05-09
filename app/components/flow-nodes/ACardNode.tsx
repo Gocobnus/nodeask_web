@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow';
 import { AnswerCard } from '../card/acard';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CustomTooltip } from '../ui/CustomTooltip';
 import { CardDeleteIcon, FollowUpIcon } from '../icons';
 import { TooltipProps } from '@heroui/react';
@@ -11,14 +11,30 @@ import { CARD_WIDTH } from '@/app/config/constants';
 
 
 const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
+  const HANDLE_ATTACH_DELAY_MS = 0;
+  const ASK_FADE_MS = 180;
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
+  const [hoverKeepAlive, setHoverKeepAlive] = useState(false);
   const [isCollapsedLocal, setIsCollapsedLocal] = useState(false);
+  const [handleAttachCommitted, setHandleAttachCommitted] = useState(false);
+  const [transitionLock, setTransitionLock] = useState(false);
+  const [lockedButtonVisible, setLockedButtonVisible] = useState(false);
+  const [frozenScale, setFrozenScale] = useState(1);
+  const [frozenTransform, setFrozenTransform] = useState<string | null>(null);
+  const [isHidingAskBtn, setIsHidingAskBtn] = useState(false);
   const updateNodeInternals = useUpdateNodeInternals();
   const containerRef = useRef<HTMLDivElement>(null);
+  const askBtnRef = useRef<HTMLButtonElement>(null);
   const lastHeightRef = useRef<number>(0);
   const resizeRafRef = useRef<number | null>(null);
   const pendingHeightRef = useRef<number>(0);
+  const hoverLeaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleAttachTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rightHandleAnimRef = useRef<number | null>(null);
+  const askHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [rightHandlePos, setRightHandlePos] = useState<number>(-8);
 
   // ResizeObserver 监听高度变化
   useEffect(() => {
@@ -89,13 +105,146 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   };
   const dynamicTooltipSize = getTooltipSize(zoom);
 
-  const isVisible = selected || isHovered;
-  const isAskVisible = isVisible && !data.hideAskButton;
-  const attachToAskButtonRight = isCollapsedLocal && isAskVisible;
+  useEffect(() => {
+    if (selected || isHovered) {
+      if (hoverLeaveTimerRef.current !== null) {
+        clearTimeout(hoverLeaveTimerRef.current);
+        hoverLeaveTimerRef.current = null;
+      }
+      setHoverKeepAlive(true);
+      return;
+    }
+    if (hoverLeaveTimerRef.current !== null) {
+      clearTimeout(hoverLeaveTimerRef.current);
+      hoverLeaveTimerRef.current = null;
+    }
+    hoverLeaveTimerRef.current = setTimeout(() => {
+      setHoverKeepAlive(false);
+      hoverLeaveTimerRef.current = null;
+    }, 200);
+  }, [selected, isHovered]);
+
+  const baseButtonVisible = (selected || hoverKeepAlive) && !data.hideAskButton;
+  const buttonVisible = transitionLock ? lockedButtonVisible : baseButtonVisible;
+  const attachToAskButtonRight = isCollapsedLocal && handleAttachCommitted;
 
   useEffect(() => {
     updateNodeInternals(id);
   }, [id, attachToAskButtonRight, updateNodeInternals]);
+
+  useEffect(() => {
+    if (handleAttachTimerRef.current !== null) {
+      clearTimeout(handleAttachTimerRef.current);
+      handleAttachTimerRef.current = null;
+    }
+    const shouldAttach = isCollapsedLocal && baseButtonVisible;
+    handleAttachTimerRef.current = setTimeout(() => {
+      setHandleAttachCommitted(shouldAttach);
+      handleAttachTimerRef.current = null;
+    }, HANDLE_ATTACH_DELAY_MS);
+  }, [isCollapsedLocal, baseButtonVisible]);
+
+  useEffect(() => {
+    if (transitionLockTimerRef.current !== null) {
+      clearTimeout(transitionLockTimerRef.current);
+      transitionLockTimerRef.current = null;
+    }
+
+    // 折叠时：按钮与线锚点提交同一时刻开始（避免按钮先出现）
+    if (isCollapsedLocal) {
+      setTransitionLock(true);
+      setLockedButtonVisible(false);
+      transitionLockTimerRef.current = setTimeout(() => {
+        setLockedButtonVisible(baseButtonVisible);
+        setTransitionLock(false);
+        transitionLockTimerRef.current = null;
+      }, HANDLE_ATTACH_DELAY_MS);
+      return;
+    }
+
+    // 展开时：不延迟按钮显示，直接回到基础可见性
+    setTransitionLock(false);
+    setLockedButtonVisible(baseButtonVisible);
+  }, [isCollapsedLocal, baseButtonVisible, HANDLE_ATTACH_DELAY_MS]);
+
+  useEffect(() => {
+    const startRight = rightHandlePos;
+    const targetRight = attachToAskButtonRight ? -52 : -8;
+    const startAt = performance.now();
+    const duration = 300;
+
+    if (rightHandleAnimRef.current !== null) {
+      cancelAnimationFrame(rightHandleAnimRef.current);
+      rightHandleAnimRef.current = null;
+    }
+
+    const tick = (now: number) => {
+      const t = Math.min((now - startAt) / duration, 1);
+      const eased = t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const nextRight = startRight + (targetRight - startRight) * eased;
+      setRightHandlePos(nextRight);
+      updateNodeInternals(id);
+      if (t < 1) {
+        rightHandleAnimRef.current = requestAnimationFrame(tick);
+      } else {
+        rightHandleAnimRef.current = null;
+      }
+    };
+
+    rightHandleAnimRef.current = requestAnimationFrame(tick);
+  }, [attachToAskButtonRight, id, updateNodeInternals]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const parseScaleFromTransform = (transform: string): number => {
+    if (!transform || transform === 'none') return 1;
+    const matrix3dMatch = transform.match(/matrix3d\(([^)]+)\)/);
+    if (matrix3dMatch) {
+      const values = matrix3dMatch[1].split(',').map((v) => Number(v.trim()));
+      return Number.isFinite(values[0]) ? values[0] : 1;
+    }
+    const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
+    if (matrixMatch) {
+      const values = matrixMatch[1].split(',').map((v) => Number(v.trim()));
+      return Number.isFinite(values[0]) ? values[0] : 1;
+    }
+    return 1;
+  };
+
+  const prevButtonVisibleRef = useRef(false);
+  useLayoutEffect(() => {
+    const prevVisible = prevButtonVisibleRef.current;
+    if (prevVisible && !buttonVisible) {
+      const el = askBtnRef.current;
+      if (el) {
+        const computed = getComputedStyle(el);
+        setFrozenScale(parseScaleFromTransform(computed.transform));
+        setFrozenTransform(computed.transform && computed.transform !== 'none' ? computed.transform : 'translateY(-50%) scale(1)');
+      } else {
+        setFrozenScale(1);
+        setFrozenTransform('translateY(-50%) scale(1)');
+      }
+      setIsHidingAskBtn(true);
+      if (askHideTimerRef.current !== null) {
+        clearTimeout(askHideTimerRef.current);
+      }
+      askHideTimerRef.current = setTimeout(() => {
+        setIsHidingAskBtn(false);
+        setFrozenScale(1);
+        setFrozenTransform(null);
+        askHideTimerRef.current = null;
+      }, ASK_FADE_MS);
+    } else if (buttonVisible) {
+      if (askHideTimerRef.current !== null) {
+        clearTimeout(askHideTimerRef.current);
+        askHideTimerRef.current = null;
+      }
+      setIsHidingAskBtn(false);
+      setFrozenScale(1);
+      setFrozenTransform(null);
+    }
+    prevButtonVisibleRef.current = buttonVisible;
+  }, [buttonVisible]);
 
   // 当节点失去 selected 状态时，强制清除 isHovered
   const prevSelectedRef = useRef(selected);
@@ -106,6 +255,31 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
     prevSelectedRef.current = selected;
   }, [selected, id]);
 
+  useEffect(() => {
+    return () => {
+      if (hoverLeaveTimerRef.current !== null) {
+        clearTimeout(hoverLeaveTimerRef.current);
+        hoverLeaveTimerRef.current = null;
+      }
+      if (handleAttachTimerRef.current !== null) {
+        clearTimeout(handleAttachTimerRef.current);
+        handleAttachTimerRef.current = null;
+      }
+      if (rightHandleAnimRef.current !== null) {
+        cancelAnimationFrame(rightHandleAnimRef.current);
+        rightHandleAnimRef.current = null;
+      }
+      if (askHideTimerRef.current !== null) {
+        clearTimeout(askHideTimerRef.current);
+        askHideTimerRef.current = null;
+      }
+      if (transitionLockTimerRef.current !== null) {
+        clearTimeout(transitionLockTimerRef.current);
+        transitionLockTimerRef.current = null;
+      }
+    };
+  }, []);
+
 
   return (
     <motion.div
@@ -115,8 +289,8 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: CARD_WIDTH, position: 'relative' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
@@ -136,33 +310,32 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           </button>
         </CustomTooltip>
       )}
-      <AnimatePresence>
-        {isAskVisible && (
-          <CustomTooltip
-            placement="right"
-            content="追问卡片内容"
-            size={dynamicTooltipSize}
-          >
-            <motion.button
-              className="acard-node__ask-btn"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (data.onAsk) {
-                  data.onAsk();
-                }
-              }}
-              type="button"
-              aria-label="追问卡片内容"
-            >
-              <FollowUpIcon width={24} height={24} />
-            </motion.button>
-          </CustomTooltip>
-        )}
-      </AnimatePresence>
+      <CustomTooltip
+        placement="right"
+        content="追问卡片内容"
+        size={dynamicTooltipSize}
+      >
+        <button
+          ref={askBtnRef}
+          className={`acard-node__ask-btn acard-node__ask-btn--visible ${isHidingAskBtn ? 'acard-node__ask-btn--hiding' : ''}`}
+          style={{
+            pointerEvents: buttonVisible ? 'auto' : 'none',
+            ['--ask-btn-scale' as string]: `${frozenScale}`,
+            opacity: buttonVisible ? 1 : 0,
+            transform: isHidingAskBtn && frozenTransform ? frozenTransform : undefined,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (data.onAsk) {
+              data.onAsk();
+            }
+          }}
+          type="button"
+          aria-label="追问卡片内容"
+        >
+          <FollowUpIcon width={24} height={24} />
+        </button>
+      </CustomTooltip>
       <Handle
         type="target"
         position={Position.Top}
@@ -186,9 +359,10 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         isOpen={data.isOpen}
         onPause={data.onPause}
         onCollapse={() => {
-          setIsCollapsedLocal((prev) => !prev);
+          const nextCollapsed = !isCollapsedLocal;
+          setIsCollapsedLocal(nextCollapsed);
           if (data.onCollapse) {
-            data.onCollapse();
+            data.onCollapse(nextCollapsed);
           }
         }}
         onExpand={data.onExpand}
@@ -224,8 +398,8 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           border: 'none',
           width: '1px',
           height: '1px',
-          top: attachToAskButtonRight ? '50%' : '24px',
-          right: attachToAskButtonRight ? '-52px' : '-8px'
+          top: '24px',
+          right: `${rightHandlePos}px`
         }}
       />
     </motion.div>
