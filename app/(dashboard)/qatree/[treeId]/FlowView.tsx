@@ -523,11 +523,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         zoom: currentZoom,
       },
       {
-        duration: 720,
+        duration: 500,
       }
     );
     if (onDone) {
-      window.setTimeout(onDone, 760);
+      window.setTimeout(onDone, 540);
     }
   }
 
