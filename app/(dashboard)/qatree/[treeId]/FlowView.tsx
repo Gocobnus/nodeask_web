@@ -36,7 +36,11 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
-  const DRAWER_SWITCH_DELAY_MS = 300;
+  const DRAWER_SWITCH_DELAY_MS = 250;
+  const LOCATE_PAN_DURATION_MS = 550;
+  const LOCATE_PAN_SETTLE_MS = 590;
+  const FOLLOWUP_PAN_DURATION_MS = 550;
+  const FOLLOWUP_PAN_SETTLE_MS = 590;
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
@@ -546,13 +550,21 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     void runCreateQFollowUp(nodeId, trimmedQuestion, 'horizontal');
   }, [runCreateQFollowUp]);
 
-  function centerPointInCanvas(targetCenterX: number, targetCenterY: number, onDone?: () => void) {
-    const currentZoom = lockedCenterZoomRef.current ?? getZoom();
+  function centerPointInCanvas(
+    targetCenterX: number,
+    targetCenterY: number,
+    onDone?: () => void,
+    options?: { durationMs?: number; settleMs?: number }
+  ) {
+    const currentZoom = getZoom();
+    const durationMs = options?.durationMs ?? FOLLOWUP_PAN_DURATION_MS;
+    const settleMs = options?.settleMs ?? (durationMs + 40);
     const reactFlowEl = document.querySelector('.react-flow') as HTMLElement | null;
     const viewportWidth = reactFlowEl?.clientWidth ?? window.innerWidth;
     const viewportHeight = reactFlowEl?.clientHeight ?? window.innerHeight;
     const nextX = viewportWidth / 2 - targetCenterX * currentZoom;
     const nextY = viewportHeight / 2 - targetCenterY * currentZoom;
+    const { x: startX, y: startY } = getViewport();
     if (locateAnimationRef.current !== null) {
       cancelAnimationFrame(locateAnimationRef.current);
       locateAnimationRef.current = null;
@@ -560,23 +572,33 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     // 居中期间只保留画布平移，禁用节点重排过渡，避免“收缩”体感
     isCenteringRef.current = true;
     setLayoutTransitionEnabled(false);
-    setViewport(
-      {
-        x: nextX,
-        y: nextY,
-        zoom: currentZoom,
-      },
-      {
-        duration: 550,
+    const startTs = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startTs;
+      const raw = Math.min(1, durationMs <= 0 ? 1 : elapsed / durationMs);
+      const eased = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+      const x = startX + (nextX - startX) * eased;
+      const y = startY + (nextY - startY) * eased;
+      setViewport({ x, y, zoom: currentZoom });
+      if (raw < 1) {
+        locateAnimationRef.current = requestAnimationFrame(tick);
+        return;
       }
-    );
-    window.setTimeout(() => {
-      isCenteringRef.current = false;
-      if (onDone) onDone();
-    }, 590);
+      locateAnimationRef.current = null;
+      window.setTimeout(() => {
+        isCenteringRef.current = false;
+        if (onDone) onDone();
+      }, Math.max(0, settleMs - durationMs));
+    };
+    locateAnimationRef.current = requestAnimationFrame(tick);
   }
 
-  function centerNodeInCanvas(nodeId: string, selectNode: boolean, onDone?: () => void) {
+  function centerNodeInCanvas(
+    nodeId: string,
+    selectNode: boolean,
+    onDone?: () => void,
+    options?: { durationMs?: number; settleMs?: number }
+  ) {
     if (selectNode) {
       setNodes((nds) => {
         const updatedNodes = nds.map((node) => ({
@@ -587,8 +609,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         return updatedNodes;
       });
     }
-    setTimeout(() => {
-      const targetNode = nodesRef.current.find((n) => n.id === nodeId);
+    requestAnimationFrame(() => {
+      const currentFlowNodes = getNodes();
+      const targetNode = currentFlowNodes.find((n) => n.id === nodeId) || nodesRef.current.find((n) => n.id === nodeId);
       if (!targetNode) return;
       const nodeWidth = typeof targetNode.width === 'number'
         ? targetNode.width
@@ -598,8 +621,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         : (targetNode.type === 'acard' ? 550 : targetNode.type === 'followup' ? 24 : 250);
       const targetCenterX = targetNode.position.x + nodeWidth / 2;
       const targetCenterY = targetNode.position.y + nodeHeight / 2;
-      centerPointInCanvas(targetCenterX, targetCenterY, onDone);
-    }, 0);
+      centerPointInCanvas(targetCenterX, targetCenterY, onDone, options);
+    });
   }
 
   const handleNodeLocate = useCallback((nodeId: string) => {
@@ -1190,7 +1213,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           if (pendingCenterNodeIdRef.current) {
             const focusId = pendingCenterNodeIdRef.current;
             pendingCenterNodeIdRef.current = null;
-            centerNodeInCanvas(focusId, false);
+            centerNodeInCanvas(focusId, false, undefined, {
+              durationMs: FOLLOWUP_PAN_DURATION_MS,
+              settleMs: FOLLOWUP_PAN_SETTLE_MS,
+            });
           }
 
           // 布局完成,清除进行中标记
@@ -1230,8 +1256,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   };
 
   const handleDrawerLocate = () => {
-    if (!openDrawerId) return;
-    handleNodeLocate(openDrawerId);
+    if (!openDrawerNode) return;
+    centerNodeInCanvas(openDrawerNode.id, true, undefined, {
+      durationMs: LOCATE_PAN_DURATION_MS,
+      settleMs: LOCATE_PAN_SETTLE_MS,
+    });
   };
 
   const handleDrawerCopy = async () => {
