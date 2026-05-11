@@ -110,6 +110,40 @@ function findChildren(
 }
 
 /**
+ * 判断一个分支子树中是否已出现答案节点（acard）
+ */
+function branchContainsAnswer(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+  memo: Map<string, boolean>
+): boolean {
+  if (memo.has(nodeId)) return memo.get(nodeId)!;
+
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node) {
+    memo.set(nodeId, false);
+    return false;
+  }
+  if (node.type === 'acard') {
+    memo.set(nodeId, true);
+    return true;
+  }
+
+  const { horizontal, vertical } = findChildren(nodeId, edges);
+  const children = [...horizontal, ...vertical];
+  for (const childId of children) {
+    if (branchContainsAnswer(childId, nodes, edges, memo)) {
+      memo.set(nodeId, true);
+      return true;
+    }
+  }
+
+  memo.set(nodeId, false);
+  return false;
+}
+
+/**
  * 递归计算子树尺寸
  */
 function calculateSubtreeSize(
@@ -216,6 +250,7 @@ function layoutNodeRecursive(
   layoutedNodes.set(nodeId, layoutedNode);
 
   const { horizontal, vertical } = findChildren(nodeId, edges);
+  const answerBranchMemo = new Map<string, boolean>();
 
   // 布局横向分支
   let horizontalBottomY = startY + nodeHeight;
@@ -244,10 +279,18 @@ function layoutNodeRecursive(
     // 计算纵向子节点的起始Y坐标
     let childStartY;
     if (horizontal.length > 0) {
-      // 仅在横向分支真实占用空间不足时，才下移纵向下游
       const baseY = startY + nodeHeight + GAP;
-      const requiredY = horizontalBottomY + HORIZONTAL_TO_MAIN_VERTICAL_GAP;
-      childStartY = Math.max(baseY, requiredY);
+      const horizontalHasAnswer = horizontal.some((childId) =>
+        branchContainsAnswer(childId, nodes, edges, answerBranchMemo)
+      );
+      if (horizontalHasAnswer) {
+        // 横向分支已出现答案时，再应用下游避让距离
+        const requiredY = horizontalBottomY + HORIZONTAL_TO_MAIN_VERTICAL_GAP;
+        childStartY = Math.max(baseY, requiredY);
+      } else {
+        // 横向分支仅有Q阶段，不下压当前QA链的后续A节点
+        childStartY = baseY;
+      }
     } else {
       // 没有横向分支，使用节点自身高度
       childStartY = startY + nodeHeight + GAP;

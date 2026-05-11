@@ -1161,7 +1161,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             animateNextLayoutRef.current = false;
             if (shouldAnimate && !isCenteringRef.current) {
               setLayoutTransitionEnabled(true);
-              setTimeout(() => setLayoutTransitionEnabled(false), 260);
+              setTimeout(() => setLayoutTransitionEnabled(false), 550);
             }
             nodesRef.current = targetNodes;
             setNodes(targetNodes);
