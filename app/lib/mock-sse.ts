@@ -61,13 +61,13 @@ export function startMockSSE(callbacks: MockSSECallbacks, options?: MockSSEOptio
   // 异步执行 SSE 流
   (async () => {
     // 1. Send Title event
-    await delay(300);
+    await delay(120);
     if (aborted) return;
     const titlePayload = { title: TREE_TITLE };
     onMessage('title', JSON.stringify(titlePayload));
 
     // 2. Wait before streaming A nodes (F0 和 Q1 已经通过 create API 创建)
-    await delay(500);
+    await delay(180);
     if (aborted) return;
 
     // 3. 循环推送所有 A 节点
@@ -102,12 +102,12 @@ export function startMockSSE(callbacks: MockSSECallbacks, options?: MockSSEOptio
             parentNodeId: aNode.parentId,
           }
         };
-        await delay(100);
+        await delay(35);
         onMessage('text', JSON.stringify(textPayload));
       }
 
       // 发送 ask_back
-      await delay(200);
+      await delay(80);
       if (aborted) return;
       const askBackPayload = {
         node_id: aNode.id,
@@ -120,12 +120,12 @@ export function startMockSSE(callbacks: MockSSECallbacks, options?: MockSSEOptio
 
       // 如果不是最后一个 A 节点，等待一段时间再推送下一个
       if (i < MOCK_A_NODES.length - 1) {
-        await delay(2000);
+        await delay(350);
       }
     }
 
     // 4. Send Done event (包含 CommonFields)
-    await delay(500);
+    await delay(120);
     if (aborted) return;
     const donePayload = {
       log_id: 'log_done',

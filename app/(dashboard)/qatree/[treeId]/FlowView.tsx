@@ -910,6 +910,22 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           } else {
             const updatedNodes = currentNodes.map(n => {
               if (n.id === id) {
+                const wasGenerating = Boolean(n.data?.isGenerating);
+                const justFinishedGenerating = n.type === 'acard' && wasGenerating && !isGenerating;
+                let finalMeasuredHeight: number | undefined;
+
+                if (justFinishedGenerating) {
+                  const liveNode = getNodes().find((node) => node.id === id);
+                  const cachedNode = nodesRef.current.find((node) => node.id === id);
+                  const resolvedHeight = typeof liveNode?.height === 'number'
+                    ? liveNode.height
+                    : typeof cachedNode?.height === 'number'
+                      ? cachedNode.height
+                      : undefined;
+                  if (typeof resolvedHeight === 'number' && resolvedHeight > 0) {
+                    finalMeasuredHeight = resolvedHeight;
+                  }
+                }
                 // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
                 // A 节点才累加流式内容
                 const currentContent = n.data.content;
@@ -922,6 +938,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                     content: updatedContent,
                     // QCard 的 question 字段保持不变（已经是 initialQuestion）
                     isGenerating,
+                    ...(n.type === 'acard' && isGenerating ? { finalLiteHeight: undefined } : {}),
+                    ...(finalMeasuredHeight ? { finalLiteHeight: finalMeasuredHeight, renderHeight: finalMeasuredHeight } : {}),
                     onExpand: n.type === 'acard' ? () => handleToggleDrawer(id) : n.data.onExpand,
                     ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
                   }

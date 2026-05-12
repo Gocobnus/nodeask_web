@@ -11,11 +11,15 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
   const shouldRenderFullCard = !isLiteMode || selected;
 
   const isCollapsed = Boolean(data?.isCollapsed);
+  const finalLiteHeight = Number(data?.finalLiteHeight);
   const measuredHeight = Number(data?.renderHeight);
+  const preferredHeight = Number.isFinite(finalLiteHeight) && finalLiteHeight > 0
+    ? finalLiteHeight
+    : measuredHeight;
   const renderHeight = isCollapsed
     ? 48
-    : Number.isFinite(measuredHeight) && measuredHeight > 0
-      ? measuredHeight
+    : Number.isFinite(preferredHeight) && preferredHeight > 0
+      ? preferredHeight
       : 550;
 
   if (shouldRenderFullCard) {
