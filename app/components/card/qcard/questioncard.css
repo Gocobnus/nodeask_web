@@ -225,6 +225,37 @@
   flex-shrink: 0;
 }
 
+.qcard__footer--ghost {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.qcard__lite-fill {
+  flex: 1;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--qcard-bg-primary) 92%, #fff);
+}
+
+.qcard-node-wrapper .qcard__header-title,
+.qcard-node-wrapper .qcard__content,
+.qcard-node-wrapper .qcard__icon-btn,
+.qcard-node-wrapper .qcard__delete-btn {
+  transition: opacity 220ms ease;
+}
+
+.qcard-node-wrapper.qcard-node-wrapper--tiny-zoom .qcard__header-title,
+.qcard-node-wrapper.qcard-node-wrapper--tiny-zoom .qcard__content,
+.qcard-node-wrapper.qcard-node-wrapper--tiny-zoom .qcard__icon-btn,
+.qcard-node-wrapper.qcard-node-wrapper--tiny-zoom .qcard__delete-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.qcard-node-wrapper.qcard-node-wrapper--tiny-zoom .qcard__background-card {
+  box-shadow: none !important;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .qcard__background-card {

@@ -271,6 +271,49 @@
   justify-content: center;
 }
 
+.acard__answer--lite {
+  margin: var(--acard-inner-margin-top) var(--acard-inner-margin-horizontal) var(--acard-inner-margin-bottom);
+}
+
+.acard__lite-fill {
+  min-height: calc(var(--acard-min-height) - var(--header-height) - var(--acard-inner-margin-bottom));
+  border-radius: 16px;
+  background: var(--acard-bg-content);
+  box-shadow: 2px 1px 8px color-mix(in srgb, var(--shadow-default) 60%, transparent);
+}
+
+/* 低缩放极简态：仅隐藏文字和按钮，不改变卡片尺寸 */
+.acard-node-wrapper .acard__title,
+.acard-node-wrapper .acard__content,
+.acard-node-wrapper .acard__tab,
+.acard-node-wrapper .acard__icon-btn,
+.acard-node-wrapper .acard__delete-btn,
+.acard-node-wrapper .acard-node__ask-btn,
+.acard-node-wrapper .acard__related-question-item {
+  transition: opacity 220ms ease;
+}
+
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__title,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__content,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__tab,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__icon-btn,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__delete-btn,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard-node__ask-btn,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__related-question-item {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__background-card,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__answer,
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__lite-fill {
+  box-shadow: none !important;
+}
+
+.acard-node-wrapper.acard-node-wrapper--tiny-zoom .acard__background-card {
+  box-shadow: inset 0 0 0 0px var(--acard-bg-selected-border), 0 2px 4px -2px rgb(0 0 0 / 0.18);
+}
+
 /* 保持卡片高度一致，以回答tab为标准 */
 .acard__answer:not(:has(.acard__footer))::after {
   content: '';

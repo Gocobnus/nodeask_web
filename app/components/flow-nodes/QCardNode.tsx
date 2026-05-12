@@ -13,6 +13,8 @@ import { CARD_WIDTH } from '@/app/config/constants';
 const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
   const { zoom } = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
+  const isTinyZoom = zoom <= 0.3;
+  const simplified = isTinyZoom && !selected;
 
   // QCard 不需要 ResizeObserver，因为：
   // 1. QCard 通常是第一个节点，位置固定
@@ -32,6 +34,7 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   return (
     <motion.div
+      className={simplified ? 'qcard-node-wrapper qcard-node-wrapper--tiny-zoom' : 'qcard-node-wrapper'}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
@@ -91,6 +94,7 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         onCopy={data.onCopy}
         onCopyError={data.onCopyError}
         tooltipSize={dynamicTooltipSize}
+        simplified={simplified}
       />
       <Handle
         type="source"

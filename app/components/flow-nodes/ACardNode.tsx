@@ -14,6 +14,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const HANDLE_ATTACH_DELAY_MS = 0;
   const ASK_FADE_MS = 180;
   const { zoom } = useViewport();
+  const isTinyZoom = zoom <= 0.3;
   const [isHovered, setIsHovered] = useState(false);
   const [hoverKeepAlive, setHoverKeepAlive] = useState(false);
   const [isCollapsedLocal, setIsCollapsedLocal] = useState(false);
@@ -35,9 +36,11 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   const askHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [rightHandlePos, setRightHandlePos] = useState<number>(-8);
+  const simplified = isTinyZoom && !selected;
 
   // ResizeObserver 监听高度变化
   useEffect(() => {
+    if (simplified) return;
     if (!containerRef.current) return;
 
     // 查找内部的 acard__answer-content-wrapper 元素（内容容器）
@@ -89,14 +92,15 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         resizeRafRef.current = null;
       }
     };
-  }, [id, data.onHeightChange]);
+  }, [id, data.onHeightChange, simplified]);
 
   useEffect(() => {
+    if (simplified) return;
     const timer = setTimeout(() => {
       updateNodeInternals(id);
     }, 100); // 稍微延迟以等待内部布局稳定
     return () => clearTimeout(timer);
-  }, [id, updateNodeInternals, data]); // 监听 data 变化（例如内容生成时）
+  }, [id, updateNodeInternals, data, simplified]); // 监听 data 变化（例如内容生成时）
 
   const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
     if (currentZoom < 0.8) return 'sm';
@@ -289,8 +293,12 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
       style={{ width: CARD_WIDTH, position: 'relative' }}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
+      onPointerEnter={() => {
+        if (!isTinyZoom) setIsHovered(true);
+      }}
+      onPointerLeave={() => {
+        if (!isTinyZoom) setIsHovered(false);
+      }}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
       {data.onDelete && selected && (
@@ -310,11 +318,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           </button>
         </CustomTooltip>
       )}
-      <CustomTooltip
-        placement="right"
-        content="追问卡片内容"
-        size={dynamicTooltipSize}
-      >
+      {simplified ? (
         <button
           ref={askBtnRef}
           className={`acard-node__ask-btn acard-node__ask-btn--visible ${isHidingAskBtn ? 'acard-node__ask-btn--hiding' : ''}`}
@@ -335,7 +339,34 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         >
           <FollowUpIcon width={24} height={24} />
         </button>
-      </CustomTooltip>
+      ) : (
+        <CustomTooltip
+          placement="right"
+          content="追问卡片内容"
+          size={dynamicTooltipSize}
+        >
+          <button
+            ref={askBtnRef}
+            className={`acard-node__ask-btn acard-node__ask-btn--visible ${isHidingAskBtn ? 'acard-node__ask-btn--hiding' : ''}`}
+            style={{
+              pointerEvents: buttonVisible ? 'auto' : 'none',
+              ['--ask-btn-scale' as string]: `${frozenScale}`,
+              opacity: buttonVisible ? 1 : 0,
+              transform: isHidingAskBtn && frozenTransform ? frozenTransform : undefined,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (data.onAsk) {
+                data.onAsk();
+              }
+            }}
+            type="button"
+            aria-label="追问卡片内容"
+          >
+            <FollowUpIcon width={24} height={24} />
+          </button>
+        </CustomTooltip>
+      )}
       <Handle
         type="target"
         position={Position.Top}
@@ -373,6 +404,7 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         onRelatedQuestionClick={data.onRelatedQuestionClick}
         relatedQuestions={data.relatedQuestions}
         tooltipSize={dynamicTooltipSize}
+        simplified={simplified}
       />
       <Handle
         type="source"
