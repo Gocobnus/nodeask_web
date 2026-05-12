@@ -5,14 +5,13 @@ import React, { useState, useLayoutEffect, useRef, useEffect } from "react";
 import Image from 'next/image';
 import { motion } from "framer-motion";
 import { QCardProps } from "../../../types/qacard";
-import { PullIcon, CardDeleteIcon, CopyIcon } from "../../icons";
+import { PullIcon, CopyIcon } from "../../icons";
 import { CustomTooltip } from "../../ui/CustomTooltip";
 import "./questioncard.css";
 import { TooltipProps } from "@heroui/react";
 
 interface CustomQCardProps extends QCardProps {
   tooltipSize?: TooltipProps['size'];
-  simplified?: boolean;
 }
 
 export default function QuestionCard({
@@ -20,22 +19,34 @@ export default function QuestionCard({
   avatar,
   isSelected = false,
   isInitiallyCollapsed = false,
+  isCollapsed: isCollapsedProp,
   onClick,
+  onCollapse,
   onCopy,
   onCopyError,
-  tooltipSize = 'sm',
-  simplified = false
+  tooltipSize = 'sm'
 }: CustomQCardProps) {
-  const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
+  const [isCollapsed, setIsCollapsed] = useState(isCollapsedProp ?? isInitiallyCollapsed);
   const [_isCopied, _setIsCopied] = useState(false);
   const [isContentScrollable, setIsContentScrollable] = useState(false);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
+
+  useEffect(() => {
+    if (typeof isCollapsedProp === 'boolean') {
+      setIsCollapsed(isCollapsedProp);
+    }
+  }, [isCollapsedProp]);
 
   // 2. 创建三个 Ref
   const cardRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const detailStyle = {
+    opacity: 1,
+    transition: 'opacity 180ms ease',
+    pointerEvents: 'auto' as const,
+  };
 
   // ... (handleButtonPress, handleButtonRelease, handleCopy, handleCardClick 保持不变) ...
   
@@ -73,7 +84,9 @@ export default function QuestionCard({
 
   const handleCollapseToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsCollapsed(prev => !prev);
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    onCollapse?.(next);
   };
 
   const iconVariants = {
@@ -116,16 +129,14 @@ export default function QuestionCard({
   }, []);
 
   useLayoutEffect(() => {
-    if (simplified) return;
     if (contentRef.current) {
       const isScrollable = contentRef.current.scrollHeight > contentRef.current.clientHeight;
       setIsContentScrollable(isScrollable);
     }
-  }, [question, isCollapsed, simplified]);
+  }, [question, isCollapsed]);
 
   // 3. 使用 useLayoutEffect 测量并设置高度
   useLayoutEffect(() => {
-    if (simplified) return;
     if (cardRef.current && headerRef.current && contentWrapperRef.current) {
       const headerHeight = headerRef.current.offsetHeight;
       
@@ -136,7 +147,7 @@ export default function QuestionCard({
         cardRef.current.style.maxHeight = `${headerHeight + contentHeight}px`;
       }
     }
-  }, [isCollapsed, question, simplified]); // 依赖项：收起状态和问题文本
+  }, [isCollapsed, question]); // 依赖项：收起状态和问题文本
 
   return (
     <motion.div 
@@ -147,12 +158,12 @@ export default function QuestionCard({
     >
       <div className="qcard__background-card-wrapper">
         {/* 5. 绑定 headerRef */}
-        <div className="qcard__header" ref={headerRef}>
+        <div className="qcard__header" ref={headerRef} style={detailStyle}>
             <div className="qcard__header-left">
               {avatar && <Image src={avatar} alt="avatar" className="qcard__avatar" width={24} height={24} />}
               <div className="qcard__header-title">{question}</div>
             </div>
-          {!simplified && <div className="qcard__header-actions">
+          <div className="qcard__header-actions">
               <CustomTooltip 
                 content={isCollapsed ? "展开" : "收起"} 
                 placement="bottom"
@@ -171,11 +182,12 @@ export default function QuestionCard({
                   <PullIcon width={24} height={24} className={isCollapsed ? "rotate-180" : ""} />
                 </button>
               </CustomTooltip>
-          </div>}
+          </div>
         </div>
 
         <motion.div 
           className={`qcard__body ${isCollapsed ? 'qcard__body--collapsed' : ''}`}
+          style={detailStyle}
           animate={{
             opacity: isCollapsed ? 0 : 1
           }}
@@ -186,16 +198,14 @@ export default function QuestionCard({
         >
           {/* 6. 绑定 contentWrapperRef */}
           <div className="qcard__body-content-wrapper" ref={contentWrapperRef}>
-            {!simplified && <div 
+            <div 
               ref={contentRef}
               className={`qcard__content nopan nodrag ${isContentScrollable && !isCtrlPressed ? 'nowheel' : ''}`}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {question}
-            </div>}
-            {simplified && !isCollapsed && <div className="qcard__lite-fill" />}
-            {simplified && !isCollapsed && <div className="qcard__footer qcard__footer--ghost"><div /></div>}
-            {!simplified && <div className="qcard__footer">
+            </div>
+            <div className="qcard__footer">
                 <div /> 
                 <CustomTooltip 
                   content={"复制"}
@@ -217,7 +227,7 @@ export default function QuestionCard({
                     <CopyIcon width={20} height={20} />
                   </motion.button>
                 </CustomTooltip>
-            </div>}
+            </div>
           </div>
         </motion.div>
       </div>

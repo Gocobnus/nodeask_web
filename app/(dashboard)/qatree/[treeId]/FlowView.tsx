@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node, useViewport } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
@@ -12,8 +12,8 @@ import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../ut
 import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, FOLLOWUP_WIDTH, HORIZONTAL_GAP, MAIN_TO_HORIZONTAL_CLUSTER_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
-import QCardNode from '../../../components/flow-nodes/QCardNode';
-import ACardNode from '../../../components/flow-nodes/ACardNode';
+import QCardLiteNode from '../../../components/flow-nodes/QCardLiteNode';
+import ACardLiteNode from '../../../components/flow-nodes/ACardLiteNode';
 import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
 import { Button, Listbox, ListboxItem, Skeleton } from '@heroui/react';
 import { createHorizontalFollowUp, createVerticalFollowUp } from '../../../services/qatree-api';
@@ -21,9 +21,9 @@ import { CustomDrawer } from '../../../components/card/acard/CustomDrawer';
 import { CustomTooltip } from '../../../components/ui/CustomTooltip';
 import { CloseIcon, CopyIcon, LocationIcon } from '../../../components/icons';
 
-const nodeTypes = {
-  qcard: QCardNode,
-  acard: ACardNode,
+const liteNodeTypes = {
+  qcard: QCardLiteNode,
+  acard: ACardLiteNode,
   followup: FollowUpNode,
 };
 
@@ -36,6 +36,8 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
+  const LITE_ENTER_ZOOM = 0.3;
+  const LITE_EXIT_ZOOM = 0.35;
   const DRAWER_SWITCH_DELAY_MS = 250;
   const LOCATE_PAN_DURATION_MS = 550;
   const LOCATE_PAN_SETTLE_MS = 590;
@@ -44,6 +46,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
+  const { zoom } = useViewport();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +57,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const [followUpNodeId, setFollowUpNodeId] = useState<string | null>(null);
   const nodeForFollowUp = nodes.find(n => n.id === followUpNodeId);
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
+  const [isLiteMode, setIsLiteMode] = useState(false);
 
   // 记录上次布局时的节点高度签名,避免死循环
   const lastLayoutSignatureRef = useRef<string>('');
@@ -72,6 +76,38 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
+  const prevLiteModeRef = useRef(false);
+
+  const getDefaultHeightForNode = useCallback((node: Node) => {
+    if (typeof node.height === 'number') return node.height;
+    if (node.type === 'acard') return 550;
+    if (node.type === 'followup') return 24;
+    return 250;
+  }, []);
+
+  const enrichNodeVisualData = useCallback((node: Node, _z: number): Node => {
+    if (node.type !== 'qcard' && node.type !== 'acard') return node;
+    const prevData = node.data || {};
+    if (isLiteMode) {
+      if (prevData.isLiteMode === true) return node;
+      return {
+        ...node,
+        data: {
+          ...prevData,
+          isLiteMode,
+        },
+      };
+    }
+
+    if (prevData.isLiteMode !== true) return node;
+    return {
+      ...node,
+      data: {
+        ...prevData,
+        isLiteMode,
+      },
+    };
+  }, [isLiteMode]);
 
   const getNodeHeight = useCallback((node: Node): number => {
     if (typeof node.height === 'number') return node.height;
@@ -349,6 +385,44 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }
     }
   };
+
+  useEffect(() => {
+    setIsLiteMode((prev) => {
+      if (!prev && zoom <= LITE_ENTER_ZOOM) return true;
+      if (prev && zoom >= LITE_EXIT_ZOOM) return false;
+      return prev;
+    });
+  }, [zoom, LITE_ENTER_ZOOM, LITE_EXIT_ZOOM]);
+
+  useEffect(() => {
+    const enteringLite = !prevLiteModeRef.current && isLiteMode;
+    prevLiteModeRef.current = isLiteMode;
+    setNodes((currentNodes) => {
+      let changed = false;
+      const next = currentNodes.map((node) => {
+        let nextNode = node;
+        if (node.type === 'qcard' || node.type === 'acard') {
+          const prevData = node.data || {};
+          if (enteringLite && prevData.isLiteMode !== true && typeof node.height === 'number') {
+            const frozenHeight = node.height;
+            nextNode = {
+              ...node,
+              data: {
+                ...prevData,
+                renderHeight: frozenHeight,
+              },
+            };
+          }
+        }
+        const enriched = enrichNodeVisualData(nextNode, zoom);
+        if (enriched !== node) changed = true;
+        return enriched;
+      });
+      if (!changed) return currentNodes;
+      nodesRef.current = next;
+      return next;
+    });
+  }, [isLiteMode, nodes, zoom, setNodes, enrichNodeVisualData, getDefaultHeightForNode]);
 
   const runCreateQFollowUp = useCallback(async (
     parentReactFlowNodeId: string,
@@ -686,6 +760,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       : undefined,
     onLocate: () => handleNodeLocate(id),
     onHeightChange: handleHeightChange,
+    onCollapse: () => {},
   }), [handleAskFollowUp, handleRelatedQuestionFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange]);
 
   const handleMessage = useCallback((event: string, data: string) => {
@@ -1296,7 +1371,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onlyRenderVisibleElements
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
+        nodeTypes={liteNodeTypes}
         onMoveStart={onMoveStart}
         zoomOnDoubleClick={false}
         zoomOnScroll={false}

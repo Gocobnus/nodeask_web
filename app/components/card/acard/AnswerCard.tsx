@@ -11,7 +11,6 @@ interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
   relatedQuestions?: string[];
   tooltipSize?: TooltipProps['size'];
-  simplified?: boolean;
 }
 
 // 导入 HeroUI 组件和自定义组件
@@ -39,8 +38,7 @@ export default function AnswerCard({
   onLocate,
   onRelatedQuestionClick,
   relatedQuestions = [],
-  tooltipSize = 'sm',
-  simplified = false
+  tooltipSize = 'sm'
 }: CustomACardProps) {
   // 基础状态
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
@@ -95,7 +93,6 @@ export default function AnswerCard({
   const [answerBottomMargin, setAnswerBottomMargin] = useState<number>(16);
   
   useLayoutEffect(() => {
-    if (simplified) return;
     // 测量 activeTab 并更新下划线样式
     // 我们使用 requestAnimationFrame 来确保测量发生在下一次绘制前
     const measureAndUpdate = () => {
@@ -119,11 +116,10 @@ export default function AnswerCard({
     window.addEventListener('resize', measureAndUpdate);
     return () => window.removeEventListener('resize', measureAndUpdate);
 
-  }, [activeTab, simplified]); // 依赖项是 activeTab
+  }, [activeTab]); // 依赖项是 activeTab
 
   // Effect: 读取 CSS 变量
   useEffect(() => {
-    if (simplified) return;
     if (cardRef.current) {
       const styles = getComputedStyle(cardRef.current);
       const marginBottomValue = styles.getPropertyValue('--acard-inner-margin-bottom').trim(); //
@@ -132,7 +128,7 @@ export default function AnswerCard({
         setAnswerBottomMargin(parsedValue);
       }
     }
-  }, [simplified]);
+  }, []);
 
   // 相关问题列表数据
   const listBoxItems = relatedQuestions.map((q, index) => ({ id: index.toString(), text: q }));
@@ -213,9 +209,7 @@ export default function AnswerCard({
 
     setIsCollapsed(prev => !prev);
 
-    if (onCollapse) {
-      onCollapse();
-    }
+    onCollapse?.();
 
   };
 
@@ -223,7 +217,6 @@ export default function AnswerCard({
 
   // Effect: 计算并设置卡片的 max-height 以实现动画
   useLayoutEffect(() => {
-    if (simplified) return;
 
     if (cardRef.current && headerRef.current && contentWrapperRef.current) {
       const headerHeight = headerRef.current.offsetHeight;
@@ -235,20 +228,18 @@ export default function AnswerCard({
         cardRef.current.style.maxHeight = `${headerHeight + contentHeight + answerBottomMargin}px`;
       }
     }
-  }, [isCollapsed, content, activeTab, answerBottomMargin, simplified]);
+  }, [isCollapsed, content, activeTab, answerBottomMargin]);
 
   // Effect: 恢复滚动条位置
   useEffect(() => {
-    if (simplified) return;
 
     if (!isCollapsed && contentRef.current && scrollPosition > 0) {
       contentRef.current.scrollTop = scrollPosition;
     }
-  }, [isCollapsed, scrollPosition, simplified]);
+  }, [isCollapsed, scrollPosition]);
 
   // Effect: 同步"相关问题"Tab的高度与"回答"Tab内容的高度
   useEffect(() => {
-    if (simplified) return;
     if (contentRef.current) {
       const updateHeight = () => {
         if (activeTab === 'answer') {
@@ -266,27 +257,24 @@ export default function AnswerCard({
         resizeObserver.disconnect();
       };
     }
-  }, [activeTab, content, isCollapsed, simplified]);
+  }, [activeTab, content, isCollapsed]);
 
   useLayoutEffect(() => {
-    if (simplified) return;
     if (contentRef.current) {
       const isScrollable = contentRef.current.scrollHeight > contentRef.current.clientHeight;
       setIsContentScrollable(isScrollable);
     }
-  }, [content, activeTab, isCollapsed, simplified]);
+  }, [content, activeTab, isCollapsed]);
 
   // Effect: 内容生成时自动滚动到底部
   useEffect(() => {
-    if (simplified) return;
     if (isGenerating && contentRef.current && activeTab === 'answer') {
       // 滚动到底部，让用户看到最新生成的内容
       contentRef.current.scrollTop = contentRef.current.scrollHeight;
     }
-  }, [content, isGenerating, activeTab, simplified]);
+  }, [content, isGenerating, activeTab]);
 
   useLayoutEffect(() => {
-    if (simplified) return;
     const checkTruncation = () => {
       const element = titleRef.current;
       if (element) {
@@ -308,7 +296,7 @@ export default function AnswerCard({
       resizeObserver.disconnect(); // 清理 observer
     };
   // 依赖项：当 title 文本变化时重新检查
-  }, [title, simplified]);
+  }, [title]);
   // --- Effect 结束 ---
 
   // --- Render ---
@@ -320,19 +308,17 @@ export default function AnswerCard({
     >
       <div className="acard__background-card-wrapper">
         <div className="acard__header" ref={headerRef}>
-            {!simplified && (
-              <CustomTooltip
-                content={title} // Tooltip 显示完整标题
-                placement="top" // 或者你希望的位置
-                isDisabled={isTitleTooltipDisabled} // 根据状态控制是否禁用
-                size={tooltipSize}
-              >
-                <div className="acard__title" ref={titleRef}> 
-                  {title}
-                </div>
-              </CustomTooltip>
-            )}
-          {!simplified && <div className="acard__header-actions">
+          <CustomTooltip
+            content={title} // Tooltip 显示完整标题
+            placement="top" // 或者你希望的位置
+            isDisabled={isTitleTooltipDisabled} // 根据状态控制是否禁用
+            size={tooltipSize}
+          >
+            <div className="acard__title" ref={titleRef}> 
+              {title}
+            </div>
+          </CustomTooltip>
+          <div className="acard__header-actions">
               {/* 暂停按钮 */}
               {isGenerating && (
                 <CustomTooltip
@@ -373,11 +359,11 @@ export default function AnswerCard({
                   <PullIcon width={24} height={24} className={isCollapsed ? "rotate-180" : ""} />
                 </button>
               </CustomTooltip>
-          </div>}
+          </div>
         </div>
 
         {/* 卡片内容区域 */}
-        {!simplified && <motion.div
+        <motion.div
           className={`acard__answer ${isCollapsed ? 'acard__answer--collapsed' : ''}`}
           animate={{
             opacity: isCollapsed ? 0 : 1 // 控制透明度动画
@@ -503,12 +489,7 @@ export default function AnswerCard({
                 ) : <div /> /* 占位符 */}
             </div>
           </div>
-        </motion.div>}
-        {simplified && !isCollapsed && (
-          <div className="acard__answer acard__answer--lite">
-            <div className="acard__lite-fill" />
-          </div>
-        )}
+        </motion.div>
       </div>
 
     </motion.div>

@@ -13,8 +13,7 @@ import { CARD_WIDTH } from '@/app/config/constants';
 const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
   const { zoom } = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
-  const isTinyZoom = zoom <= 0.3;
-  const simplified = isTinyZoom && !selected;
+  const disableEnterAnimation = Boolean(data?.disableEnterAnimation);
 
   // QCard 不需要 ResizeObserver，因为：
   // 1. QCard 通常是第一个节点，位置固定
@@ -31,13 +30,14 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
     return 'lg';
   };
   const dynamicTooltipSize = getTooltipSize(zoom);
+  const forceTiny = Boolean(data?.forceTiny);
 
   return (
     <motion.div
-      className={simplified ? 'qcard-node-wrapper qcard-node-wrapper--tiny-zoom' : 'qcard-node-wrapper'}
-      initial={{ opacity: 0 }}
+      className={forceTiny ? 'qcard-node-wrapper qcard-node-wrapper--tiny-zoom' : 'qcard-node-wrapper'}
+      initial={disableEnterAnimation ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }} // 0.4秒平滑淡入
+      transition={disableEnterAnimation ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
       style={{ width: CARD_WIDTH, position: 'relative' }}
       onAnimationComplete={() => updateNodeInternals(id)}
     >
@@ -90,11 +90,12 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         question={data.question}
         avatar={data.avatar}
         isSelected={selected}
+        isCollapsed={Boolean(data?.isCollapsed)}
         onClick={data.onClick}
+        onCollapse={data.onCollapse}
         onCopy={data.onCopy}
         onCopyError={data.onCopyError}
         tooltipSize={dynamicTooltipSize}
-        simplified={simplified}
       />
       <Handle
         type="source"

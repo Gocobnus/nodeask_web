@@ -15,7 +15,9 @@ export interface QCardProps {
   avatar?: string;
   isSelected?: boolean;
   isInitiallyCollapsed?: boolean;
+  isCollapsed?: boolean;
   onClick?: (e?: React.MouseEvent) => void;
+  onCollapse?: (collapsed?: boolean) => void;
   onDelete?: () => void;
   onCopy?: () => void;
   onCopyError?: (error: Error) => void;
