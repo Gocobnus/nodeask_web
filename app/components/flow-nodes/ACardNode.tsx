@@ -10,7 +10,7 @@ import { TooltipProps } from '@heroui/react';
 import { CARD_WIDTH } from '@/app/config/constants';
 
 
-const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
+const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: any, selected: boolean, suppressHandles?: boolean }) => {
   const HANDLE_ATTACH_DELAY_MS = 0;
   const ASK_FADE_MS = 180;
   const { zoom } = useViewport();
@@ -339,20 +339,22 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           <FollowUpIcon width={24} height={24} />
         </button>
       </CustomTooltip>
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="custom-handle-top"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          top: '-8px',
-          left: '50%',
-          transform: 'translateX(-50%)'
-        }}
-      />
+      {!suppressHandles && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="custom-handle-top"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            top: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      )}
       <AnswerCard
         title={data.title}
         content={data.content}
@@ -377,34 +379,38 @@ const ACardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         relatedQuestions={data.relatedQuestions}
         tooltipSize={dynamicTooltipSize}
       />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="custom-handle-bottom"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          bottom: '-8px',
-          left: '50%',
-          transform: 'translateX(-50%)'
-        }}
-      />
-      <Handle
-        type="source"
-        id="right"
-        position={Position.Right}
-        className="custom-handle-right"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          top: '24px',
-          right: `${rightHandlePos}px`
-        }}
-      />
+      {!suppressHandles && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="custom-handle-bottom"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            bottom: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      )}
+      {!suppressHandles && (
+        <Handle
+          type="source"
+          id="right"
+          position={Position.Right}
+          className="custom-handle-right"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            top: '24px',
+            right: `${rightHandlePos}px`
+          }}
+        />
+      )}
     </motion.div>
   );
 };

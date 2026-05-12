@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { Handle, Position, useViewport, useUpdateNodeInternals } from 'reactflow';
 import { QuestionCard } from '../card/qcard';
 import { motion } from 'framer-motion';
@@ -10,10 +10,11 @@ import { TooltipProps } from '@heroui/react';
 import { CARD_WIDTH } from '@/app/config/constants';
 
 
-const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: boolean }) => {
+const QCardNode = ({ id, data, selected, suppressHandles, asProbe }: { id: string, data: any, selected: boolean, suppressHandles?: boolean, asProbe?: boolean }) => {
   const { zoom } = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
   const disableEnterAnimation = Boolean(data?.disableEnterAnimation);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // QCard 不需要 ResizeObserver，因为：
   // 1. QCard 通常是第一个节点，位置固定
@@ -23,6 +24,16 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
   useEffect(() => {
      updateNodeInternals(id);
   }, [id, updateNodeInternals, data]);
+
+  useLayoutEffect(() => {
+    if (!asProbe || !data?.onHeightChange) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const h = el.offsetHeight;
+    if (h > 0) {
+      data.onHeightChange(id, h);
+    }
+  }, [asProbe, id, data?.question, data?.content, data?.onHeightChange]);
 
   const getTooltipSize = (currentZoom: number): TooltipProps['size'] => {
     if (currentZoom < 0.8) return 'sm';
@@ -34,6 +45,7 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
 
   return (
     <motion.div
+      ref={containerRef}
       className={forceTiny ? 'qcard-node-wrapper qcard-node-wrapper--tiny-zoom' : 'qcard-node-wrapper'}
       initial={disableEnterAnimation ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -58,34 +70,38 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
           </button>
         </CustomTooltip>
       )}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="custom-handle-top"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          top: '-8px',
-          left: '50%',
-          transform: 'translateX(-50%)'
-        }}
-      />
-      <Handle
-        type="target"
-        id="left"
-        position={Position.Left}
-        className="custom-handle-left"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          top: '24px',
-          left: '-8px'
-        }}
-      />
+      {!suppressHandles && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="custom-handle-top"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            top: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      )}
+      {!suppressHandles && (
+        <Handle
+          type="target"
+          id="left"
+          position={Position.Left}
+          className="custom-handle-left"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            top: '24px',
+            left: '-8px'
+          }}
+        />
+      )}
       <QuestionCard
         question={data.question}
         avatar={data.avatar}
@@ -97,20 +113,22 @@ const QCardNode = ({ id, data, selected }: { id: string, data: any, selected: bo
         onCopyError={data.onCopyError}
         tooltipSize={dynamicTooltipSize}
       />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="custom-handle-bottom"
-        style={{
-          background: 'transparent',
-          border: 'none',
-          width: '1px',
-          height: '1px',
-          bottom: '-8px',
-          left: '50%',
-          transform: 'translateX(-50%)'
-        }}
-      />
+      {!suppressHandles && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="custom-handle-bottom"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            width: '1px',
+            height: '1px',
+            bottom: '-8px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      )}
     </motion.div>
   );
 };

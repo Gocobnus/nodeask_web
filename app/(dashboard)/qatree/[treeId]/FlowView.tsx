@@ -711,10 +711,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     lastNodeHeightsRef.current[nodeId] = newHeight;
 
     // 更新节点高度并触发布局重新计算
+    // 同步写入 data.renderHeight / measuredOnce，供 lite-shell 切回后读取真实高度
     setNodes((currentNodes) => {
       const updated = currentNodes.map(node =>
         node.id === nodeId
-          ? { ...node, height: newHeight }
+          ? {
+              ...node,
+              height: newHeight,
+              data: { ...node.data, renderHeight: newHeight, measuredOnce: true },
+            }
           : node
       );
       nodesRef.current = updated;

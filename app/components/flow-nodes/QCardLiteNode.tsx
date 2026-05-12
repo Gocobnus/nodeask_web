@@ -12,24 +12,20 @@ const QCardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
 
   const isCollapsed = Boolean(data?.isCollapsed);
   const measuredHeight = Number(data?.renderHeight);
+  const hasMeasuredHeight = Number.isFinite(measuredHeight) && measuredHeight > 0;
   const renderHeight = isCollapsed
     ? 48
-    : Number.isFinite(measuredHeight) && measuredHeight > 0
+    : hasMeasuredHeight
       ? measuredHeight
       : 250;
+  const needsProbeOnce = !hasMeasuredHeight && !data?.measuredOnce;
 
   if (shouldRenderFullCard) {
     return <QCardNode id={id} data={data} selected={selected} />;
   }
 
-  return (
-    <motion.div
-      className="qcard-lite-shell"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-      style={{ width: CARD_WIDTH, height: renderHeight }}
-    >
+  const liteShellContent = (
+    <>
       <Handle
         type="target"
         position={Position.Top}
@@ -76,6 +72,37 @@ const QCardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
           transform: 'translateX(-50%)'
         }}
       />
+    </>
+  );
+
+  if (needsProbeOnce) {
+    // 探针：完整 QCardNode 通过 useLayoutEffect 单次上报 offsetHeight，视觉不可见。
+    // 覆盖层：lite-shell 绝对定位贴合探针撑出的高度。
+    const probeData = { ...data, disableEnterAnimation: true };
+    return (
+      <div
+        className="qcard-lite-shell"
+        style={{ position: 'relative', width: CARD_WIDTH }}
+      >
+        <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>
+          <QCardNode id={id} data={probeData} selected={false} suppressHandles asProbe />
+        </div>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {liteShellContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="qcard-lite-shell"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      style={{ width: CARD_WIDTH, height: renderHeight }}
+    >
+      {liteShellContent}
     </motion.div>
   );
 };

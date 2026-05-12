@@ -7,6 +7,7 @@ import { CARD_WIDTH } from '@/app/config/constants';
 
 const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected: boolean }) => {
   const isLiteMode = Boolean(data?.isLiteMode);
+  const isGenerating = Boolean(data?.isGenerating);
   const shouldRenderFullCard = !isLiteMode || selected;
 
   const isCollapsed = Boolean(data?.isCollapsed);
@@ -22,11 +23,8 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
     return <ACardNode id={id} data={fullCardData} selected={selected} />;
   }
 
-  return (
-    <div
-      className="acard-lite-shell"
-      style={{ width: CARD_WIDTH, height: renderHeight }}
-    >
+  const liteShellContent = (
+    <>
       <Handle
         type="target"
         position={Position.Top}
@@ -73,6 +71,34 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
           right: '-8px'
         }}
       />
+    </>
+  );
+
+  if (isGenerating) {
+    // 探针：完整 ACardNode 在 DOM 中保留 layout 测量与 ResizeObserver，视觉不可见。
+    // 覆盖层：lite-shell 绝对定位贴合探针撑出的高度，承担视觉表现与连线锚点。
+    const probeData = { ...data, disableEnterAnimation: true };
+    return (
+      <div
+        className="acard-lite-shell"
+        style={{ position: 'relative', width: CARD_WIDTH }}
+      >
+        <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>
+          <ACardNode id={id} data={probeData} selected={false} suppressHandles />
+        </div>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {liteShellContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="acard-lite-shell"
+      style={{ width: CARD_WIDTH, height: renderHeight }}
+    >
+      {liteShellContent}
     </div>
   );
 };
