@@ -718,7 +718,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           ? {
               ...node,
               height: newHeight,
-              data: { ...node.data, renderHeight: newHeight, measuredOnce: true },
+              data: {
+                ...node.data,
+                renderHeight: newHeight,
+                measuredOnce: true,
+                ...(node.data?.needsInitialHeightSync
+                  ? { finalLiteHeight: newHeight, needsInitialHeightSync: undefined }
+                  : {}),
+              },
             }
           : node
       );
@@ -875,6 +882,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             } else {
               // type 是 'qcard' 或 'acard'
               const cardType = type as 'qcard' | 'acard';
+              const isCompletedOnFirstChunk = cardType === 'acard' && !isGenerating;
               // Q1 节点的 content 应该使用 initialQuestion，因为 SSE 不推送 Q 节点内容
               const initialContent = pos === 0 ? initialQuestion : content;
 
@@ -893,6 +901,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
+                  ...(isCompletedOnFirstChunk ? { needsInitialHeightSync: true } : {}),
                   onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
@@ -917,10 +926,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 if (justFinishedGenerating) {
                   const liveNode = getNodes().find((node) => node.id === id);
                   const cachedNode = nodesRef.current.find((node) => node.id === id);
-                  const resolvedHeight = typeof liveNode?.height === 'number'
-                    ? liveNode.height
-                    : typeof cachedNode?.height === 'number'
-                      ? cachedNode.height
+                  const liveNodeHeight = typeof liveNode?.height === 'number' ? liveNode.height : undefined;
+                  const cachedNodeHeight = typeof cachedNode?.height === 'number' ? cachedNode.height : undefined;
+                  const resolvedHeight = typeof liveNodeHeight === 'number'
+                    ? liveNodeHeight
+                    : typeof cachedNodeHeight === 'number'
+                      ? cachedNodeHeight
                       : undefined;
                   if (typeof resolvedHeight === 'number' && resolvedHeight > 0) {
                     finalMeasuredHeight = resolvedHeight;

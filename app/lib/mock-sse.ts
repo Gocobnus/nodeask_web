@@ -22,14 +22,14 @@ const generateMockANodes = (parentNodeId: string) => {
       id: a1Id,
       type: 'acard',
       pos: 1,
-      content: "React FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact FlReact Fl",
+      content: "React FlReact React FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReactReact FlReact",
       parentId: parentNodeId,  // 使用传入的父节点 ID
     },
     {
       id: a2Id,
       type: 'acard',
       pos: 1,
-      content: "React",
+      content: "R1t",
       parentId: a1Id,  // A2 的父节点是 A1
     },
     {
