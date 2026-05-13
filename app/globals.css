@@ -13,3 +13,21 @@
 .flow-canvas--layout-transition .react-flow__node {
   transition: transform 550ms ease;
 }
+
+.flow-canvas--lod-preview .react-flow__viewport {
+  filter: blur(1.5px);
+}
+
+.flow-canvas--lod-switching .react-flow__viewport {
+  transition: filter 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.flow-canvas--lod-switching-to-lite .react-flow__viewport {
+  opacity: 0.94;
+  transform: scale(0.992);
+}
+
+.flow-canvas--lod-switching-to-full .react-flow__viewport {
+  opacity: 0.97;
+  transform: scale(0.996);
+}

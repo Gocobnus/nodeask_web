@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node, useViewport } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
@@ -12,18 +12,20 @@ import { getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
 import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, FOLLOWUP_WIDTH, HORIZONTAL_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
-import QCardNode from '../../../components/flow-nodes/QCardNode';
-import ACardNode from '../../../components/flow-nodes/ACardNode';
+import QCardNodeSwitch from '../../../components/flow-nodes/QCardNodeSwitch';
+import ACardNodeSwitch from '../../../components/flow-nodes/ACardNodeSwitch';
 import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
 import { Button, Listbox, ListboxItem, Skeleton } from '@heroui/react';
 import { createHorizontalFollowUp, createVerticalFollowUp } from '../../../services/qatree-api';
 import { CustomDrawer } from '../../../components/card/acard/CustomDrawer';
 import { CustomTooltip } from '../../../components/ui/CustomTooltip';
 import { CloseIcon, CopyIcon, LocationIcon } from '../../../components/icons';
+import { QuestionCard } from '../../../components/card/qcard';
+import { AnswerCard } from '../../../components/card/acard';
 
 const nodeTypes = {
-  qcard: QCardNode,
-  acard: ACardNode,
+  qcard: QCardNodeSwitch,
+  acard: ACardNodeSwitch,
   followup: FollowUpNode,
 };
 
@@ -36,6 +38,10 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
+  const LOD_ENTER_ZOOM = 0.42;
+  const LOD_EXIT_ZOOM = 0.48;
+  const LOD_FADE_OUT_MS = 170;
+  const LOD_FADE_IN_MS = 210;
   const DRAWER_SWITCH_DELAY_MS = 250;
   const LOCATE_PAN_DURATION_MS = 550;
   const LOCATE_PAN_SETTLE_MS = 590;
@@ -44,9 +50,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
+  const { zoom } = useViewport();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLodLiteMode, setIsLodLiteMode] = useState(false);
+  const [isLodSwitchVeilVisible, setIsLodSwitchVeilVisible] = useState(false);
+  const [lodSwitchDirection, setLodSwitchDirection] = useState<'to-lite' | 'to-full'>('to-lite');
+  const [lodSwitchPhase, setLodSwitchPhase] = useState<'fade-out' | 'fade-in'>('fade-out');
 
   const [editingText, setEditingText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +65,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const [followUpNodeId, setFollowUpNodeId] = useState<string | null>(null);
   const nodeForFollowUp = nodes.find(n => n.id === followUpNodeId);
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
+  const [lodPreviewNodeId, setLodPreviewNodeId] = useState<string | null>(null);
 
   // 记录上次布局时的节点高度签名,避免死循环
   const lastLayoutSignatureRef = useRef<string>('');
@@ -69,6 +81,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const animateNextLayoutRef = useRef(false);
   const [layoutTransitionEnabled, setLayoutTransitionEnabled] = useState(false);
   const pendingCenterNodeIdRef = useRef<string | null>(null);
+  const lodFadeOutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lodFadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lodSwitchingRef = useRef(false);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
@@ -78,6 +93,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     if (node.type === 'acard') return 550;
     if (node.type === 'followup') return 24;
     return 250;
+  }, []);
+
+  const enrichNodeLodData = useCallback((node: Node, lodLite: boolean): Node => {
+    if (node.type !== 'qcard' && node.type !== 'acard') return node;
+    const prevData = node.data || {};
+    if (Boolean(prevData.lodLite) === lodLite) return node;
+    return {
+      ...node,
+      data: {
+        ...prevData,
+        lodLite,
+      },
+    };
   }, []);
 
   const collectDescendantIds = useCallback((rootId: string, allEdges: any[]): Set<string> => {
@@ -333,6 +361,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     pendingTextEventsRef.current.push({ key, event, data, retries: 0 });
   }, []);
 
+  const openLodPreviewByNodeId = useCallback((nodeId: string): boolean => {
+    const node = nodesRef.current.find((n) => n.id === nodeId);
+    if (!node) return false;
+    if ((node.type !== 'qcard' && node.type !== 'acard') || node.data?.lodLite !== true) return false;
+    setLodPreviewNodeId(nodeId);
+    return true;
+  }, []);
+
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
 
@@ -349,6 +385,48 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }
     }
   };
+
+  useEffect(() => {
+    if (lodSwitchingRef.current) return;
+    let next = isLodLiteMode;
+    if (!isLodLiteMode && zoom <= LOD_ENTER_ZOOM) next = true;
+    if (isLodLiteMode && zoom >= LOD_EXIT_ZOOM) next = false;
+    if (next === isLodLiteMode) return;
+
+    lodSwitchingRef.current = true;
+    setLodSwitchDirection(next ? 'to-lite' : 'to-full');
+    setLodSwitchPhase('fade-out');
+    setIsLodSwitchVeilVisible(true);
+
+    if (lodFadeOutTimerRef.current) clearTimeout(lodFadeOutTimerRef.current);
+    if (lodFadeInTimerRef.current) clearTimeout(lodFadeInTimerRef.current);
+
+    lodFadeOutTimerRef.current = setTimeout(() => {
+      setIsLodLiteMode(next);
+      setLodSwitchPhase('fade-in');
+      lodFadeOutTimerRef.current = null;
+
+      lodFadeInTimerRef.current = setTimeout(() => {
+        setIsLodSwitchVeilVisible(false);
+        lodFadeInTimerRef.current = null;
+        lodSwitchingRef.current = false;
+      }, LOD_FADE_IN_MS);
+    }, LOD_FADE_OUT_MS);
+  }, [zoom, isLodLiteMode, LOD_ENTER_ZOOM, LOD_EXIT_ZOOM, LOD_FADE_OUT_MS, LOD_FADE_IN_MS]);
+
+  useEffect(() => {
+    setNodes((currentNodes) => {
+      let changed = false;
+      const next = currentNodes.map((node) => {
+        const enriched = enrichNodeLodData(node, isLodLiteMode);
+        if (enriched !== node) changed = true;
+        return enriched;
+      });
+      if (!changed) return currentNodes;
+      nodesRef.current = next;
+      return next;
+    });
+  }, [isLodLiteMode, setNodes, enrichNodeLodData]);
 
   const runCreateQFollowUp = useCallback(async (
     parentReactFlowNodeId: string,
@@ -384,6 +462,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           content: questionText,
           question: questionText,
           isGenerating: false,
+          lodLite: isLodLiteMode,
           nodeId: q_node_id,
           qaId: qa_id,
           parentNodeId: parentBusinessNodeId,
@@ -462,7 +541,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       lockedCenterZoomRef.current = null;
       setIsSubmitting(false);
     }
-  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp]);
+  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp, isLodLiteMode]);
 
   const handleSubmit = async (submittedText: string) => {
     if (!followUpNodeId) return;
@@ -527,6 +606,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   }, []);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
+    if (openLodPreviewByNodeId(nodeId)) {
+      return;
+    }
     setNodes((nds) => {
       const updatedNodes = nds.map((node) => ({
         ...node,
@@ -540,9 +622,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     });
     prevFollowUpNodeIdRef.current = null;
     setFollowUpNodeId(null);
-  }, [setNodes]);
+  }, [setNodes, openLodPreviewByNodeId]);
 
-  const handleAskFollowUp = useCallback((nodeId: string) => {
+  const handleAskFollowUp = useCallback((nodeId: string, options?: { forceInput?: boolean }) => {
+    const targetNode = nodesRef.current.find((n) => n.id === nodeId);
+    const isQNode = targetNode?.type === 'qcard';
+    if (!options?.forceInput && !isQNode && openLodPreviewByNodeId(nodeId)) {
+      return;
+    }
     const previousNodeId = prevFollowUpNodeIdRef.current;
 
     setNodes((nds) => {
@@ -564,7 +651,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     prevFollowUpNodeIdRef.current = nodeId;  // 更新记录
     setFollowUpNodeId(nodeId);
-  }, [setNodes]);
+  }, [setNodes, openLodPreviewByNodeId]);
   handleAskFollowUpRef.current = handleAskFollowUp;
 
   const handleRelatedQuestionFollowUp = useCallback((nodeId: string, question: string) => {
@@ -699,6 +786,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         cancelAnimationFrame(locateAnimationRef.current);
         locateAnimationRef.current = null;
       }
+      if (lodFadeOutTimerRef.current) {
+        clearTimeout(lodFadeOutTimerRef.current);
+        lodFadeOutTimerRef.current = null;
+      }
+      if (lodFadeInTimerRef.current) {
+        clearTimeout(lodFadeInTimerRef.current);
+        lodFadeInTimerRef.current = null;
+      }
+      lodSwitchingRef.current = false;
     };
   }, []);
 
@@ -706,8 +802,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const cardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
     onDelete: () => console.log(`Delete card ${id}`),
     onCopy: () => console.log(`Copy card ${id}`),
-    onClick: type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
-    onAsk: () => handleAskFollowUp(id),
+    onClick: type === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
+    onAsk: () => handleAskFollowUp(id, { forceInput: true }),
     onRelatedQuestionClick: type === 'acard'
       ? (question: string) => handleRelatedQuestionFollowUp(id, question)
       : undefined,
@@ -817,7 +913,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 data: {
                   nodeId: id,
                   parentNodeId: parentNodeId, // 父节点的业务 ID
-                  onClick: () => handleAskFollowUp(id),
+                  onClick: () => handleAskFollowUp(id, { forceInput: true }),
                 },
               };
             } else {
@@ -835,13 +931,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   pos,
                   content: initialContent,
                   isGenerating,
+                  lodLite: isLodLiteMode,
                   nodeId: id, // 添加业务 ID
                   qaId: qaId, // 添加 qa_id，用于在 done 事件中查找对应的 A 节点
                   parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
-                  onClick: cardType === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
+                  onClick: cardType === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
                   onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
@@ -872,7 +969,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                     content: updatedContent,
                     // QCard 的 question 字段保持不变（已经是 initialQuestion）
                     isGenerating,
-                    onClick: n.type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
+                    onClick: n.type === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
                     onExpand: n.type === 'acard' ? () => handleToggleDrawer(id) : n.data.onExpand,
                     ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
                   }
@@ -1020,7 +1117,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, handleToggleDrawer, getNodes, getZoom]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, handleToggleDrawer, getNodes, getZoom, isLodLiteMode]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -1105,6 +1202,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           pos: 0,
           content: initialQuestion,
           isGenerating: false,
+          lodLite: isLodLiteMode,
           nodeId: currentTree.qNodeId,
           parentNodeId: currentTree.qParentNodeId, // Q1 的父节点是 F0（业务 ID）
           parentReactFlowId: currentTree.dummyNodeId, // Q1 的父节点是 F0（React Flow ID）
@@ -1308,7 +1406,17 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     handleRelatedQuestionFollowUp(openDrawerId, selectedItem.text);
   };
 
-  const canvasClassName = layoutTransitionEnabled ? 'flow-canvas flow-canvas--layout-transition' : 'flow-canvas';
+  const lodPreviewNode = lodPreviewNodeId
+    ? nodes.find((n) => n.id === lodPreviewNodeId && (n.type === 'qcard' || n.type === 'acard'))
+    : undefined;
+  const canvasClassName = [
+    'flow-canvas',
+    layoutTransitionEnabled ? 'flow-canvas--layout-transition' : '',
+    lodPreviewNode ? 'flow-canvas--lod-preview' : '',
+    isLodSwitchVeilVisible ? 'flow-canvas--lod-switching' : '',
+    isLodSwitchVeilVisible && lodSwitchDirection === 'to-lite' ? 'flow-canvas--lod-switching-to-lite' : '',
+    isLodSwitchVeilVisible && lodSwitchDirection === 'to-full' ? 'flow-canvas--lod-switching-to-full' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <div
@@ -1334,6 +1442,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         panOnScroll={true}
         preventScrolling={true}
         onPaneClick={() => {
+          if (lodPreviewNodeId) {
+            setLodPreviewNodeId(null);
+          }
           setNodes((currentNodes) => {
             // 取消选中并恢复追问按钮
             const finalNodes = currentNodes.map(n => ({
@@ -1352,6 +1463,55 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         minZoom={0.1}
       />
       <AnimatePresence>
+        {isLodSwitchVeilVisible && (
+          <motion.div
+            className={`absolute inset-0 z-30 pointer-events-none ${
+              lodSwitchDirection === 'to-lite'
+                ? 'bg-white/10 backdrop-blur-[0.8px]'
+                : 'bg-white/8 backdrop-blur-[0.6px]'
+            }`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: lodSwitchPhase === 'fade-out' ? 1 : 0 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: lodSwitchPhase === 'fade-out' ? LOD_FADE_OUT_MS / 1000 : LOD_FADE_IN_MS / 1000,
+              ease: 'easeInOut'
+            }}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {lodPreviewNode && (
+          <motion.div
+            className="absolute inset-0 z-40 flex items-center justify-center bg-white/16 backdrop-blur-[1px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            onClick={() => setLodPreviewNodeId(null)}
+          >
+            <div onClick={(e) => e.stopPropagation()}>
+              {lodPreviewNode.type === 'qcard' ? (
+                <QuestionCard
+                  question={lodPreviewNode.data?.question || lodPreviewNode.data?.content || ''}
+                  avatar={lodPreviewNode.data?.avatar}
+                  isSelected
+                  onClick={() => {}}
+                />
+              ) : (
+                <AnswerCard
+                  title={lodPreviewNode.data?.title || ''}
+                  content={lodPreviewNode.data?.content || ''}
+                  isGenerating={Boolean(lodPreviewNode.data?.isGenerating)}
+                  isCompleted={!lodPreviewNode.data?.isGenerating}
+                  isSelected
+                  relatedQuestions={Array.isArray(lodPreviewNode.data?.relatedQuestions) ? lodPreviewNode.data.relatedQuestions : []}
+                  onClick={() => {}}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
         {nodeForFollowUp && (
           <motion.div
             className="absolute bottom-12 left-0 right-0 bg-transparent flex justify-center pointer-events-none"
