@@ -585,10 +585,17 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setNodes((nds) => {
-      const updatedNodes = nds.map((node) => ({ ...node, selected: node.id === nodeId }));
+      const updatedNodes = nds.map((node) => ({
+        ...node,
+        selected: node.id === nodeId,
+        data: node.type === 'acard' && node.data.hideAskButton
+          ? { ...node.data, hideAskButton: false }
+          : node.data,
+      }));
       nodesRef.current = updatedNodes;
       return updatedNodes;
     });
+    prevFollowUpNodeIdRef.current = null;
     setFollowUpNodeId(null);
   }, [setNodes]);
 
