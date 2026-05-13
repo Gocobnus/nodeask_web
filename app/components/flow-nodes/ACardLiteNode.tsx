@@ -8,8 +8,6 @@ import { CARD_WIDTH } from '@/app/config/constants';
 const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected: boolean }) => {
   const isLiteMode = Boolean(data?.isLiteMode);
   const isGenerating = Boolean(data?.isGenerating);
-  const needsInitialHeightSync = Boolean(data?.needsInitialHeightSync);
-  const shouldUseProbe = isGenerating || needsInitialHeightSync;
   const shouldRenderFullCard = !isLiteMode || selected;
 
   const isCollapsed = Boolean(data?.isCollapsed);
@@ -80,7 +78,7 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
     </>
   );
 
-  if (shouldUseProbe) {
+  if (isGenerating) {
     // 探针：完整 ACardNode 在 DOM 中保留 layout 测量与 ResizeObserver，视觉不可见。
     // 覆盖层：lite-shell 绝对定位贴合探针撑出的高度，承担视觉表现与连线锚点。
     const probeData = { ...data, disableEnterAnimation: true };

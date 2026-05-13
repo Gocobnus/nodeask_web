@@ -16,6 +16,7 @@ const generateMockANodes = (parentNodeId: string) => {
   const a1Id = `a-${timestamp}-1`;
   const a2Id = `a-${timestamp}-2`;
   const a3Id = `a-${timestamp}-3`;
+  const a4Id = `a-${timestamp}-4`;
 
   return [
     {
@@ -38,6 +39,13 @@ const generateMockANodes = (parentNodeId: string) => {
       pos: 1,
       content: "在实际应用中,",
       parentId: a2Id,  // A3 的父节点是 A2
+    },
+    {
+      id: a4Id,
+      type: 'acard',
+      pos: 1,
+      content: "R1t大撒大撒",
+      parentId: a3Id,  // A3 的父节点是 A2
     },
   ];
 };

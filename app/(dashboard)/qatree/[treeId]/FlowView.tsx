@@ -722,8 +722,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 ...node.data,
                 renderHeight: newHeight,
                 measuredOnce: true,
-                ...(node.data?.needsInitialHeightSync
-                  ? { finalLiteHeight: newHeight, needsInitialHeightSync: undefined }
+                ...(node.data?.completeImmediatelyAfterMount
+                  ? {
+                      isGenerating: false,
+                      finalLiteHeight: newHeight,
+                      completeImmediatelyAfterMount: undefined,
+                      ...cardActions(nodeId, 'acard'),
+                    }
                   : {}),
               },
             }
@@ -894,14 +899,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 data: {
                   pos,
                   content: initialContent,
-                  isGenerating,
+                  isGenerating: isCompletedOnFirstChunk ? true : isGenerating,
                   nodeId: id, // 添加业务 ID
                   qaId: qaId, // 添加 qa_id，用于在 done 事件中查找对应的 A 节点
                   parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
-                  ...(isCompletedOnFirstChunk ? { needsInitialHeightSync: true } : {}),
+                  ...(isCompletedOnFirstChunk ? { completeImmediatelyAfterMount: true } : {}),
                   onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
@@ -915,6 +920,42 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
             const newNodes = [...currentNodes, newNode];
             nodesRef.current = newNodes;
+
+            if (type === 'acard' && !isGenerating) {
+              requestAnimationFrame(() => {
+                setNodes((latestNodes) => {
+                  const liveNode = getNodes().find((node) => node.id === id);
+                  const cachedNode = nodesRef.current.find((node) => node.id === id);
+                  const resolvedHeight = typeof liveNode?.height === 'number'
+                    ? liveNode.height
+                    : typeof cachedNode?.height === 'number'
+                      ? cachedNode.height
+                      : undefined;
+
+                  const completedNodes = latestNodes.map((node) =>
+                    node.id === id &&
+                    node.data?.completeImmediatelyAfterMount &&
+                    typeof resolvedHeight === 'number' &&
+                    resolvedHeight > 0
+                      ? {
+                          ...node,
+                          data: {
+                            ...node.data,
+                            isGenerating: false,
+                            finalLiteHeight: resolvedHeight,
+                            renderHeight: resolvedHeight,
+                            completeImmediatelyAfterMount: undefined,
+                            ...cardActions(id, 'acard'),
+                          },
+                        }
+                      : node
+                  );
+                  nodesRef.current = completedNodes;
+                  return completedNodes;
+                });
+              });
+            }
+
             return newNodes;
           } else {
             const updatedNodes = currentNodes.map(n => {
