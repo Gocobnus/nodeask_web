@@ -315,37 +315,6 @@
   box-shadow: inset 0 0 0 0px var(--acard-bg-selected-border), 0 2px 4px -2px rgb(0 0 0 / 0.18);
 }
 
-.acard-lite-shell {
-  position: relative;
-}
-
-.acard-lite-shell__surface {
-  --acard-inner-margin-horizontal: 8px;
-  --acard-inner-margin-top: 0px;
-  --acard-inner-margin-bottom: 16px;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--acard-border-radius, 20px);
-  background: var(--acard-bg-primary);
-  box-shadow: inset 0 0 0 0px var(--acard-bg-selected-border), 0 2px 4px -2px rgb(0 0 0 / 0.18);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.acard-lite-shell__header {
-  height: 48px;
-  flex-shrink: 0;
-  background: color-mix(in srgb, var(--acard-bg-primary) 88%, var(--acard-bg-content));
-}
-
-.acard-lite-shell__body {
-  flex: 1;
-  margin: var(--acard-inner-margin-top, 0px) var(--acard-inner-margin-horizontal, 8px) var(--acard-inner-margin-bottom, 16px);
-  border-radius: 16px;
-  background: var(--acard-bg-content);
-}
-
 /* 保持卡片高度一致，以回答tab为标准 */
 .acard__answer:not(:has(.acard__footer))::after {
   content: '';

@@ -2,18 +2,18 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node, useViewport } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
 import { motion, AnimatePresence } from 'framer-motion';
 import ReusableTiptapEditor from '../../../components/common/ReusableTiptapEditor';
-import { getLayoutedElements, getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
-import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, FOLLOWUP_WIDTH, HORIZONTAL_GAP, MAIN_TO_HORIZONTAL_CLUSTER_GAP } from '../../../config/constants';
+import { getMultiColumnLayoutedElements } from '../../../utils/layout-utils';
+import { GAP, HORIZONTAL_BRANCH_GAP, CARD_WIDTH, FOLLOWUP_WIDTH, HORIZONTAL_GAP } from '../../../config/constants';
 
 import { startMockSSE } from '../../../lib/mock-sse';
-import QCardLiteNode from '../../../components/flow-nodes/QCardLiteNode';
-import ACardLiteNode from '../../../components/flow-nodes/ACardLiteNode';
+import QCardNode from '../../../components/flow-nodes/QCardNode';
+import ACardNode from '../../../components/flow-nodes/ACardNode';
 import FollowUpNode from '../../../components/flow-nodes/FollowUpNode';
 import { Button, Listbox, ListboxItem, Skeleton } from '@heroui/react';
 import { createHorizontalFollowUp, createVerticalFollowUp } from '../../../services/qatree-api';
@@ -21,9 +21,9 @@ import { CustomDrawer } from '../../../components/card/acard/CustomDrawer';
 import { CustomTooltip } from '../../../components/ui/CustomTooltip';
 import { CloseIcon, CopyIcon, LocationIcon } from '../../../components/icons';
 
-const liteNodeTypes = {
-  qcard: QCardLiteNode,
-  acard: ACardLiteNode,
+const nodeTypes = {
+  qcard: QCardNode,
+  acard: ACardNode,
   followup: FollowUpNode,
 };
 
@@ -36,8 +36,6 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
-  const LITE_ENTER_ZOOM = 0.3;
-  const LITE_EXIT_ZOOM = 0.35;
   const DRAWER_SWITCH_DELAY_MS = 250;
   const LOCATE_PAN_DURATION_MS = 550;
   const LOCATE_PAN_SETTLE_MS = 590;
@@ -46,7 +44,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
-  const { zoom } = useViewport();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +54,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const [followUpNodeId, setFollowUpNodeId] = useState<string | null>(null);
   const nodeForFollowUp = nodes.find(n => n.id === followUpNodeId);
   const [openDrawerId, setOpenDrawerId] = useState<string | null>(null);
-  const [isLiteMode, setIsLiteMode] = useState(false);
 
   // 记录上次布局时的节点高度签名,避免死循环
   const lastLayoutSignatureRef = useRef<string>('');
@@ -76,38 +72,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
-  const prevLiteModeRef = useRef(false);
-
-  const getDefaultHeightForNode = useCallback((node: Node) => {
-    if (typeof node.height === 'number') return node.height;
-    if (node.type === 'acard') return 550;
-    if (node.type === 'followup') return 24;
-    return 250;
-  }, []);
-
-  const enrichNodeVisualData = useCallback((node: Node, _z: number): Node => {
-    if (node.type !== 'qcard' && node.type !== 'acard') return node;
-    const prevData = node.data || {};
-    if (isLiteMode) {
-      if (prevData.isLiteMode === true) return node;
-      return {
-        ...node,
-        data: {
-          ...prevData,
-          isLiteMode,
-        },
-      };
-    }
-
-    if (prevData.isLiteMode !== true) return node;
-    return {
-      ...node,
-      data: {
-        ...prevData,
-        isLiteMode,
-      },
-    };
-  }, [isLiteMode]);
 
   const getNodeHeight = useCallback((node: Node): number => {
     if (typeof node.height === 'number') return node.height;
@@ -386,44 +350,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
   };
 
-  useEffect(() => {
-    setIsLiteMode((prev) => {
-      if (!prev && zoom <= LITE_ENTER_ZOOM) return true;
-      if (prev && zoom >= LITE_EXIT_ZOOM) return false;
-      return prev;
-    });
-  }, [zoom, LITE_ENTER_ZOOM, LITE_EXIT_ZOOM]);
-
-  useEffect(() => {
-    const enteringLite = !prevLiteModeRef.current && isLiteMode;
-    prevLiteModeRef.current = isLiteMode;
-    setNodes((currentNodes) => {
-      let changed = false;
-      const next = currentNodes.map((node) => {
-        let nextNode = node;
-        if (node.type === 'qcard' || node.type === 'acard') {
-          const prevData = node.data || {};
-          if (enteringLite && prevData.isLiteMode !== true && typeof node.height === 'number') {
-            const frozenHeight = node.height;
-            nextNode = {
-              ...node,
-              data: {
-                ...prevData,
-                renderHeight: frozenHeight,
-              },
-            };
-          }
-        }
-        const enriched = enrichNodeVisualData(nextNode, zoom);
-        if (enriched !== node) changed = true;
-        return enriched;
-      });
-      if (!changed) return currentNodes;
-      nodesRef.current = next;
-      return next;
-    });
-  }, [isLiteMode, nodes, zoom, setNodes, enrichNodeVisualData, getDefaultHeightForNode]);
-
   const runCreateQFollowUp = useCallback(async (
     parentReactFlowNodeId: string,
     questionText: string,
@@ -555,6 +481,23 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       });
     } else if (nodeForFollowUp?.type === 'followup') {
       await runCreateQFollowUp(followUpNodeId, trimmedText, 'vertical');
+
+      setDrafts(prevDrafts => {
+        const newDrafts = { ...prevDrafts };
+        delete newDrafts[nodeForFollowUp.id];
+        return newDrafts;
+      });
+    } else if (nodeForFollowUp?.type === 'qcard') {
+      const parentReactFlowId = nodeForFollowUp.data?.parentReactFlowId;
+      const parentBusinessId = nodeForFollowUp.data?.parentNodeId;
+      const parentNode = (parentReactFlowId
+        ? nodesRef.current.find((n) => n.id === parentReactFlowId)
+        : undefined) || resolveParentNodeIn(nodesRef.current, parentBusinessId);
+      if (!parentNode) {
+        return;
+      }
+      const mode: 'horizontal' | 'vertical' = parentNode?.type === 'followup' ? 'vertical' : 'horizontal';
+      await runCreateQFollowUp(parentNode.id, trimmedText, mode);
 
       setDrafts(prevDrafts => {
         const newDrafts = { ...prevDrafts };
@@ -718,26 +661,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     lastNodeHeightsRef.current[nodeId] = newHeight;
 
     // 更新节点高度并触发布局重新计算
-    // 同步写入 data.renderHeight / measuredOnce，供 lite-shell 切回后读取真实高度
     setNodes((currentNodes) => {
       const updated = currentNodes.map(node =>
         node.id === nodeId
           ? {
               ...node,
               height: newHeight,
-              data: {
-                ...node.data,
-                renderHeight: newHeight,
-                measuredOnce: true,
-                ...(node.data?.completeImmediatelyAfterMount
-                  ? {
-                      isGenerating: false,
-                      finalLiteHeight: newHeight,
-                      completeImmediatelyAfterMount: undefined,
-                      ...cardActions(nodeId, 'acard'),
-                    }
-                  : {}),
-              },
             }
           : node
       );
@@ -894,7 +823,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             } else {
               // type 是 'qcard' 或 'acard'
               const cardType = type as 'qcard' | 'acard';
-              const isCompletedOnFirstChunk = cardType === 'acard' && !isGenerating;
               // Q1 节点的 content 应该使用 initialQuestion，因为 SSE 不推送 Q 节点内容
               const initialContent = pos === 0 ? initialQuestion : content;
 
@@ -906,14 +834,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 data: {
                   pos,
                   content: initialContent,
-                  isGenerating: isCompletedOnFirstChunk ? true : isGenerating,
+                  isGenerating,
                   nodeId: id, // 添加业务 ID
                   qaId: qaId, // 添加 qa_id，用于在 done 事件中查找对应的 A 节点
                   parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
-                  ...(isCompletedOnFirstChunk ? { completeImmediatelyAfterMount: true } : {}),
+                  onClick: cardType === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
                   onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
                   ...(!isGenerating && cardActions(id, cardType)),
                 },
@@ -928,63 +856,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const newNodes = [...currentNodes, newNode];
             nodesRef.current = newNodes;
 
-            if (type === 'acard' && !isGenerating) {
-              requestAnimationFrame(() => {
-                setNodes((latestNodes) => {
-                  const liveNode = getNodes().find((node) => node.id === id);
-                  const cachedNode = nodesRef.current.find((node) => node.id === id);
-                  const resolvedHeight = typeof liveNode?.height === 'number'
-                    ? liveNode.height
-                    : typeof cachedNode?.height === 'number'
-                      ? cachedNode.height
-                      : undefined;
-
-                  const completedNodes = latestNodes.map((node) =>
-                    node.id === id &&
-                    node.data?.completeImmediatelyAfterMount &&
-                    typeof resolvedHeight === 'number' &&
-                    resolvedHeight > 0
-                      ? {
-                          ...node,
-                          data: {
-                            ...node.data,
-                            isGenerating: false,
-                            finalLiteHeight: resolvedHeight,
-                            renderHeight: resolvedHeight,
-                            completeImmediatelyAfterMount: undefined,
-                            ...cardActions(id, 'acard'),
-                          },
-                        }
-                      : node
-                  );
-                  nodesRef.current = completedNodes;
-                  return completedNodes;
-                });
-              });
-            }
-
             return newNodes;
           } else {
             const updatedNodes = currentNodes.map(n => {
               if (n.id === id) {
-                const wasGenerating = Boolean(n.data?.isGenerating);
-                const justFinishedGenerating = n.type === 'acard' && wasGenerating && !isGenerating;
-                let finalMeasuredHeight: number | undefined;
-
-                if (justFinishedGenerating) {
-                  const liveNode = getNodes().find((node) => node.id === id);
-                  const cachedNode = nodesRef.current.find((node) => node.id === id);
-                  const liveNodeHeight = typeof liveNode?.height === 'number' ? liveNode.height : undefined;
-                  const cachedNodeHeight = typeof cachedNode?.height === 'number' ? cachedNode.height : undefined;
-                  const resolvedHeight = typeof liveNodeHeight === 'number'
-                    ? liveNodeHeight
-                    : typeof cachedNodeHeight === 'number'
-                      ? cachedNodeHeight
-                      : undefined;
-                  if (typeof resolvedHeight === 'number' && resolvedHeight > 0) {
-                    finalMeasuredHeight = resolvedHeight;
-                  }
-                }
                 // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
                 // A 节点才累加流式内容
                 const currentContent = n.data.content;
@@ -997,8 +872,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                     content: updatedContent,
                     // QCard 的 question 字段保持不变（已经是 initialQuestion）
                     isGenerating,
-                    ...(n.type === 'acard' && isGenerating ? { finalLiteHeight: undefined } : {}),
-                    ...(finalMeasuredHeight ? { finalLiteHeight: finalMeasuredHeight, renderHeight: finalMeasuredHeight } : {}),
+                    onClick: n.type === 'qcard' ? () => handleAskFollowUp(id) : () => handleNodeSelect(id),
                     onExpand: n.type === 'acard' ? () => handleToggleDrawer(id) : n.data.onExpand,
                     ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
                   }
@@ -1453,7 +1327,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         onlyRenderVisibleElements
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        nodeTypes={liteNodeTypes}
+        nodeTypes={nodeTypes}
         onMoveStart={onMoveStart}
         zoomOnDoubleClick={false}
         zoomOnScroll={false}

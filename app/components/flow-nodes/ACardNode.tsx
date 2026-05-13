@@ -127,7 +127,7 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
     }, 200);
   }, [selected, isHovered, forceShowActions]);
 
-  const baseButtonVisible = (selected || hoverKeepAlive) && !data.hideAskButton;
+  const baseButtonVisible = (selected || hoverKeepAlive) && !data.hideAskButton && !data.isGenerating;
   const buttonVisible = transitionLock ? lockedButtonVisible : baseButtonVisible;
   const attachToAskButtonRight = isCollapsedLocal && handleAttachCommitted;
 
