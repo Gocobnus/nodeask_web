@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node, useViewport } from 'reactflow';
+import ReactFlow, { ReactFlowProvider, useNodesState, useEdgesState, useReactFlow, Node } from 'reactflow';
 import { useQATrees } from '../../../context/QATreeContext';
 import 'reactflow/dist/style.css';
 import { mockUser } from '../../../lib/mock-data'; // 导入模拟用户
@@ -38,8 +38,6 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
-  const LOD_ENTER_ZOOM = 0.42;
-  const LOD_EXIT_ZOOM = 0.48;
   const LOD_FADE_OUT_MS = 170;
   const LOD_FADE_IN_MS = 210;
   const DRAWER_SWITCH_DELAY_MS = 250;
@@ -50,7 +48,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const router = useRouter();
   const { trees, updateTreeTitle } = useQATrees();
   const { getZoom, getNodes, setViewport, getViewport } = useReactFlow();
-  const { zoom } = useViewport();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -386,12 +383,9 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     }
   };
 
-  useEffect(() => {
+  const _handleToggleLodMode = useCallback(() => {
     if (lodSwitchingRef.current) return;
-    let next = isLodLiteMode;
-    if (!isLodLiteMode && zoom <= LOD_ENTER_ZOOM) next = true;
-    if (isLodLiteMode && zoom >= LOD_EXIT_ZOOM) next = false;
-    if (next === isLodLiteMode) return;
+    const next = !isLodLiteMode;
 
     lodSwitchingRef.current = true;
     setLodSwitchDirection(next ? 'to-lite' : 'to-full');
@@ -412,7 +406,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         lodSwitchingRef.current = false;
       }, LOD_FADE_IN_MS);
     }, LOD_FADE_OUT_MS);
-  }, [zoom, isLodLiteMode, LOD_ENTER_ZOOM, LOD_EXIT_ZOOM, LOD_FADE_OUT_MS, LOD_FADE_IN_MS]);
+  }, [isLodLiteMode, LOD_FADE_OUT_MS, LOD_FADE_IN_MS]);
 
   useEffect(() => {
     setNodes((currentNodes) => {
@@ -1460,7 +1454,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           setFollowUpNodeId(null);
         }}
         selectNodesOnDrag={false}
-        minZoom={0.1}
+        minZoom={0.4}
       />
       <AnimatePresence>
         {isLodSwitchVeilVisible && (
