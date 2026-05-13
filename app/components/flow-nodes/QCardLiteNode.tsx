@@ -83,6 +83,10 @@ const QCardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
       <div
         className="qcard-lite-shell"
         style={{ position: 'relative', width: CARD_WIDTH }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!selected && data?.onClick) data.onClick();
+        }}
       >
         <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>
           <QCardNode id={id} data={probeData} selected={false} suppressHandles asProbe />
@@ -101,6 +105,10 @@ const QCardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
       style={{ width: CARD_WIDTH, height: renderHeight }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!selected && data?.onClick) data.onClick();
+      }}
     >
       {liteShellContent}
     </motion.div>

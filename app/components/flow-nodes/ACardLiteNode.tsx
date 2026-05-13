@@ -86,6 +86,10 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
       <div
         className="acard-lite-shell"
         style={{ position: 'relative', width: CARD_WIDTH }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!selected && data?.onClick) data.onClick();
+        }}
       >
         <div style={{ visibility: 'hidden', pointerEvents: 'none' }}>
           <ACardNode id={id} data={probeData} selected={false} suppressHandles />
@@ -101,6 +105,10 @@ const ACardLiteNode = ({ id, data, selected }: { id: string; data: any; selected
     <div
       className="acard-lite-shell"
       style={{ width: CARD_WIDTH, height: renderHeight }}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!selected && data?.onClick) data.onClick();
+      }}
     >
       {liteShellContent}
     </div>
