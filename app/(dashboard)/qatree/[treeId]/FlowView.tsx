@@ -38,6 +38,7 @@ interface FlowCanvasProps extends FlowViewProps {
 }
 
 function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
+  const DEBUG_LAYOUT_TRACE = true;
   const LOD_FADE_OUT_MS = 170;
   const LOD_FADE_IN_MS = 210;
   const DRAWER_SWITCH_DELAY_MS = 250;
@@ -81,9 +82,81 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const lodFadeOutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lodFadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lodSwitchingRef = useRef(false);
+  const layoutPassIdRef = useRef(0);
+  const lastPositionByNodeRef = useRef<Record<string, { x: number; y: number }>>({});
+  const trackedParentAIdsRef = useRef<Set<string>>(new Set());
+  const activeHorizontalAnimBranchesRef = useRef<Set<string>>(new Set());
+  const horizontalAnimUntilRef = useRef<Map<string, number>>(new Map());
+  const pendingHorizontalSseStartsRef = useRef<Array<() => void>>([]);
+  const lastTrackedA4MoveTsRef = useRef<number | null>(null);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
+
+  const traceLog = useCallback((label: string, payload?: Record<string, unknown>) => {
+    if (!DEBUG_LAYOUT_TRACE) return;
+    if (payload) {
+      console.log(`[LAYOUT_TRACE] ${label}`, payload);
+      return;
+    }
+    console.log(`[LAYOUT_TRACE] ${label}`);
+  }, [DEBUG_LAYOUT_TRACE]);
+
+  const touchHorizontalAnimBranch = useCallback((branchId?: string, ttlMs = 900) => {
+    if (!branchId) return;
+    const now = Date.now();
+    activeHorizontalAnimBranchesRef.current.add(branchId);
+    horizontalAnimUntilRef.current.set(branchId, now + ttlMs);
+  }, []);
+
+  const hasActiveHorizontalAnim = useCallback(() => {
+    const now = Date.now();
+    const map = horizontalAnimUntilRef.current;
+    for (const [branchId, until] of map.entries()) {
+      if (until <= now) {
+        map.delete(branchId);
+        activeHorizontalAnimBranchesRef.current.delete(branchId);
+      }
+    }
+    return activeHorizontalAnimBranchesRef.current.size > 0;
+  }, []);
+
+  const flushPendingHorizontalSseStarts = useCallback(() => {
+    if (pendingHorizontalSseStartsRef.current.length === 0) return;
+    const starts = [...pendingHorizontalSseStartsRef.current];
+    pendingHorizontalSseStartsRef.current = [];
+    const now = Date.now();
+    const msSinceLastA4Move = lastTrackedA4MoveTsRef.current === null
+      ? null
+      : now - lastTrackedA4MoveTsRef.current;
+    traceLog('flush pending sse starts begin', {
+      count: starts.length,
+      layoutTransitionEnabled,
+      msSinceLastA4Move,
+      ts: now,
+    });
+    starts.forEach((start) => start());
+  }, [traceLog, layoutTransitionEnabled]);
+
+  const getViewportAndNodeLeft = useCallback((nodeId: string) => {
+    const viewportEl = document.querySelector('.react-flow__viewport') as HTMLElement | null;
+    const viewportTransform = viewportEl ? getComputedStyle(viewportEl).transform : null;
+    const nodeEl = document.querySelector(`.react-flow__node[data-id="${nodeId}"]`) as HTMLElement | null;
+    const nodeLeft = nodeEl ? nodeEl.getBoundingClientRect().left : null;
+    return { viewportTransform, nodeLeft };
+  }, []);
+
+  const getHorizontalAnimDebug = useCallback(() => {
+    const now = Date.now();
+    let maxRemainingMs = 0;
+    for (const until of horizontalAnimUntilRef.current.values()) {
+      maxRemainingMs = Math.max(maxRemainingMs, Math.max(0, until - now));
+    }
+    return {
+      activeCount: activeHorizontalAnimBranchesRef.current.size,
+      maxRemainingMs,
+    };
+  }, []);
 
   const getNodeHeight = useCallback((node: Node): number => {
     if (typeof node.height === 'number') return node.height;
@@ -436,11 +509,35 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         throw new Error('Parent node not found');
       }
       const parentBusinessNodeId = parentNode.data?.nodeId || parentNode.id;
+      if (mode === 'horizontal' && parentNode.type === 'acard') {
+        const qaId = parentNode.data?.qaId;
+        const trackedIds = new Set(
+          nodesRef.current
+            .filter((n) => n.type === 'acard' && n.data?.qaId === qaId)
+            .map((n) => n.id)
+        );
+        trackedParentAIdsRef.current = trackedIds;
+        traceLog('track parent A-chain', {
+          qaId,
+          count: trackedIds.size,
+          ids: Array.from(trackedIds),
+          ts: Date.now(),
+        });
+      }
       const data = mode === 'horizontal'
         ? await createHorizontalFollowUp(treeId, parentBusinessNodeId, questionText)
         : await createVerticalFollowUp(treeId, parentBusinessNodeId, questionText);
 
       const { q_node_id, qa_id } = data;
+      if (mode === 'horizontal') {
+        activeHorizontalAnimBranchesRef.current.add(q_node_id);
+        touchHorizontalAnimBranch(q_node_id, 1800);
+        traceLog('horizontal anim branch added', {
+          branchId: q_node_id,
+          activeCount: activeHorizontalAnimBranchesRef.current.size,
+          ts: Date.now(),
+        });
+      }
       const shouldFocusAfterLayout = true;
       const newQNodeBase: Node = {
         id: q_node_id,
@@ -459,6 +556,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           lodLite: isLodLiteMode,
           nodeId: q_node_id,
           qaId: qa_id,
+          horizontalRootQId: mode === 'horizontal' ? q_node_id : parentNode.data?.horizontalRootQId,
           parentNodeId: parentBusinessNodeId,
           parentReactFlowId: parentNode.id,
           avatar: mockUser.avatar,
@@ -511,18 +609,34 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         if (shouldFocusAfterLayout) {
           pendingCenterNodeIdRef.current = q_node_id;
         }
+        traceLog('set animateNextLayoutRef true', {
+          source: 'runCreateQFollowUp',
+          parentReactFlowNodeId,
+          q_node_id,
+          ts: Date.now(),
+        });
         animateNextLayoutRef.current = true;
+        traceLog('setLayoutTrigger from followup', { ts: Date.now() });
         setLayoutTrigger(prev => prev + 1);
 
-        // 节点入图后再启动 SSE，避免流式消息先到导致父节点尚未可见
-        startMockSSE({
-          onMessage: (event, data) => {
-            handleMessageRef.current(event, data);
-          },
-          onClose: () => console.log(`${mode} follow-up SSE stream closed.`),
-        }, {
-          qaId: qa_id,
-          parentNodeId: q_node_id
+        // 节点入图后再启动 SSE：统一先挂起，等待布局稳定后再启动
+        const startFollowupSSE = () => {
+          startMockSSE({
+            onMessage: (event, data) => {
+              handleMessageRef.current(event, data);
+            },
+            onClose: () => console.log(`${mode} follow-up SSE stream closed.`),
+          }, {
+            qaId: qa_id,
+            parentNodeId: q_node_id
+          });
+        };
+        pendingHorizontalSseStartsRef.current.push(startFollowupSSE);
+        traceLog('queue followup sse start after layout transition', {
+          mode,
+          q_node_id,
+          queuedCount: pendingHorizontalSseStartsRef.current.length,
+          ts: Date.now(),
         });
       };
 
@@ -535,7 +649,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       lockedCenterZoomRef.current = null;
       setIsSubmitting(false);
     }
-  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp, isLodLiteMode]);
+  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp, isLodLiteMode, traceLog, touchHorizontalAnimBranch]);
 
   const handleSubmit = async (submittedText: string) => {
     if (!followUpNodeId) return;
@@ -788,6 +902,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         clearTimeout(lodFadeInTimerRef.current);
         lodFadeInTimerRef.current = null;
       }
+      pendingHorizontalSseStartsRef.current = [];
+      activeHorizontalAnimBranchesRef.current.clear();
       lodSwitchingRef.current = false;
     };
   }, []);
@@ -838,6 +954,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           const existingNode = currentNodes.find(n => n.id === id);
           if (!existingNode) {
             let initialPosition = { x: 0, y: 0 };
+            let inheritedHorizontalRootQId: string | undefined;
 
             if (currentNodes.length === 0) {
               // 第一个节点:居中显示
@@ -866,6 +983,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 return currentNodes;
               }
               resolvedParentReactFlowId = parentNode.id;
+              inheritedHorizontalRootQId = parentNode.data?.horizontalRootQId;
+              touchHorizontalAnimBranch(inheritedHorizontalRootQId, 1000);
 
               console.log('📍 新节点位置计算 - 节点ID:', id, '父节点:', {
                 id: parentNode.id,
@@ -907,6 +1026,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 data: {
                   nodeId: id,
                   parentNodeId: parentNodeId, // 父节点的业务 ID
+                  horizontalRootQId: inheritedHorizontalRootQId,
                   onClick: () => handleAskFollowUp(id, { forceInput: true }),
                 },
               };
@@ -928,6 +1048,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   lodLite: isLodLiteMode,
                   nodeId: id, // 添加业务 ID
                   qaId: qaId, // 添加 qa_id，用于在 done 事件中查找对应的 A 节点
+                  horizontalRootQId: inheritedHorizontalRootQId,
                   parentNodeId: parentNodeId, // 父节点的业务 ID（用于调试和显示）
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
@@ -949,6 +1070,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
             return newNodes;
           } else {
+            touchHorizontalAnimBranch(existingNode.data?.horizontalRootQId, 1000);
             const updatedNodes = currentNodes.map(n => {
               if (n.id === id) {
                 // Q1 节点不累加内容（SSE 只推送空字符串用于创建节点）
@@ -1042,6 +1164,15 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const matchingANodes = currentNodes.filter(n =>
           n.type === 'acard' && n.data.qaId === qaId
         );
+        const horizontalRootQId = matchingANodes[matchingANodes.length - 1]?.data?.horizontalRootQId;
+        if (horizontalRootQId) {
+          touchHorizontalAnimBranch(horizontalRootQId, 900);
+          traceLog('horizontal anim branch touched on done', {
+            branchId: horizontalRootQId,
+            activeCount: activeHorizontalAnimBranchesRef.current.size,
+            ts: Date.now(),
+          });
+        }
 
         if (matchingANodes.length === 0) {
           console.warn(`A node not found for qa_id: ${qaId}`);
@@ -1111,7 +1242,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       }, 100);
     }
-  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, handleToggleDrawer, getNodes, getZoom, isLodLiteMode]);
+  }, [treeId, initialQuestion, updateTreeTitle, setNodes, setEdges, cardActions, handleToggleDrawer, getNodes, getZoom, isLodLiteMode, traceLog, touchHorizontalAnimBranch]);
 
   const handleMessageRef = useRef(handleMessage);
   useEffect(() => {
@@ -1281,6 +1412,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       // 只有在节点都测量完成,且高度签名发生变化时才执行布局
       if (allNodesMeasured && currentSignature !== lastLayoutSignatureRef.current) {
+        const layoutPassId = ++layoutPassIdRef.current;
         lastLayoutSignatureRef.current = currentSignature;
         layoutInProgressRef.current = true; // 标记布局开始
 
@@ -1303,14 +1435,84 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
           // 4. 计算偏移量并应用到所有节点（基于F0参考节点）
           const applyLayoutNodes = (targetNodes: Node[]) => {
-            const shouldAnimate = animateNextLayoutRef.current;
+            const activeBranchAnimating = hasActiveHorizontalAnim();
+            const horizontalAnimDebug = getHorizontalAnimDebug();
+            const shouldAnimate = animateNextLayoutRef.current || activeBranchAnimating;
             animateNextLayoutRef.current = false;
-            if (shouldAnimate && !isCenteringRef.current) {
-              setLayoutTransitionEnabled(true);
-              setTimeout(() => setLayoutTransitionEnabled(false), 550);
+            const xChangedNodeIds: string[] = [];
+            targetNodes.forEach((node) => {
+              if (node.type !== 'acard') return;
+              if (!trackedParentAIdsRef.current.has(node.id)) return;
+              const prev = lastPositionByNodeRef.current[node.id];
+              const next = { x: node.position.x, y: node.position.y };
+              if (!prev || prev.x !== next.x || prev.y !== next.y) {
+                if (prev && prev.x !== next.x) {
+                  xChangedNodeIds.push(node.id);
+                  traceLog('tracked A-chain x changed', {
+                    layoutPassId,
+                    nodeId: node.id,
+                    fromX: prev.x,
+                    toX: next.x,
+                    deltaX: next.x - prev.x,
+                    ts: Date.now(),
+                  });
+                }
+                if (node.id.endsWith('-4')) {
+                  lastTrackedA4MoveTsRef.current = Date.now();
+                  traceLog('tracked A4 moved', {
+                    layoutPassId,
+                    nodeId: node.id,
+                    from: prev || null,
+                    to: next,
+                    shouldAnimate,
+                    activeHorizontalCount: horizontalAnimDebug.activeCount,
+                    activeHorizontalMaxRemainingMs: horizontalAnimDebug.maxRemainingMs,
+                    ts: lastTrackedA4MoveTsRef.current,
+                  });
+                }
+              }
+              lastPositionByNodeRef.current[node.id] = next;
+            });
+            if (xChangedNodeIds.length > 0) {
+              traceLog('tracked A-chain x changed summary', {
+                layoutPassId,
+                nodeIds: xChangedNodeIds,
+                shouldAnimate,
+                ts: Date.now(),
+              });
+            }
+            const trackedA4 = targetNodes.find((n) => n.id.endsWith('-4') && trackedParentAIdsRef.current.has(n.id));
+            if (trackedA4) {
+              traceLog('A4 screen before layout apply', {
+                layoutPassId,
+                a4Id: trackedA4.id,
+                screen: getViewportAndNodeLeft(trackedA4.id),
+                ts: Date.now(),
+              });
             }
             nodesRef.current = targetNodes;
             setNodes(targetNodes);
+            if (trackedA4) {
+              requestAnimationFrame(() => {
+                traceLog('A4 screen after layout apply', {
+                  layoutPassId,
+                  a4Id: trackedA4.id,
+                  screen: getViewportAndNodeLeft(trackedA4.id),
+                  ts: Date.now(),
+                });
+              });
+            }
+            if (shouldAnimate && !isCenteringRef.current) {
+              setLayoutTransitionEnabled(true);
+              setTimeout(() => {
+                setLayoutTransitionEnabled(false);
+                flushPendingHorizontalSseStarts();
+              }, 550);
+            } else {
+              setTimeout(() => {
+                flushPendingHorizontalSseStarts();
+              }, 0);
+            }
           };
 
           if (referenceOldPos && referenceNewPos) {

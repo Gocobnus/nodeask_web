@@ -288,9 +288,9 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
     <motion.div
       ref={containerRef}
       className={`acard-node-wrapper ${selected ? 'selected' : ''} ${forceTiny ? 'acard-node-wrapper--tiny-zoom' : ''}`}
-      initial={disableEnterAnimation ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={disableEnterAnimation ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }}
+      initial={disableEnterAnimation ? false : { opacity: 0, y: -16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={disableEnterAnimation ? { duration: 0 } : { duration: 0.5, ease: "easeOut" }}
       style={{ width: CARD_WIDTH, position: 'relative' }}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
