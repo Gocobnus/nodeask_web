@@ -955,15 +955,10 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     };
   }, []);
 
-  // 卡片操作函数
-  const cardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
-    onDelete: () => console.log(`Delete card ${id}`),
-    onCopy: () => console.log(`Copy card ${id}`),
+  // 生成中和完成态都需要的基础卡片操作
+  const baseCardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
     onClick: type === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
     onAsk: () => handleAskFollowUp(id, { forceInput: true }),
-    onRelatedQuestionClick: type === 'acard'
-      ? (question: string) => handleRelatedQuestionFollowUp(id, question)
-      : undefined,
     onLocate: () => handleNodeLocate(id),
     onHeightChange: handleHeightChange,
     onCollapse: (collapsed?: boolean) => {
@@ -971,7 +966,18 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         handleCollapseChange(id, collapsed);
       }
     },
-  }), [handleAskFollowUp, handleRelatedQuestionFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange, handleCollapseChange]);
+  }), [handleAskFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange, handleCollapseChange]);
+
+  // 完成态卡片操作函数
+  const cardActions = useCallback((id: string, type: 'qcard' | 'acard') => ({
+    ...baseCardActions(id, type),
+    onDelete: () => console.log(`Delete card ${id}`),
+    onCopy: () => console.log(`Copy card ${id}`),
+    onExpand: type === 'acard' ? () => handleToggleDrawer(id) : undefined,
+    onRelatedQuestionClick: type === 'acard'
+      ? (question: string) => handleRelatedQuestionFollowUp(id, question)
+      : undefined,
+  }), [baseCardActions, handleToggleDrawer, handleRelatedQuestionFollowUp]);
 
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);
@@ -1104,9 +1110,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                   question: pos === 0 ? initialQuestion : '',
                   title: pos > 0 ? `Answer ${id}` : '',
                   avatar: pos === 0 ? mockUser.avatar : undefined,
-                  onClick: cardType === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
-                  onExpand: cardType === 'acard' ? () => handleToggleDrawer(id) : undefined,
-                  ...(!isGenerating && cardActions(id, cardType)),
+                  ...baseCardActions(id, cardType),
+                  ...(!isGenerating ? cardActions(id, cardType) : {}),
                 },
               };
 
@@ -1136,9 +1141,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                     content: updatedContent,
                     // QCard 的 question 字段保持不变（已经是 initialQuestion）
                     isGenerating,
-                    onClick: n.type === 'qcard' ? () => handleAskFollowUp(id, { forceInput: true }) : () => handleNodeSelect(id),
-                    onExpand: n.type === 'acard' ? () => handleToggleDrawer(id) : n.data.onExpand,
-                    ...(!isGenerating && n.type !== 'followup' && cardActions(id, n.type as 'qcard' | 'acard'))
+                    ...(n.type !== 'followup' ? baseCardActions(id, n.type as 'qcard' | 'acard') : {}),
+                    ...(!isGenerating && n.type !== 'followup' ? cardActions(id, n.type as 'qcard' | 'acard') : {})
                   }
                 };
               }
