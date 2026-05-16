@@ -31,7 +31,7 @@ export interface ACardProps {
   isSelected?: boolean;
   isOpen?: boolean;
   onPause?: () => void;
-  onCollapse?: () => void;
+  onCollapse?: (collapsed?: boolean) => void;
   onExpand?: () => void;
   onCopy?: () => void;
   onCopyError?: (error: Error) => void;

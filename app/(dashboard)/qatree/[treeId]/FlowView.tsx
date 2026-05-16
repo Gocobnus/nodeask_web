@@ -439,22 +439,90 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     return true;
   }, []);
 
+  const clearQNodeDraftIfNeeded = useCallback((nodeId: string | null) => {
+    if (!nodeId) return;
+    const node = nodesRef.current.find((n) => n.id === nodeId);
+    if (node?.type !== 'qcard') return;
+    setDrafts(prevDrafts => {
+      const newDrafts = { ...prevDrafts };
+      delete newDrafts[nodeId];
+      return newDrafts;
+    });
+  }, []);
+
   const handleUpdate = (newText: string) => {
     setEditingText(newText);
 
     // 保存草稿（followUpNodeId始终是父ACard的ID）
-    if (followUpNodeId) {
-      if (newText.trim() !== '') {
-        setDrafts(prevDrafts => ({ ...prevDrafts, [followUpNodeId]: newText }));
-      } else {
-        setDrafts(prevDrafts => {
-          const newDrafts = { ...prevDrafts };
-          delete newDrafts[followUpNodeId];
-          return newDrafts;
-        });
-      }
+    if (!followUpNodeId) return;
+
+    const currentNode = nodesRef.current.find(n => n.id === followUpNodeId);
+    if (currentNode?.type === 'qcard') {
+      setDrafts(prevDrafts => ({ ...prevDrafts, [followUpNodeId]: newText }));
+      return;
+    }
+
+    if (newText.trim() !== '') {
+      setDrafts(prevDrafts => ({ ...prevDrafts, [followUpNodeId]: newText }));
+    } else {
+      setDrafts(prevDrafts => {
+        const newDrafts = { ...prevDrafts };
+        delete newDrafts[followUpNodeId];
+        return newDrafts;
+      });
     }
   };
+
+  // 处理节点高度变化
+  const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
+    const prevHeight = lastNodeHeightsRef.current[nodeId];
+    if (prevHeight !== undefined && Math.abs(newHeight - prevHeight) < 8) {
+      return;
+    }
+    lastNodeHeightsRef.current[nodeId] = newHeight;
+
+    // 更新节点高度并触发布局重新计算
+    setNodes((currentNodes) => {
+      const updated = currentNodes.map(node =>
+        node.id === nodeId
+          ? {
+              ...node,
+              height: newHeight,
+            }
+          : node
+      );
+      nodesRef.current = updated;
+      return updated;
+    });
+
+    // 节流布局触发，避免收起/展开动画期间多次全量重排
+    if (layoutTriggerTimeoutRef.current) {
+      return;
+    }
+    layoutTriggerTimeoutRef.current = setTimeout(() => {
+      layoutTriggerTimeoutRef.current = null;
+      setLayoutTrigger(prev => prev + 1);
+    }, 120);
+  }, [setNodes]);
+
+  const handleCollapseChange = useCallback((nodeId: string, collapsed: boolean) => {
+    setNodes((currentNodes) => {
+      const updatedNodes = currentNodes.map((node) => {
+        if (node.id !== nodeId || (node.type !== 'qcard' && node.type !== 'acard')) {
+          return node;
+        }
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isCollapsed: collapsed,
+          },
+        };
+      });
+      nodesRef.current = updatedNodes;
+      return updatedNodes;
+    });
+  }, [setNodes]);
 
   const _handleToggleLodMode = useCallback(() => {
     if (lodSwitchingRef.current) return;
@@ -563,6 +631,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           onDelete: () => console.log(`Delete card ${q_node_id}`),
           onCopy: () => console.log(`Copy card ${q_node_id}`),
           onClick: () => handleAskFollowUpRef.current(q_node_id),
+          onAsk: () => handleAskFollowUpRef.current(q_node_id),
+          onHeightChange: handleHeightChange,
+          onCollapse: (collapsed?: boolean) => {
+            if (typeof collapsed === 'boolean') {
+              handleCollapseChange(q_node_id, collapsed);
+            }
+          },
         }
       };
       const newEdge: any = {
@@ -649,7 +724,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       lockedCenterZoomRef.current = null;
       setIsSubmitting(false);
     }
-  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp, isLodLiteMode, traceLog, touchHorizontalAnimBranch]);
+  }, [treeId, getZoom, placeHorizontalQBelowExistingBranches, setNodes, setEdges, ensureHorizontalBranchGapOnVerticalFollowUp, isLodLiteMode, traceLog, touchHorizontalAnimBranch, handleHeightChange, handleCollapseChange]);
 
   const handleSubmit = async (submittedText: string) => {
     if (!followUpNodeId) return;
@@ -728,15 +803,19 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       nodesRef.current = updatedNodes;
       return updatedNodes;
     });
+    clearQNodeDraftIfNeeded(followUpNodeId);
     prevFollowUpNodeIdRef.current = null;
     setFollowUpNodeId(null);
-  }, [setNodes, openLodPreviewByNodeId]);
+  }, [setNodes, openLodPreviewByNodeId, followUpNodeId, clearQNodeDraftIfNeeded]);
 
   const handleAskFollowUp = useCallback((nodeId: string, options?: { forceInput?: boolean }) => {
     const targetNode = nodesRef.current.find((n) => n.id === nodeId);
     const isQNode = targetNode?.type === 'qcard';
     if (!options?.forceInput && !isQNode && openLodPreviewByNodeId(nodeId)) {
       return;
+    }
+    if (followUpNodeId && followUpNodeId !== nodeId) {
+      clearQNodeDraftIfNeeded(followUpNodeId);
     }
     const previousNodeId = prevFollowUpNodeIdRef.current;
 
@@ -759,7 +838,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
     prevFollowUpNodeIdRef.current = nodeId;  // 更新记录
     setFollowUpNodeId(nodeId);
-  }, [setNodes, openLodPreviewByNodeId]);
+  }, [setNodes, openLodPreviewByNodeId, followUpNodeId, clearQNodeDraftIfNeeded]);
   handleAskFollowUpRef.current = handleAskFollowUp;
 
   const handleRelatedQuestionFollowUp = useCallback((nodeId: string, question: string) => {
@@ -847,38 +926,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const handleNodeLocate = useCallback((nodeId: string) => {
     centerNodeInCanvas(nodeId, true);
   }, []);
-  // 处理节点高度变化
-  const handleHeightChange = useCallback((nodeId: string, newHeight: number) => {
-    const prevHeight = lastNodeHeightsRef.current[nodeId];
-    if (prevHeight !== undefined && Math.abs(newHeight - prevHeight) < 8) {
-      return;
-    }
-    lastNodeHeightsRef.current[nodeId] = newHeight;
-
-    // 更新节点高度并触发布局重新计算
-    setNodes((currentNodes) => {
-      const updated = currentNodes.map(node =>
-        node.id === nodeId
-          ? {
-              ...node,
-              height: newHeight,
-            }
-          : node
-      );
-      nodesRef.current = updated;
-      return updated;
-    });
-
-    // 节流布局触发，避免收起/展开动画期间多次全量重排
-    if (layoutTriggerTimeoutRef.current) {
-      return;
-    }
-    layoutTriggerTimeoutRef.current = setTimeout(() => {
-      layoutTriggerTimeoutRef.current = null;
-      setLayoutTrigger(prev => prev + 1);
-    }, 120);
-  }, [setNodes]);
-
   useEffect(() => {
     return () => {
       if (drawerSwitchTimerRef.current) {
@@ -919,8 +966,12 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       : undefined,
     onLocate: () => handleNodeLocate(id),
     onHeightChange: handleHeightChange,
-    onCollapse: () => {},
-  }), [handleAskFollowUp, handleRelatedQuestionFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange]);
+    onCollapse: (collapsed?: boolean) => {
+      if (typeof collapsed === 'boolean') {
+        handleCollapseChange(id, collapsed);
+      }
+    },
+  }), [handleAskFollowUp, handleRelatedQuestionFollowUp, handleNodeSelect, handleNodeLocate, handleHeightChange, handleCollapseChange]);
 
   const handleMessage = useCallback((event: string, data: string) => {
     setIsLoading(current => current ? false : current);
@@ -1653,6 +1704,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             nodesRef.current = finalNodes;
             return finalNodes;
           });
+          clearQNodeDraftIfNeeded(followUpNodeId);
           setFollowUpNodeId(null);
         }}
         selectNodesOnDrag={false}

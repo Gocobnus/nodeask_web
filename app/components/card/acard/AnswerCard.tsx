@@ -11,6 +11,7 @@ interface CustomACardProps extends ACardProps {
   onLocate?: () => void;
   relatedQuestions?: string[];
   tooltipSize?: TooltipProps['size'];
+  isCollapsed?: boolean;
 }
 
 // 导入 HeroUI 组件和自定义组件
@@ -29,6 +30,7 @@ export default function AnswerCard({
   isCompleted = false,
   isSelected = false,
   isOpen = false,
+  isCollapsed: isCollapsedProp,
   onPause,
   onCollapse,
   onExpand,
@@ -42,7 +44,7 @@ export default function AnswerCard({
 }: CustomACardProps) {
   // 基础状态
   const [activeTab, setActiveTab] = useState<'answer' | 'related'>('answer');
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(Boolean(isCollapsedProp));
   const [scrollPosition, setScrollPosition] = useState(0);
   const [answerContentHeight, setAnswerContentHeight] = useState<number | null>(null);
   const [isContentScrollable, setIsContentScrollable] = useState(false);
@@ -51,6 +53,12 @@ export default function AnswerCard({
   const [isTitleTooltipDisabled, setIsTitleTooltipDisabled] = useState(true);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   // --- 结束 ---
+
+  useEffect(() => {
+    if (typeof isCollapsedProp === 'boolean') {
+      setIsCollapsed(isCollapsedProp);
+    }
+  }, [isCollapsedProp]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -207,9 +215,10 @@ export default function AnswerCard({
       setScrollPosition(contentRef.current.scrollTop);
     }
 
-    setIsCollapsed(prev => !prev);
+    const nextCollapsed = !isCollapsed;
+    setIsCollapsed(nextCollapsed);
 
-    onCollapse?.();
+    onCollapse?.(nextCollapsed);
 
   };
 

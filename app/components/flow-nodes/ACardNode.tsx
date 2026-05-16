@@ -16,7 +16,7 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
   const { zoom } = useViewport();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverKeepAlive, setHoverKeepAlive] = useState(false);
-  const [isCollapsedLocal, setIsCollapsedLocal] = useState(false);
+  const [isCollapsedLocal, setIsCollapsedLocal] = useState(Boolean(data?.isCollapsed));
   const [handleAttachCommitted, setHandleAttachCommitted] = useState(false);
   const [transitionLock, setTransitionLock] = useState(false);
   const [lockedButtonVisible, setLockedButtonVisible] = useState(false);
@@ -130,6 +130,10 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
   const baseButtonVisible = (selected || hoverKeepAlive) && !data.hideAskButton && !data.isGenerating;
   const buttonVisible = transitionLock ? lockedButtonVisible : baseButtonVisible;
   const attachToAskButtonRight = isCollapsedLocal && handleAttachCommitted;
+
+  useEffect(() => {
+    setIsCollapsedLocal(Boolean(data?.isCollapsed));
+  }, [data?.isCollapsed]);
 
   useEffect(() => {
     updateNodeInternals(id);
@@ -362,12 +366,13 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
         isCompleted={!data.isGenerating}
         isSelected={selected}
         isOpen={data.isOpen}
+        isCollapsed={isCollapsedLocal}
         onPause={data.onPause}
         onCollapse={() => {
           const nextCollapsed = !isCollapsedLocal;
           setIsCollapsedLocal(nextCollapsed);
           if (data.onCollapse) {
-            data.onCollapse();
+            data.onCollapse(nextCollapsed);
           }
         }}
         onExpand={data.onExpand}
