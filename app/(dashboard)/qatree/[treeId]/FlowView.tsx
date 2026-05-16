@@ -83,13 +83,11 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const lodFadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lodSwitchingRef = useRef(false);
   const layoutPassIdRef = useRef(0);
-  const lastPositionByNodeRef = useRef<Record<string, { x: number; y: number }>>({});
   const trackedParentAIdsRef = useRef<Set<string>>(new Set());
   const activeHorizontalAnimBranchesRef = useRef<Set<string>>(new Set());
   const horizontalAnimUntilRef = useRef<Map<string, number>>(new Map());
   const pendingHorizontalSseStartsRef = useRef<Array<() => void>>([]);
   const pendingHorizontalParentForVisualSyncRef = useRef<string | null>(null);
-  const lastTrackedA4MoveTsRef = useRef<number | null>(null);
 
   // 布局进行中标记,防止重复触发
   const layoutInProgressRef = useRef(false);
@@ -126,26 +124,13 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
     if (pendingHorizontalSseStartsRef.current.length === 0) return;
     const starts = [...pendingHorizontalSseStartsRef.current];
     pendingHorizontalSseStartsRef.current = [];
-    const now = Date.now();
-    const msSinceLastA4Move = lastTrackedA4MoveTsRef.current === null
-      ? null
-      : now - lastTrackedA4MoveTsRef.current;
     traceLog('flush pending sse starts begin', {
       count: starts.length,
       layoutTransitionEnabled,
-      msSinceLastA4Move,
-      ts: now,
+      ts: Date.now(),
     });
     starts.forEach((start) => start());
   }, [traceLog, layoutTransitionEnabled]);
-
-  const getViewportAndNodeLeft = useCallback((nodeId: string) => {
-    const viewportEl = document.querySelector('.react-flow__viewport') as HTMLElement | null;
-    const viewportTransform = viewportEl ? getComputedStyle(viewportEl).transform : null;
-    const nodeEl = document.querySelector(`.react-flow__node[data-id="${nodeId}"]`) as HTMLElement | null;
-    const nodeLeft = nodeEl ? nodeEl.getBoundingClientRect().left : null;
-    return { viewportTransform, nodeLeft };
-  }, []);
 
   const getHorizontalAnimDebug = useCallback(() => {
     const now = Date.now();
@@ -606,6 +591,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             .map((n) => n.id)
         );
         trackedParentAIdsRef.current = trackedIds;
+        console.log('[VISUAL_SYNC_TRACE]', {
+          stage: 'followup-start',
+          parentId: parentNode.id,
+          parentPosition: parentNode.position,
+          qaId,
+          trackedAIds: Array.from(trackedIds),
+          ts: Date.now(),
+        });
         traceLog('track parent A-chain', {
           qaId,
           count: trackedIds.size,
@@ -621,7 +614,8 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       if (mode === 'horizontal') {
         activeHorizontalAnimBranchesRef.current.add(q_node_id);
         touchHorizontalAnimBranch(q_node_id, 1800);
-        traceLog('horizontal anim branch added', {
+        console.log('[VISUAL_SYNC_TRACE]', {
+          stage: 'branch-added',
           branchId: q_node_id,
           activeCount: activeHorizontalAnimBranchesRef.current.size,
           ts: Date.now(),
@@ -712,6 +706,14 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           ts: Date.now(),
         });
         animateNextLayoutRef.current = true;
+        console.log('[VISUAL_SYNC_TRACE]', {
+          stage: 'layout-requested',
+          parentReactFlowNodeId,
+          qNodeId: q_node_id,
+          pendingParentId: pendingHorizontalParentForVisualSyncRef.current,
+          queuedSseCount: pendingHorizontalSseStartsRef.current.length,
+          ts: Date.now(),
+        });
         traceLog('setLayoutTrigger from followup', { ts: Date.now() });
         setLayoutTrigger(prev => prev + 1);
 
@@ -1027,21 +1029,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         } else {
           type = 'acard';
         }
-        const lastAskHiddenNodeId =
-          typeof window !== 'undefined' ? (window as any).__lastAskHiddenNodeId : undefined;
-        if (type === 'acard' && (finish === true || lastAskHiddenNodeId === id)) {
-          console.log('[ACARD_GENERATING_TRACE] sse text', {
-            id,
-            qaId,
-            finish,
-            done,
-            nextIsGenerating: isGenerating,
-            pkgIndex: payload.pkg_index,
-            currentIsGenerating: nodesRef.current.find((n) => n.id === id)?.data?.isGenerating,
-            ts: Date.now(),
-          });
-        }
-
         setNodes(currentNodes => {
           const existingNode = currentNodes.find(n => n.id === id);
           if (!existingNode) {
@@ -1168,17 +1155,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 // A 节点才累加流式内容
                 const currentContent = n.data.content;
                 const updatedContent = n.type === 'qcard' ? currentContent : currentContent + content;
-                if (n.type === 'acard' && (n.data?.isGenerating !== isGenerating || finish === true)) {
-                  console.log('[ACARD_GENERATING_TRACE] set node from text', {
-                    id,
-                    prevIsGenerating: n.data?.isGenerating,
-                    nextIsGenerating: isGenerating,
-                    finish,
-                    done,
-                    pkgIndex: payload.pkg_index,
-                    ts: Date.now(),
-                  });
-                }
 
                 return {
                   ...n,
@@ -1229,16 +1205,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       if (event === 'ask_back') {
         const { node_id, ask_back } = payload;
-        const askBackNode = nodesRef.current.find((n) => n.id === node_id);
-        const lastAskHiddenNodeId =
-          typeof window !== 'undefined' ? (window as any).__lastAskHiddenNodeId : undefined;
-        if (askBackNode?.type === 'acard' && (lastAskHiddenNodeId === node_id || askBackNode.data?.isGenerating === true)) {
-          console.log('[ACARD_GENERATING_TRACE] ask_back', {
-            nodeId: node_id,
-            currentIsGenerating: askBackNode.data?.isGenerating,
-            ts: Date.now(),
-          });
-        }
         setNodes(currentNodes => {
           const updatedNodes = currentNodes.map(n =>
             n.id === node_id ? {
@@ -1550,57 +1516,6 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
             const horizontalAnimDebug = getHorizontalAnimDebug();
             const shouldAnimate = animateNextLayoutRef.current || activeBranchAnimating;
             animateNextLayoutRef.current = false;
-            const xChangedNodeIds: string[] = [];
-            targetNodes.forEach((node) => {
-              if (node.type !== 'acard') return;
-              if (!trackedParentAIdsRef.current.has(node.id)) return;
-              const prev = lastPositionByNodeRef.current[node.id];
-              const next = { x: node.position.x, y: node.position.y };
-              if (!prev || prev.x !== next.x || prev.y !== next.y) {
-                if (prev && prev.x !== next.x) {
-                  xChangedNodeIds.push(node.id);
-                  traceLog('tracked A-chain x changed', {
-                    layoutPassId,
-                    nodeId: node.id,
-                    fromX: prev.x,
-                    toX: next.x,
-                    deltaX: next.x - prev.x,
-                    ts: Date.now(),
-                  });
-                }
-                if (node.id.endsWith('-4')) {
-                  lastTrackedA4MoveTsRef.current = Date.now();
-                  traceLog('tracked A4 moved', {
-                    layoutPassId,
-                    nodeId: node.id,
-                    from: prev || null,
-                    to: next,
-                    shouldAnimate,
-                    activeHorizontalCount: horizontalAnimDebug.activeCount,
-                    activeHorizontalMaxRemainingMs: horizontalAnimDebug.maxRemainingMs,
-                    ts: lastTrackedA4MoveTsRef.current,
-                  });
-                }
-              }
-              lastPositionByNodeRef.current[node.id] = next;
-            });
-            if (xChangedNodeIds.length > 0) {
-              traceLog('tracked A-chain x changed summary', {
-                layoutPassId,
-                nodeIds: xChangedNodeIds,
-                shouldAnimate,
-                ts: Date.now(),
-              });
-            }
-            const trackedA4 = targetNodes.find((n) => n.id.endsWith('-4') && trackedParentAIdsRef.current.has(n.id));
-            if (trackedA4) {
-              traceLog('A4 screen before layout apply', {
-                layoutPassId,
-                a4Id: trackedA4.id,
-                screen: getViewportAndNodeLeft(trackedA4.id),
-                ts: Date.now(),
-              });
-            }
 
             const visualSyncParentId = pendingHorizontalParentForVisualSyncRef.current;
             const prevParent = visualSyncParentId
@@ -1650,100 +1565,97 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               });
             };
 
+            const getVisualSyncSamplePositions = (
+              nodesToInspect: Node[],
+              descendantIds: Set<string>,
+              parentId?: string | null
+            ) => {
+              const samples: Array<{
+                id: string;
+                role: 'parent' | 'first-descendant' | 'last-descendant' | 'a4-descendant';
+                x: number;
+                y: number;
+              }> = [];
+              const seen = new Set<string>();
+              const addSample = (
+                node: Node | undefined,
+                role: 'parent' | 'first-descendant' | 'last-descendant' | 'a4-descendant'
+              ) => {
+                if (!node || seen.has(node.id)) return;
+                seen.add(node.id);
+                samples.push({
+                  id: node.id,
+                  role,
+                  x: node.position.x,
+                  y: node.position.y,
+                });
+              };
+              const descendants = nodesToInspect.filter((node) => descendantIds.has(node.id));
+
+              addSample(parentId ? nodesToInspect.find((node) => node.id === parentId) : undefined, 'parent');
+              addSample(descendants[0], 'first-descendant');
+              addSample(descendants[descendants.length - 1], 'last-descendant');
+              addSample(descendants.find((node) => node.id.endsWith('-4')), 'a4-descendant');
+
+              return samples;
+            };
+
             const mergedVisualSyncStartNodes = visualSyncStartNodes
               ? mergeLayoutNodesWithLatestData(visualSyncStartNodes)
               : null;
-            const visualSyncStaleNodes = mergedVisualSyncStartNodes
-              ? mergedVisualSyncStartNodes
-                  .filter((node) => node.type === 'acard')
-                  .map((node) => {
-                    const currentNode = nodesRef.current.find((current) => current.id === node.id);
-                    if (currentNode?.data?.isGenerating === false && node.data?.isGenerating === true) {
-                      return {
-                        id: node.id,
-                        currentIsGenerating: currentNode.data?.isGenerating,
-                        startIsGenerating: node.data?.isGenerating,
-                      };
-                    }
-                    return null;
-                  })
-                  .filter((item): item is { id: string; currentIsGenerating: boolean; startIsGenerating: boolean } => Boolean(item))
-              : [];
-            if (visualSyncStaleNodes.length > 0) {
-              console.log('[ACARD_GENERATING_TRACE] visual sync stale start', {
+            const didHandlePendingVisualSync = Boolean(visualSyncParentId) && shouldAnimate && Math.abs(parentDeltaX) >= 0.5;
+            if (visualSyncParentId) {
+              console.log('[VISUAL_SYNC_TRACE]', {
+                stage: 'layout-apply',
                 layoutPassId,
-                staleNodes: visualSyncStaleNodes,
+                visualSyncParentId,
+                shouldAnimate,
+                isCentering: isCenteringRef.current,
+                hasPrevParent: Boolean(prevParent),
+                hasNextParent: Boolean(nextParent),
+                parentDeltaX,
+                descendantIds: Array.from(visualSyncDescendantIds),
+                hasVisualSyncStart: Boolean(mergedVisualSyncStartNodes),
+                activeHorizontalCount: horizontalAnimDebug.activeCount,
+                activeHorizontalMaxRemainingMs: horizontalAnimDebug.maxRemainingMs,
                 ts: Date.now(),
               });
             }
 
             const commitFinalNodes = () => {
               const mergedTargetNodes = mergeLayoutNodesWithLatestData(targetNodes);
-              const currentNodeById = new Map(nodesRef.current.map((node) => [node.id, node]));
-              const staleNodes = mergedTargetNodes
-                .filter((node) => node.type === 'acard')
-                .map((node) => {
-                  const currentNode = currentNodeById.get(node.id);
-                  if (currentNode?.data?.isGenerating === false && node.data?.isGenerating === true) {
-                    return {
-                      id: node.id,
-                      currentIsGenerating: currentNode.data?.isGenerating,
-                      targetIsGenerating: node.data?.isGenerating,
-                      currentContentLength: String(currentNode.data?.content || '').length,
-                      targetContentLength: String(node.data?.content || '').length,
-                    };
-                  }
-                  return null;
-                })
-                .filter((item): item is {
-                  id: string;
-                  currentIsGenerating: boolean;
-                  targetIsGenerating: boolean;
-                  currentContentLength: number;
-                  targetContentLength: number;
-                } => Boolean(item));
-              if (staleNodes.length > 0) {
-                console.log('[ACARD_GENERATING_TRACE] layout stale overwrite before', {
+              if (visualSyncParentId) {
+                console.log('[VISUAL_SYNC_TRACE]', {
+                  stage: 'final-commit',
                   layoutPassId,
-                  staleNodes,
+                  pendingParentId: visualSyncParentId,
                   shouldAnimate,
-                  hasVisualSyncStartNodes: Boolean(mergedVisualSyncStartNodes),
+                  samplePositions: getVisualSyncSamplePositions(
+                    mergedTargetNodes,
+                    visualSyncDescendantIds,
+                    visualSyncParentId
+                  ),
                   ts: Date.now(),
                 });
               }
               nodesRef.current = mergedTargetNodes;
               setNodes(mergedTargetNodes);
-              if (trackedA4) {
-                requestAnimationFrame(() => {
-                  traceLog('A4 screen after layout apply', {
-                    layoutPassId,
-                    a4Id: trackedA4.id,
-                    screen: getViewportAndNodeLeft(trackedA4.id),
-                    ts: Date.now(),
-                  });
-                });
-              }
-              if (staleNodes.length > 0) {
-                requestAnimationFrame(() => {
-                  console.log('[ACARD_GENERATING_TRACE] layout stale overwrite after', {
-                    layoutPassId,
-                    nodes: staleNodes.map((item) => {
-                      const currentNode = nodesRef.current.find((node) => node.id === item.id);
-                      return {
-                        id: item.id,
-                        currentIsGenerating: currentNode?.data?.isGenerating,
-                        contentLength: String(currentNode?.data?.content || '').length,
-                      };
-                    }),
-                    ts: Date.now(),
-                  });
-                });
-              }
             };
 
             if (shouldAnimate && !isCenteringRef.current) {
               setLayoutTransitionEnabled(true);
               if (mergedVisualSyncStartNodes) {
+                console.log('[VISUAL_SYNC_TRACE]', {
+                  stage: 'visual-sync-start-commit',
+                  layoutPassId,
+                  pendingParentId: visualSyncParentId,
+                  samplePositions: getVisualSyncSamplePositions(
+                    mergedVisualSyncStartNodes,
+                    visualSyncDescendantIds,
+                    visualSyncParentId
+                  ),
+                  ts: Date.now(),
+                });
                 nodesRef.current = mergedVisualSyncStartNodes;
                 setNodes(mergedVisualSyncStartNodes);
                 requestAnimationFrame(() => {
@@ -1754,12 +1666,31 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
               }
               setTimeout(() => {
                 setLayoutTransitionEnabled(false);
-                pendingHorizontalParentForVisualSyncRef.current = null;
+                if (didHandlePendingVisualSync) {
+                  console.log('[VISUAL_SYNC_TRACE]', {
+                    stage: 'pending-parent-clear',
+                    layoutPassId,
+                    pendingParentId: pendingHorizontalParentForVisualSyncRef.current,
+                    reason: 'animated-timeout',
+                    ts: Date.now(),
+                  });
+                  pendingHorizontalParentForVisualSyncRef.current = null;
+                }
                 flushPendingHorizontalSseStarts();
               }, 550);
             } else {
               commitFinalNodes();
-              pendingHorizontalParentForVisualSyncRef.current = null;
+              if (visualSyncParentId) {
+                console.log('[VISUAL_SYNC_TRACE]', {
+                  stage: 'pending-parent-kept',
+                  layoutPassId,
+                  pendingParentId: visualSyncParentId,
+                  reason: 'non-animated-or-no-delta',
+                  shouldAnimate,
+                  parentDeltaX,
+                  ts: Date.now(),
+                });
+              }
               setTimeout(() => {
                 flushPendingHorizontalSseStarts();
               }, 0);

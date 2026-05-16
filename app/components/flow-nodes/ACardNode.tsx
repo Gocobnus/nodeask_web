@@ -34,7 +34,6 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
   const rightHandleAnimRef = useRef<number | null>(null);
   const askHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastAskButtonDebugSignatureRef = useRef<string>('');
   const [rightHandlePos, setRightHandlePos] = useState<number>(-8);
   const disableEnterAnimation = Boolean(data?.disableEnterAnimation);
   const forceShowActions = Boolean(data?.forceShowActions);
@@ -131,59 +130,6 @@ const ACardNode = ({ id, data, selected, suppressHandles }: { id: string, data: 
   const baseButtonVisible = (selected || hoverKeepAlive) && !data.hideAskButton && !data.isGenerating;
   const buttonVisible = transitionLock ? lockedButtonVisible : baseButtonVisible;
   const attachToAskButtonRight = isCollapsedLocal && handleAttachCommitted;
-
-  useEffect(() => {
-    const isActiveForDebug = selected || isHovered || hoverKeepAlive;
-    if (!isActiveForDebug) return;
-    if (buttonVisible) return;
-
-    const signature = [
-      id,
-      selected,
-      isHovered,
-      hoverKeepAlive,
-      data?.hideAskButton,
-      data?.isGenerating,
-      typeof data?.onAsk,
-      buttonVisible,
-      transitionLock,
-      lockedButtonVisible,
-    ].join('|');
-
-    if (signature === lastAskButtonDebugSignatureRef.current) return;
-    lastAskButtonDebugSignatureRef.current = signature;
-    if (typeof window !== 'undefined') {
-      (window as any).__lastAskHiddenNodeId = id;
-    }
-
-    console.log('[ASK_BUTTON_DEBUG] hidden', {
-      id,
-      selected,
-      isHovered,
-      hoverKeepAlive,
-      forceShowActions,
-      hideAskButton: data?.hideAskButton,
-      isGenerating: data?.isGenerating,
-      hasOnAsk: typeof data?.onAsk === 'function',
-      baseButtonVisible,
-      buttonVisible,
-      transitionLock,
-      lockedButtonVisible,
-    });
-  }, [
-    id,
-    selected,
-    isHovered,
-    hoverKeepAlive,
-    data?.hideAskButton,
-    data?.isGenerating,
-    data?.onAsk,
-    buttonVisible,
-    transitionLock,
-    lockedButtonVisible,
-    forceShowActions,
-    baseButtonVisible,
-  ]);
 
   useEffect(() => {
     setIsCollapsedLocal(Boolean(data?.isCollapsed));
