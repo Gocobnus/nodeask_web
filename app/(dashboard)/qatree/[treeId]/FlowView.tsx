@@ -88,6 +88,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
   const activeHorizontalAnimBranchesRef = useRef<Set<string>>(new Set());
   const horizontalAnimUntilRef = useRef<Map<string, number>>(new Map());
   const pendingHorizontalSseStartsRef = useRef<Array<() => void>>([]);
+  const pendingHorizontalParentForVisualSyncRef = useRef<string | null>(null);
   const lastTrackedA4MoveTsRef = useRef<number | null>(null);
 
   // 布局进行中标记,防止重复触发
@@ -312,6 +313,25 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         if (!ids.has(edge.target)) {
           queue.push(edge.target);
         }
+      });
+    }
+
+    return ids;
+  }, []);
+
+  const collectNonHorizontalDescendantIds = useCallback((rootId: string, allEdges: any[]): Set<string> => {
+    const ids = new Set<string>();
+    const queue: string[] = [rootId];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+
+      allEdges.forEach((edge) => {
+        if (edge.source !== currentId) return;
+        if (edge.sourceHandle === 'right') return;
+        if (ids.has(edge.target)) return;
+        ids.add(edge.target);
+        queue.push(edge.target);
       });
     }
 
@@ -578,6 +598,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
       }
       const parentBusinessNodeId = parentNode.data?.nodeId || parentNode.id;
       if (mode === 'horizontal' && parentNode.type === 'acard') {
+        pendingHorizontalParentForVisualSyncRef.current = parentNode.id;
         const qaId = parentNode.data?.qaId;
         const trackedIds = new Set(
           nodesRef.current
@@ -993,7 +1014,7 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
         const { id, pos, content, finish, parentNodeId } = payload.node_data;
         const done = payload.done || false; // 从 CommonFields 获取 done 字段
         const qaId = payload.qa_id; // 从 CommonFields 获取 qa_id
-        const isGenerating = !finish;
+        const isGenerating = !(finish === true || done === true);
         let resolvedParentReactFlowId: string | undefined;
         let shouldDeferForMissingParent = false;
 
@@ -1005,6 +1026,20 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
           type = 'qcard';
         } else {
           type = 'acard';
+        }
+        const lastAskHiddenNodeId =
+          typeof window !== 'undefined' ? (window as any).__lastAskHiddenNodeId : undefined;
+        if (type === 'acard' && (finish === true || lastAskHiddenNodeId === id)) {
+          console.log('[ACARD_GENERATING_TRACE] sse text', {
+            id,
+            qaId,
+            finish,
+            done,
+            nextIsGenerating: isGenerating,
+            pkgIndex: payload.pkg_index,
+            currentIsGenerating: nodesRef.current.find((n) => n.id === id)?.data?.isGenerating,
+            ts: Date.now(),
+          });
         }
 
         setNodes(currentNodes => {
@@ -1133,6 +1168,17 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 // A 节点才累加流式内容
                 const currentContent = n.data.content;
                 const updatedContent = n.type === 'qcard' ? currentContent : currentContent + content;
+                if (n.type === 'acard' && (n.data?.isGenerating !== isGenerating || finish === true)) {
+                  console.log('[ACARD_GENERATING_TRACE] set node from text', {
+                    id,
+                    prevIsGenerating: n.data?.isGenerating,
+                    nextIsGenerating: isGenerating,
+                    finish,
+                    done,
+                    pkgIndex: payload.pkg_index,
+                    ts: Date.now(),
+                  });
+                }
 
                 return {
                   ...n,
@@ -1183,6 +1229,16 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
 
       if (event === 'ask_back') {
         const { node_id, ask_back } = payload;
+        const askBackNode = nodesRef.current.find((n) => n.id === node_id);
+        const lastAskHiddenNodeId =
+          typeof window !== 'undefined' ? (window as any).__lastAskHiddenNodeId : undefined;
+        if (askBackNode?.type === 'acard' && (lastAskHiddenNodeId === node_id || askBackNode.data?.isGenerating === true)) {
+          console.log('[ACARD_GENERATING_TRACE] ask_back', {
+            nodeId: node_id,
+            currentIsGenerating: askBackNode.data?.isGenerating,
+            ts: Date.now(),
+          });
+        }
         setNodes(currentNodes => {
           const updatedNodes = currentNodes.map(n =>
             n.id === node_id ? {
@@ -1545,25 +1601,165 @@ function FlowCanvas({ treeId, initialQuestion }: FlowCanvasProps) {
                 ts: Date.now(),
               });
             }
-            nodesRef.current = targetNodes;
-            setNodes(targetNodes);
-            if (trackedA4) {
-              requestAnimationFrame(() => {
-                traceLog('A4 screen after layout apply', {
-                  layoutPassId,
-                  a4Id: trackedA4.id,
-                  screen: getViewportAndNodeLeft(trackedA4.id),
-                  ts: Date.now(),
-                });
+
+            const visualSyncParentId = pendingHorizontalParentForVisualSyncRef.current;
+            const prevParent = visualSyncParentId
+              ? nodesRef.current.find((node) => node.id === visualSyncParentId)
+              : undefined;
+            const nextParent = visualSyncParentId
+              ? targetNodes.find((node) => node.id === visualSyncParentId)
+              : undefined;
+            const parentDeltaX = prevParent && nextParent
+              ? nextParent.position.x - prevParent.position.x
+              : 0;
+            const visualSyncDescendantIds = visualSyncParentId && prevParent && nextParent && shouldAnimate && Math.abs(parentDeltaX) >= 0.5
+              ? collectNonHorizontalDescendantIds(visualSyncParentId, layoutEdges)
+              : new Set<string>();
+            const visualSyncStartNodes = visualSyncDescendantIds.size > 0
+              ? targetNodes.map((node) =>
+                  visualSyncDescendantIds.has(node.id)
+                    ? {
+                        ...node,
+                        position: {
+                          ...node.position,
+                          x: node.position.x - parentDeltaX,
+                        },
+                      }
+                    : node
+                )
+              : null;
+
+            const mergeLayoutNodesWithLatestData = (nodesToMerge: Node[]): Node[] => {
+              type LayoutNode = Node & { measured?: unknown; resizing?: boolean };
+              const latestNodeById = new Map(nodesRef.current.map((node) => [node.id, node]));
+
+              return nodesToMerge.map((targetNode) => {
+                const latestNode = latestNodeById.get(targetNode.id);
+                if (!latestNode) return targetNode;
+
+                const layoutNode = targetNode as LayoutNode;
+                return {
+                  ...latestNode,
+                  position: targetNode.position,
+                  width: targetNode.width,
+                  height: targetNode.height,
+                  dragging: targetNode.dragging,
+                  ...(layoutNode.measured !== undefined ? { measured: layoutNode.measured } : {}),
+                  ...(layoutNode.resizing !== undefined ? { resizing: layoutNode.resizing } : {}),
+                };
+              });
+            };
+
+            const mergedVisualSyncStartNodes = visualSyncStartNodes
+              ? mergeLayoutNodesWithLatestData(visualSyncStartNodes)
+              : null;
+            const visualSyncStaleNodes = mergedVisualSyncStartNodes
+              ? mergedVisualSyncStartNodes
+                  .filter((node) => node.type === 'acard')
+                  .map((node) => {
+                    const currentNode = nodesRef.current.find((current) => current.id === node.id);
+                    if (currentNode?.data?.isGenerating === false && node.data?.isGenerating === true) {
+                      return {
+                        id: node.id,
+                        currentIsGenerating: currentNode.data?.isGenerating,
+                        startIsGenerating: node.data?.isGenerating,
+                      };
+                    }
+                    return null;
+                  })
+                  .filter((item): item is { id: string; currentIsGenerating: boolean; startIsGenerating: boolean } => Boolean(item))
+              : [];
+            if (visualSyncStaleNodes.length > 0) {
+              console.log('[ACARD_GENERATING_TRACE] visual sync stale start', {
+                layoutPassId,
+                staleNodes: visualSyncStaleNodes,
+                ts: Date.now(),
               });
             }
+
+            const commitFinalNodes = () => {
+              const mergedTargetNodes = mergeLayoutNodesWithLatestData(targetNodes);
+              const currentNodeById = new Map(nodesRef.current.map((node) => [node.id, node]));
+              const staleNodes = mergedTargetNodes
+                .filter((node) => node.type === 'acard')
+                .map((node) => {
+                  const currentNode = currentNodeById.get(node.id);
+                  if (currentNode?.data?.isGenerating === false && node.data?.isGenerating === true) {
+                    return {
+                      id: node.id,
+                      currentIsGenerating: currentNode.data?.isGenerating,
+                      targetIsGenerating: node.data?.isGenerating,
+                      currentContentLength: String(currentNode.data?.content || '').length,
+                      targetContentLength: String(node.data?.content || '').length,
+                    };
+                  }
+                  return null;
+                })
+                .filter((item): item is {
+                  id: string;
+                  currentIsGenerating: boolean;
+                  targetIsGenerating: boolean;
+                  currentContentLength: number;
+                  targetContentLength: number;
+                } => Boolean(item));
+              if (staleNodes.length > 0) {
+                console.log('[ACARD_GENERATING_TRACE] layout stale overwrite before', {
+                  layoutPassId,
+                  staleNodes,
+                  shouldAnimate,
+                  hasVisualSyncStartNodes: Boolean(mergedVisualSyncStartNodes),
+                  ts: Date.now(),
+                });
+              }
+              nodesRef.current = mergedTargetNodes;
+              setNodes(mergedTargetNodes);
+              if (trackedA4) {
+                requestAnimationFrame(() => {
+                  traceLog('A4 screen after layout apply', {
+                    layoutPassId,
+                    a4Id: trackedA4.id,
+                    screen: getViewportAndNodeLeft(trackedA4.id),
+                    ts: Date.now(),
+                  });
+                });
+              }
+              if (staleNodes.length > 0) {
+                requestAnimationFrame(() => {
+                  console.log('[ACARD_GENERATING_TRACE] layout stale overwrite after', {
+                    layoutPassId,
+                    nodes: staleNodes.map((item) => {
+                      const currentNode = nodesRef.current.find((node) => node.id === item.id);
+                      return {
+                        id: item.id,
+                        currentIsGenerating: currentNode?.data?.isGenerating,
+                        contentLength: String(currentNode?.data?.content || '').length,
+                      };
+                    }),
+                    ts: Date.now(),
+                  });
+                });
+              }
+            };
+
             if (shouldAnimate && !isCenteringRef.current) {
               setLayoutTransitionEnabled(true);
+              if (mergedVisualSyncStartNodes) {
+                nodesRef.current = mergedVisualSyncStartNodes;
+                setNodes(mergedVisualSyncStartNodes);
+                requestAnimationFrame(() => {
+                  commitFinalNodes();
+                });
+              } else {
+                commitFinalNodes();
+              }
               setTimeout(() => {
                 setLayoutTransitionEnabled(false);
+                pendingHorizontalParentForVisualSyncRef.current = null;
                 flushPendingHorizontalSseStarts();
               }, 550);
             } else {
+              commitFinalNodes();
+              pendingHorizontalParentForVisualSyncRef.current = null;
               setTimeout(() => {
                 flushPendingHorizontalSseStarts();
               }, 0);
