@@ -8,9 +8,13 @@
 NodeAsk 是一个以知识图谱形式组织 AI 对话的 Web 应用。它希望打破传统 AI 对话的线性结构，让用户可以围绕任意回答、任意卡片或任意历史节点继续提问，而不必始终沿着对话末端向下延伸。
 
 ![NodeAsk 首页截图](./pic/1.png)
+
 ![NodeAsk 图谱截图](./pic/2.png)
+
 ![NodeAsk 图谱截图](./pic/3.png)
+
 ![NodeAsk 图谱截图](./pic/4.png)
+
 ![NodeAsk 图谱截图](./pic/5.png)
 
 ## 为什么做这个项目
